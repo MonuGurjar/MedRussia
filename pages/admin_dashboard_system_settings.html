@@ -1,0 +1,418 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Settings - Admission Control Center</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e0e3e5",
+                    "primary-container": "#1a365d",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-high": "#e5e9eb",
+                    "on-primary-fixed": "#001b3c",
+                    "on-primary-fixed-variant": "#2d476f",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed-variant": "#673d00",
+                    "on-tertiary-container": "#989fa6",
+                    "on-surface-variant": "#43474e",
+                    "on-tertiary-fixed": "#161c22",
+                    "secondary-container": "#ffb55c",
+                    "inverse-on-surface": "#eef1f3",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#adc7f7",
+                    "surface": "#f7fafc",
+                    "primary-fixed-dim": "#adc7f7",
+                    "surface-container-low": "#f1f4f6",
+                    "tertiary-fixed": "#dde3eb",
+                    "secondary-fixed": "#ffddba",
+                    "tertiary-fixed-dim": "#c1c7cf",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary": "#1b2127",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#d6e3ff",
+                    "background": "#f7fafc",
+                    "inverse-surface": "#2d3133",
+                    "secondary-fixed-dim": "#ffb866",
+                    "outline": "#74777f",
+                    "on-primary-container": "#86a0cd",
+                    "secondary": "#875200",
+                    "on-surface": "#181c1e",
+                    "surface-dim": "#d7dadc",
+                    "primary": "#002045",
+                    "on-secondary-fixed": "#2b1700",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#41474e",
+                    "on-secondary-container": "#744600",
+                    "tertiary-container": "#30363c",
+                    "surface-tint": "#455f88",
+                    "outline-variant": "#c4c6cf",
+                    "surface-bright": "#f7fafc",
+                    "on-background": "#181c1e",
+                    "surface-container": "#ebeef0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "sm": "0.25rem",
+                    "md": "0.75rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #002045;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #002045;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex">
+<!-- SideNavBar (Shared Component) -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-20 flex flex-col p-4 gap-2">
+<div class="flex items-center gap-3 px-4 py-4 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold overflow-hidden">
+<img alt="Medical University Logo" class="w-full h-full object-cover" data-alt="A macro shot of a sleek, modern, metallic medical emblem featuring a subtle caduceus intertwined with a minimalist open book. The emblem is rendered in a polished silver tone with deep academic blue enamel accents. The lighting is crisp, studio-quality, casting a soft, professional highlight that underscores the institutional prestige and clarity of the design. The mood is authoritative and pristine." src="https://lh3.googleusercontent.com/aida-public/AB6AXuClm9LNQXlY58iBoItgMSYHYO0AlPUl1ITLgddKqICCSCTniX-jKphE3zhvEl6BCyc63B-SPDkecsQf0zgSdYR_oyuZJIDiJE_EPmbNMo6sRAMvYNjnZVZYb93fvfM7kiCHpyU4R2jvKLz0qL9GfE6QjUPezShHdKutPEkwNZZ0y57KdHhiAILDKuNAIiNi9q7zoEeEGMQ2VRrrr7SAH4OXjltuGiVCcN1L8qMxrypR_1-Tao1UnsuGbjTFOnAT6DoglDyX9W51N_A">
+</div>
+<div>
+<h1 class="text-headline-md font-semibold text-primary" style="font-size: 16px; line-height: 20px;">Academic Excellence</h1>
+<p class="text-label-sm text-on-surface-variant font-medium mt-1">Admin Dashboard</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 flex-1 overflow-y-auto">
+<!-- Inquiries -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="inbox">inbox</span>
+                Inquiries
+            </a>
+<!-- Direct Chats -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="chat">chat</span>
+                Direct Chats
+            </a>
+<!-- AI Chats -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="smart_toy">smart_toy</span>
+                AI Chats
+            </a>
+<!-- Students -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="school">school</span>
+                Students
+            </a>
+<!-- Team -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="group">group</span>
+                Team
+            </a>
+<!-- Insights -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="monitoring">monitoring</span>
+                Insights
+            </a>
+<!-- Chat Insights -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="analytics">analytics</span>
+                Chat Insights
+            </a>
+<!-- Feedback Hub -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group active:scale-95 duration-150 text-body-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="reviews">reviews</span>
+                Feedback Hub
+            </a>
+
+<!-- Settings (ACTIVE) -->
+
+</div>
+<div class="mt-auto pt-4 border-t border-outline-variant"><a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform duration-150 text-body-md" href="#"><span class="material-symbols-outlined text-[20px] fill" data-icon="settings" data-weight="fill">settings</span>Settings</a></div></nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="bg-surface border-b border-outline-variant h-16 px-8 flex justify-between items-center sticky top-0 z-10 w-full flat no shadows focus-within:ring-2 focus-within:ring-primary">
+<div class="flex items-center flex-1">
+<div class="relative w-96 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary pointer-events-none" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md py-2 pl-10 pr-4 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-on-surface-variant" placeholder="Search settings..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-headline text-label-md text-primary font-bold hidden xl:block mr-4 tracking-wide">Admission Control Center</span>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button aria-label="Notifications" class="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Help" class="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant hidden sm:block"></div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border-[1.5px] border-primary text-primary font-semibold text-label-md rounded hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-surface">
+                        Support
+                    </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-semibold text-label-md rounded hover:bg-primary-container transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-surface">
+                        New Inquiry
+                    </button>
+</div>
+<button class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface ml-2">
+<img alt="Admin User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged male administrator in a sharply tailored navy blue suit against a soft, bright white background. He exudes confidence and reliability, fitting for a prestigious academic setting. The lighting is clean and balanced, highlighting his calm expression. The overall aesthetic is corporate, modern, and trustworthy, strictly adhering to an executive light-mode style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmb1mFKxLgUXoyxsqN-JhL34JtumvrZPw8LMhva7rt_4C3ImBTdHpwyD9HCHTq-3HOEwfDJVH2Z2HRr20D2L3-4yMjNdMZKhjw_wk36-AWSzpAhCWfg8s_UP3XW_Ge-oblrWTD6i164HivgYRaHO8syVhoYAQE5naK7zv_pRx0xj27RtCQ6BLkwB7yCjlbMVGQshV5aYymqwtcW2x51NC37qGEwmqOM_jV1373bT9apKlLLUvveU5euo0hUUWpSnTwvRTQSbO2pDM">
+</button>
+</div>
+</header>
+<!-- Canvas Area -->
+<main class="flex-1 p-8 bg-background overflow-y-auto">
+<div class="max-w-[1280px] mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="text-headline-lg font-bold text-on-surface tracking-tight" style="font-size: 32px; line-height: 40px;">System Settings</h2>
+<p class="text-body-lg text-on-surface-variant mt-2 max-w-2xl">Manage your institution's CRM preferences, user access levels, security protocols, and data configurations.</p>
+</div>
+<!-- Bento Grid Layout for Settings -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+<!-- Section 1: CRM Preferences -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.03)] hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-300 flex flex-col h-full">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined fill" data-icon="tune" data-weight="fill">tune</span>
+</div>
+<h3 class="text-headline-md font-semibold text-on-surface" style="font-size: 20px;">CRM Preferences</h3>
+</div>
+<div class="flex flex-col gap-6 flex-1">
+<!-- Timezone -->
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2" for="timezone-select">System Timezone</label>
+<select class="w-full bg-surface-bright border border-outline-variant text-body-md rounded-md focus:border-primary focus:ring-1 focus:ring-primary py-2.5 px-3 appearance-none cursor-pointer" id="timezone-select">
+<option>(GMT-05:00) Eastern Time (US &amp; Canada)</option>
+<option>(GMT-06:00) Central Time (US &amp; Canada)</option>
+<option>(GMT-08:00) Pacific Time (US &amp; Canada)</option>
+<option>(GMT+00:00) Greenwich Mean Time</option>
+</select>
+<p class="text-label-sm text-on-surface-variant mt-1.5">Affects all timestamped data and automated communication schedules.</p>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<!-- Notifications -->
+<div>
+<h4 class="text-label-md font-semibold text-on-surface mb-4">Global Notifications</h4>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="block text-body-md font-medium text-on-surface">Email Digests</span>
+<span class="block text-label-sm text-on-surface-variant mt-0.5">Daily summary of new inquiries and applicant status changes.</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-surface-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out" id="toggle-email" name="toggle-email" type="checkbox">
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer transition-colors duration-200 ease-in-out" for="toggle-email"></label>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<span class="block text-body-md font-medium text-on-surface">Urgent SMS Alerts</span>
+<span class="block text-label-sm text-on-surface-variant mt-0.5">Critical system errors or VIP applicant actions.</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-surface-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out" id="toggle-sms" name="toggle-sms" type="checkbox">
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer transition-colors duration-200 ease-in-out" for="toggle-sms"></label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: User Roles & Permissions -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.03)] hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-300 flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined fill" data-icon="shield_person" data-weight="fill">shield_person</span>
+</div>
+<h3 class="text-headline-md font-semibold text-on-surface" style="font-size: 20px;">Roles &amp; Access</h3>
+</div>
+<button class="text-primary font-semibold text-label-md hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded px-2 py-1">
+                                Add Role
+                            </button>
+</div>
+<div class="border border-outline-variant rounded-lg overflow-hidden flex-1">
+<table class="w-full text-left text-body-md">
+<thead class="bg-surface-container-low border-b border-outline-variant text-label-sm text-on-surface-variant uppercase tracking-wider">
+<tr>
+<th class="px-4 py-3 font-semibold">Role Name</th>
+<th class="px-4 py-3 font-semibold">Users</th>
+<th class="px-4 py-3 font-semibold text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant bg-surface-container-lowest">
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-3">
+<div class="font-medium text-on-surface">Super Admin</div>
+<div class="text-label-sm text-on-surface-variant">Full system access</div>
+</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary-fixed text-on-primary-fixed">
+                                                3
+                                            </span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-surface-tint hover:text-primary font-medium text-label-md focus:outline-none">Manage</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-3">
+<div class="font-medium text-on-surface">Admissions Officer</div>
+<div class="text-label-sm text-on-surface-variant">Read/Write applications</div>
+</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface">
+                                                12
+                                            </span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-surface-tint hover:text-primary font-medium text-label-md focus:outline-none">Manage</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-3">
+<div class="font-medium text-on-surface">Interviewer</div>
+<div class="text-label-sm text-on-surface-variant">Score entry only</div>
+</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface">
+                                                8
+                                            </span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-surface-tint hover:text-primary font-medium text-label-md focus:outline-none">Manage</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section 3: Data Export Tools -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.03)] hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-300 flex flex-col h-full xl:col-span-1">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined fill" data-icon="file_download" data-weight="fill">file_download</span>
+</div>
+<h3 class="text-headline-md font-semibold text-on-surface" style="font-size: 20px;">Data Export</h3>
+</div>
+<p class="text-body-md text-on-surface-variant mb-6">Generate comprehensive reports for accreditation or internal audit purposes.</p>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2">Start Date</label>
+<input class="w-full bg-surface-bright border border-outline-variant text-body-md rounded-md focus:border-primary focus:ring-1 focus:ring-primary py-2 px-3 text-on-surface-variant" type="date">
+</div>
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2">End Date</label>
+<input class="w-full bg-surface-bright border border-outline-variant text-body-md rounded-md focus:border-primary focus:ring-1 focus:ring-primary py-2 px-3 text-on-surface-variant" type="date">
+</div>
+</div>
+<div class="mb-8">
+<label class="block text-label-md font-semibold text-on-surface mb-3">Datasets to Include</label>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Applicant Demographics &amp; Status</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Communication Logs (Emails/Chats)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Financial / Scholarship Awards</span>
+</label>
+</div>
+</div>
+<div class="mt-auto flex gap-3">
+<button class="flex-1 px-4 py-2.5 bg-primary text-on-primary font-semibold text-label-md rounded flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="csv">description</span>
+                                Export as CSV
+                            </button>
+<button class="flex-1 px-4 py-2.5 border-[1.5px] border-primary text-primary font-semibold text-label-md rounded flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                                Export PDF
+                            </button>
+</div>
+</section>
+<!-- Section 4: Security -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.03)] hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-300 flex flex-col h-full xl:col-span-1">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined fill" data-icon="lock" data-weight="fill">lock</span>
+</div>
+<h3 class="text-headline-md font-semibold text-on-surface" style="font-size: 20px;">Security &amp; Authentication</h3>
+</div>
+<div class="bg-surface-bright border border-outline-variant rounded-lg p-5 mb-6 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary mt-0.5" data-icon="verified_user">verified_user</span>
+<div>
+<h4 class="text-label-md font-bold text-on-surface">Two-Factor Authentication (2FA)</h4>
+<p class="text-body-md text-on-surface-variant mt-1 mb-3">Add an extra layer of security to your admin account by requiring a code from a mobile app upon login.</p>
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-surface-container-highest text-on-surface-variant">
+                                        Status: Inactive
+                                    </span>
+<button class="text-primary font-semibold text-label-md hover:underline focus:outline-none rounded">
+                                        Configure 2FA
+                                    </button>
+</div>
+</div>
+</div>
+<div class="h-px bg-outline-variant w-full mb-6"></div>
+<div class="space-y-5">
+<div>
+<h4 class="text-label-md font-semibold text-on-surface mb-1">Password Policy</h4>
+<p class="text-label-sm text-on-surface-variant">Enforce strong passwords (min. 12 characters, symbols, numbers) for all institutional staff.</p>
+<button class="mt-2 text-surface-tint hover:text-primary font-medium text-label-md focus:outline-none flex items-center gap-1">
+                                    Manage Policy <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div>
+<h4 class="text-label-md font-semibold text-on-surface mb-1">Active Sessions</h4>
+<p class="text-label-sm text-on-surface-variant mb-2">You are currently logged in from 2 devices (MacBook Pro, iPhone 14).</p>
+<button class="px-4 py-2 border-[1.5px] border-outline-variant text-on-surface-variant font-medium text-label-md rounded hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                                    Log out all other sessions
+                                </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>

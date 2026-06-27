@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-surface" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Academic Excellence - AI Chats</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-container": "#1a365d",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-high": "#e5e9eb",
+                        "on-primary-fixed": "#001b3c",
+                        "on-primary-fixed-variant": "#2d476f",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "on-tertiary-container": "#989fa6",
+                        "on-surface-variant": "#43474e",
+                        "on-tertiary-fixed": "#161c22",
+                        "secondary-container": "#ffb55c",
+                        "inverse-on-surface": "#eef1f3",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#adc7f7",
+                        "surface": "#f7fafc",
+                        "primary-fixed-dim": "#adc7f7",
+                        "surface-container-low": "#f1f4f6",
+                        "tertiary-fixed": "#dde3eb",
+                        "secondary-fixed": "#ffddba",
+                        "tertiary-fixed-dim": "#c1c7cf",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#1b2127",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d6e3ff",
+                        "background": "#f7fafc",
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed-dim": "#ffb866",
+                        "outline": "#74777f",
+                        "on-primary-container": "#86a0cd",
+                        "secondary": "#875200",
+                        "on-surface": "#181c1e",
+                        "surface-dim": "#d7dadc",
+                        "primary": "#002045",
+                        "on-secondary-fixed": "#2b1700",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#41474e",
+                        "on-secondary-container": "#744600",
+                        "tertiary-container": "#30363c",
+                        "surface-tint": "#455f88",
+                        "outline-variant": "#c4c6cf",
+                        "surface-bright": "#f7fafc",
+                        "on-background": "#181c1e",
+                        "surface-container": "#ebeef0"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "sm": "0.25rem",
+                        "md": "0.75rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body h-full flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col z-20">
+<div class="p-6 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">local_hospital</span>
+</div>
+<div>
+<h1 class="text-headline-md font-semibold text-primary tracking-tight leading-tight">Academic<br/>Excellence</h1>
+</div>
+</div>
+<p class="text-label-sm text-on-surface-variant mt-2 font-medium tracking-wide uppercase">Admin Dashboard</p>
+</div>
+<div class="flex flex-col h-full p-4 gap-2 overflow-y-auto scrollbar-hide">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">inbox</span>
+<span class="text-label-md">Inquiries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">chat</span>
+<span class="text-label-md">Direct Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="text-label-md">AI Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">school</span>
+<span class="text-label-md">Students</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">group</span>
+<span class="text-label-md">Team</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">monitoring</span>
+<span class="text-label-md">Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">analytics</span>
+<span class="text-label-md">Chat Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">reviews</span>
+<span class="text-label-md">Feedback Hub</span>
+</a>
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">settings</span>
+<span class="text-label-md">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col ml-64 h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-8 shrink-0 z-10">
+<div class="flex-1 max-w-md">
+<!-- Search Bar Placeholder -->
+<div class="relative focus-within:ring-2 focus-within:ring-primary rounded-lg transition-all">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:outline-none focus:ring-0 placeholder:text-on-surface-variant" placeholder="Search conversations..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full border border-surface"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="px-4 py-2 text-label-md font-semibold text-primary border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors">
+                    Support
+                </button>
+<button class="px-4 py-2 bg-primary text-on-primary text-label-md font-semibold rounded-lg shadow-sm hover:bg-primary-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    New Inquiry
+                </button>
+<div class="ml-4 w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+<img alt="Admin User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a medical university administrator wearing a crisp white shirt and a dark blue blazer. The lighting is bright and studio-quality, emphasizing a modern, trustworthy, and academic atmosphere. The background is a soft, blurred light gray, fitting perfectly into a clean corporate UI design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCld1FFg2k3Mta_lk5UHcFc7yoqtue2mPDflxFHMvHXnJRCYx8VgJ4WsFoHlqoCvCAj30vASvHtVpRdMOEY1TiR2beRU1CGyA9TjMXZefSRX6oqfOOKxheFbnBGE8Qs2AZlnXbeAoH_YltCArZASmfJUDTvrAmdnN_eOhxntye-YQn2qpH-l7RVhzJoqLTBWCmDjyCx9cpDIOK8ZBuyCyWZhK1yiRFS2JUCTqhxLdSXxqeIN0xp-QPcKUZxEcDpw_fMHNCjC2xJRU"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area (Split Pane) -->
+<main class="flex-1 flex overflow-hidden bg-surface-container-lowest">
+<!-- Left Pane: Chat List -->
+<aside class="w-1/3 border-r border-outline-variant flex flex-col bg-surface-bright shrink-0">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface">
+<h2 class="text-headline-md text-primary tracking-tight">Active Sessions</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded hover:bg-surface-container-low">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-hide p-2 space-y-1">
+<!-- Chat Item 1 (Active/Selected) -->
+<div class="p-4 rounded-lg bg-surface-container-low border border-primary-fixed cursor-pointer transition-colors relative shadow-[0_4px_12px_rgba(26,54,93,0.05)]">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-label-md font-bold text-on-surface">Sarah Jenkins</h3>
+<span class="text-label-sm text-on-surface-variant">Just now</span>
+</div>
+<p class="text-body-md text-on-surface-variant truncate mb-3">What are the prerequisites for the pre-med track?</p>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                Bot Active
+                            </span>
+<span class="text-label-sm text-outline">ID: #4928</span>
+</div>
+</div>
+<!-- Chat Item 2 -->
+<div class="p-4 rounded-lg hover:bg-surface-container-lowest border border-transparent hover:border-outline-variant cursor-pointer transition-colors group">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-label-md font-semibold text-on-surface group-hover:text-primary transition-colors">David Chen</h3>
+<span class="text-label-sm text-on-surface-variant">2m ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant truncate mb-3">I need help with my financial aid application deadline...</p>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                Human Intervened
+                            </span>
+</div>
+</div>
+<!-- Chat Item 3 -->
+<div class="p-4 rounded-lg hover:bg-surface-container-lowest border border-transparent hover:border-outline-variant cursor-pointer transition-colors group">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-label-md font-semibold text-on-surface group-hover:text-primary transition-colors">Emily Rodriguez</h3>
+<span class="text-label-sm text-on-surface-variant">15m ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant truncate mb-3">Are clinical rotations guaranteed in the third year?</p>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                Bot Active
+                            </span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Right Pane: Transcript & Intervention -->
+<section class="flex-1 flex flex-col bg-surface-container-lowest relative">
+<!-- Header -->
+<div class="h-16 border-b border-outline-variant px-6 flex items-center justify-between bg-surface shrink-0">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold text-label-md">
+                            SJ
+                        </div>
+<div>
+<h2 class="text-headline-md text-primary tracking-tight text-lg">Sarah Jenkins</h2>
+<p class="text-label-sm text-on-surface-variant">Prospective Student • Pre-Med Inquiry</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant font-semibold rounded-lg hover:bg-surface-container-low transition-colors text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                            View Profile
+                        </button>
+<button class="px-5 py-2 bg-secondary text-on-secondary font-bold rounded-lg shadow-sm hover:bg-[#6b4100] transition-colors text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">pan_tool</span>
+                            Intervene
+                        </button>
+</div>
+</div>
+<!-- Chat Transcript -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6 bg-[#fcfdfd]">
+<!-- System Message -->
+<div class="flex justify-center">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-label-sm rounded-full">Chat started at 10:42 AM</span>
+</div>
+<!-- AI Message -->
+<div class="flex gap-4 max-w-[80%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-on-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-label-sm font-semibold text-primary-container ml-1">Virtual Advisor</span>
+<div class="bg-surface border border-outline-variant rounded-2xl rounded-tl-sm px-5 py-3 text-body-md text-on-surface shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                Hello Sarah! I'm the Academic Excellence Virtual Advisor. How can I assist you with your application or program inquiries today?
+                            </div>
+<span class="text-label-sm text-on-surface-variant ml-1">10:42 AM</span>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-4 max-w-[80%] ml-auto justify-end">
+<div class="flex flex-col gap-1 items-end">
+<span class="text-label-sm font-semibold text-on-surface mr-1">Sarah Jenkins</span>
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-5 py-3 text-body-md shadow-[0_2px_8px_rgba(26,54,93,0.1)]">
+                                Hi, I'm looking at the pre-med track. What are the specific prerequisites required before applying?
+                            </div>
+<span class="text-label-sm text-on-surface-variant mr-1">10:44 AM</span>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex gap-4 max-w-[85%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-on-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-label-sm font-semibold text-primary-container ml-1">Virtual Advisor</span>
+<div class="bg-surface border border-outline-variant rounded-2xl rounded-tl-sm px-5 py-4 text-body-md text-on-surface shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-3">
+<p>For the pre-med track, applicants must complete the following core prerequisites prior to matriculation:</p>
+<ul class="list-disc pl-5 space-y-1 text-on-surface-variant">
+<li>Biology: 1 year with lab</li>
+<li>General Chemistry: 1 year with lab</li>
+<li>Organic Chemistry: 1 year with lab</li>
+<li>Physics: 1 year with lab</li>
+</ul>
+<p>Would you like me to send a detailed PDF prospectus to your email?</p>
+</div>
+<span class="text-label-sm text-on-surface-variant ml-1">10:44 AM</span>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-4 max-w-[80%] ml-auto justify-end">
+<div class="flex flex-col gap-1 items-end">
+<span class="text-label-sm font-semibold text-on-surface mr-1">Sarah Jenkins</span>
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-5 py-3 text-body-md shadow-[0_2px_8px_rgba(26,54,93,0.1)]">
+                                I took AP Bio in high school. Does that count towards the biology requirement, or do I need to take it at the university level?
+                            </div>
+<span class="text-label-sm text-on-surface-variant mr-1">Just now</span>
+</div>
+</div>
+<!-- AI Typing Indicator -->
+<div class="flex gap-4 max-w-[80%]">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 mt-1 animate-pulse">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 justify-center">
+<div class="bg-surface border border-outline-variant rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1 items-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant animate-bounce" style="animation-delay: 0ms"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant animate-bounce" style="animation-delay: 150ms"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant animate-bounce" style="animation-delay: 300ms"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer (Read Only State) -->
+<div class="p-4 bg-surface border-t border-outline-variant">
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-3 flex items-center justify-center">
+<p class="text-label-md text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+                            AI is currently handling this conversation. Click 'Intervene' to take over.
+                        </p>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

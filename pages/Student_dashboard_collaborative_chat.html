@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chat - MedGuide Russia</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#1b2127",
+                      "on-secondary-fixed": "#2b1700",
+                      "surface-bright": "#f7fafc",
+                      "on-secondary-container": "#744600",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#d6e3ff",
+                      "background": "#f7fafc",
+                      "surface": "#f7fafc",
+                      "on-tertiary-container": "#989fa6",
+                      "tertiary-fixed": "#dde3eb",
+                      "secondary-container": "#ffb55c",
+                      "tertiary-container": "#30363c",
+                      "surface-container-lowest": "#ffffff",
+                      "on-background": "#181c1e",
+                      "on-surface": "#181c1e",
+                      "surface-container-high": "#e5e9eb",
+                      "secondary-fixed": "#ffddba",
+                      "surface-container": "#ebeef0",
+                      "primary-container": "#1a365d",
+                      "inverse-surface": "#2d3133",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "outline": "#74777f",
+                      "secondary-fixed-dim": "#ffb866",
+                      "inverse-on-surface": "#eef1f3",
+                      "secondary": "#875200",
+                      "on-tertiary-fixed-variant": "#41474e",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-primary-fixed": "#001b3c",
+                      "surface-variant": "#e0e3e5",
+                      "on-surface-variant": "#43474e",
+                      "surface-tint": "#455f88",
+                      "tertiary-fixed-dim": "#c1c7cf",
+                      "outline-variant": "#c4c6cf",
+                      "inverse-primary": "#adc7f7",
+                      "on-primary-container": "#86a0cd",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#d7dadc",
+                      "on-error-container": "#93000a",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f1f4f6",
+                      "primary": "#002045",
+                      "on-secondary-fixed-variant": "#673d00",
+                      "on-tertiary-fixed": "#161c22",
+                      "on-primary-fixed-variant": "#2d476f",
+                      "primary-fixed-dim": "#adc7f7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "display": ["Inter"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Custom scrollbar for chat areas */
+        .chat-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background-color: #c4c6cf;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="h-full flex overflow-hidden text-on-surface bg-background">
+<!-- SideNavBar (Web) -->
+<nav class="hidden md:flex flex-col w-64 h-full fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant py-8 px-4 z-40 transition-all duration-200 ease-in-out">
+<div class="flex items-center gap-3 mb-10 px-2">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold text-xl flex-shrink-0">
+                M
+            </div>
+<div>
+<h1 class="text-headline-md font-bold text-primary leading-tight">MedGuide Russia</h1>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Medical Admissions</p>
+</div>
+</div>
+<button class="w-full mb-8 bg-secondary-container hover:bg-[#ffb866] text-on-secondary-container font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+            New Inquiry
+        </button>
+<div class="flex flex-col gap-1 flex-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                Inquiries
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-semibold border-r-4 border-primary bg-surface-container-low font-body text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                Chat
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+                Uni Explorer
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">calculate</span>
+                Budget Calc
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">verified</span>
+                Eligibility
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">person</span>
+                Profile
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">checklist</span>
+                Checklist
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium mt-auto" href="#">
+<span class="material-symbols-outlined">help</span>
+                Help
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[18px]">feedback</span>
+                Help Improve
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+                Sign Out
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full md:ml-64 w-full bg-background transition-all">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-4 md:px-8 py-4 bg-surface z-30 sticky top-0 border-b border-surface-variant">
+<div class="flex items-center gap-2 md:hidden">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold text-sm">M</div>
+<h1 class="text-headline-md font-semibold text-primary">Chat</h1>
+</div>
+<h1 class="hidden md:block font-headline text-headline-md font-semibold text-primary">Communications</h1>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors scale-95 active:scale-100 p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hidden md:flex items-center justify-center bg-primary text-on-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary-container transition-colors">
+                    New Inquiry
+                </button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant bg-surface-container flex-shrink-0 cursor-pointer">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A close-up portrait of a young male medical student with short dark hair, wearing a casual light blue button-down shirt. The background is a soft, blurred bright environment, suggesting a modern university campus setting. The lighting is natural and flattering, emphasizing a professional yet approachable demeanor consistent with an academic portal avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5QFIQS0MOFRvCzT1ozDLL06SAa3NmnAQkI1vajgd0tzR1d5W6Kl19nP-frHsJVsw_HzqT4oW08abjdmmJnzHDBooe5Jo17CPPEYm7SLzeo7oKJ0mYEmXFymxPIzFISPUHy1L006qLS-ur2g_InTlEw_by_wZVDxRMMusV1Cgh6WQ5aIpwylZx6cIXuJZbqZi5n4jK7_1NRdPhLPTPVG80fKv0nlbWrbm5cg3nU610KbQUxUhHR8GjbUbQTqTAF2bA9SrQQDxZMs4"/>
+</div>
+</div>
+</header>
+<!-- Chat Split Pane Layout -->
+<main class="flex-1 overflow-hidden p-4 md:p-6 w-full max-w-7xl mx-auto flex gap-6 h-[calc(100vh-80px)]">
+<!-- Left Pane: Contact List -->
+<div class="w-full md:w-80 flex-shrink-0 bg-surface-container-lowest rounded-xl border border-surface-variant flex flex-col shadow-sm hidden md:flex">
+<div class="p-4 border-b border-surface-variant">
+<button class="w-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors border border-outline-variant/30">
+<span class="material-symbols-outlined text-[20px]">edit_square</span>
+                        New Chat
+                    </button>
+<div class="mt-4 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface rounded-lg border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary text-sm font-body outline-none transition-all placeholder:text-outline" placeholder="Search contacts..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto chat-scroll py-2">
+<!-- Contact Item: Active -->
+<div class="px-4 py-3 flex items-center gap-3 hover:bg-surface-container cursor-pointer transition-colors bg-surface-container-low border-l-4 border-primary">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg overflow-hidden">
+<img alt="Counselor Amit" class="w-full h-full object-cover" data-alt="A professional headshot of a female admission counselor in her mid-30s. She has warm brown skin, dark hair pulled back neatly, and is wearing a crisp white blouse with a navy blazer. She has a welcoming, confident smile. The background is a clean, bright, out-of-focus office setting, fitting the prestigious and supportive brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCa1yemtaPKyqlbZub2MIX_ZhUKjCSvnv34mhnoXmbMZ2kIQhvm2ql7-tpkievSsgSxA-wX3p9NFrg6Y-Mab96tzpUqdIjUzbdwO8XYO6jtxLR1VtA4O7B0KhFkdcsKMiIO8HNReLsZv8HS5FBiVopkxYjynjYQWxlTGzesnyqy1jYUs1PlS4r66TufqQnp44rOpFo00RE0pMsuXccaC7jJAG_lnykJTCqf4kCueZdRBshyZVG-8aSYwnfHBmE5pzKfxfGSbl0LTw"/>
+</div>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-semibold text-sm text-on-surface truncate">Admission Counselor - Priya</h3>
+<span class="text-[11px] text-primary font-medium">10:42 AM</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">I've received your transcripts. We need...</p>
+</div>
+</div>
+<!-- Contact Item: Unread -->
+<div class="px-4 py-3 flex items-center gap-3 hover:bg-surface-container cursor-pointer transition-colors border-l-4 border-transparent">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-outline">description</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-semibold text-sm text-on-surface truncate">Document Specialist</h3>
+<span class="text-[11px] text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-xs text-on-surface truncate font-medium">Please upload the translated visa forms.</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+</div>
+<!-- Contact Item: Offline -->
+<div class="px-4 py-3 flex items-center gap-3 hover:bg-surface-container cursor-pointer transition-colors border-l-4 border-transparent">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-surface-variant overflow-hidden">
+<img alt="Counselor David" class="w-full h-full object-cover" data-alt="A portrait of a male university representative in his 40s. He has short hair, a neat beard, and wears glasses along with a light grey suit jacket over a blue shirt. The lighting is soft and professional. The background is a muted, pale blue office wall, conveying academic authority and trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSySEA9VjPMQRoRelC5yohbImnFidzDOPkizRYGwuNTowYKLoRBkwGDXVL_v58RKT9lqI23JbUTjUwsQdRXWskhDFsXQbwZptNTIPwp9a_Xq-JXhagZkQCYXB1LYURjuj0yGS1VfP-F4toWPulnCkbBWtipyGjhPjmg-4qLc-Yo-SkPXyxJOLWjeMqL25TJR3nFriT4iPdXpVbU4H073jWmOridh3RQc-vjRevQlrNAGiS7hf3PrpfOek-n6LYzaU10TGJAXhLC-s"/>
+</div>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-outline border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-semibold text-sm text-on-surface truncate">Visa Support - David</h3>
+<span class="text-[11px] text-on-surface-variant">Mon</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">The embassy appointment is confirmed.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Pane: Active Chat -->
+<div class="flex-1 bg-surface-container-lowest rounded-xl border border-surface-variant flex flex-col shadow-sm h-full relative">
+<!-- Chat Header -->
+<div class="p-4 border-b border-surface-variant flex items-center justify-between bg-surface-container-lowest rounded-t-xl z-10">
+<div class="flex items-center gap-3">
+<button class="md:hidden p-2 -ml-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="relative flex-shrink-0">
+<img alt="Counselor Priya" class="w-10 h-10 rounded-full object-cover border border-outline-variant/50" data-alt="A professional headshot of a female admission counselor in her mid-30s. She has warm brown skin, dark hair pulled back neatly, and is wearing a crisp white blouse with a navy blazer. She has a welcoming, confident smile. The background is a clean, bright, out-of-focus office setting, fitting the prestigious and supportive brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVI6XULF0vtqRYH2dUBr9ZK_g4jNhqRzC_3FXwHNwJ4WOpx2m8SfKN3bUqH5PXls1VIW7wIqthvjsGMVX3nFF09Ikat5u-dsY-5r2E4fyH1JTnKWxEzi1dA5sU07-XzeYAm6aapgiEnEm3MybR8jbGEpskm5qqCrlwWeRFUcar-LCn6uaOxVL4BXFzmZOoPXrmEBs2LaMQGtueRFwjv_FnXMFd9Cew-Dtvzkju_VQkJpDg-Khp46nP_KglIPklFXLQ5H-eJ_WzHy0"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div>
+<h2 class="font-semibold text-on-surface text-sm md:text-base">Admission Counselor - Priya</h2>
+<p class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                                Active Now
+                            </p>
+</div>
+</div>
+<div class="flex gap-1">
+<button class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors" title="Schedule Call">
+<span class="material-symbols-outlined">calendar_month</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors" title="More Options">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto chat-scroll p-4 md:p-6 bg-[#fcfdfd] flex flex-col gap-4">
+<!-- Date Divider -->
+<div class="flex justify-center my-2">
+<span class="text-[11px] font-medium text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">Today, 10:15 AM</span>
+</div>
+<!-- Message: Counselor (Left) -->
+<div class="flex gap-3 max-w-[85%] md:max-w-[70%]">
+<img alt="Priya" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-auto" data-alt="A professional headshot of a female admission counselor in her mid-30s. She has warm brown skin, dark hair pulled back neatly, and is wearing a crisp white blouse with a navy blazer. She has a welcoming, confident smile. The background is a clean, bright, out-of-focus office setting, fitting the prestigious and supportive brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdDJFCWj1Ji9T5aV9mLPb6BWdbNkd9t8HAK4fL3Gt3qMQqv7AuIzk8jdkaBkYlaPKdSkOgfo6wkjFT3_iiphg6qHuzAosiXs6APClyTkT7wVwK0BSSBjgac3veoDjX_yLHwE4QsEoJtRFS9Ux2G7zvs9qmMCZy1WZE38a5DfO_TBK01fKmNesbLTRVvUhjzRgClJDwiCAs-KDkbkLLLGPAozLWFc8tkKSn9S_O2xZKu9DQTM11VrWMw5Mzz8bVTetTLiFHW9vNSeQ"/>
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-variant text-on-surface p-3 rounded-2xl rounded-bl-sm text-sm border border-outline-variant/20 shadow-sm">
+                                Hello! I've reviewed your initial application for the MBBS program at Kazan State Medical University. Everything looks good so far.
+                            </div>
+<span class="text-[10px] text-outline ml-1">10:15 AM</span>
+</div>
+</div>
+<!-- Message: Counselor (Left) - Continuation -->
+<div class="flex gap-3 max-w-[85%] md:max-w-[70%] ml-11 -mt-2">
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-variant text-on-surface p-3 rounded-2xl rounded-bl-sm text-sm border border-outline-variant/20 shadow-sm">
+                                To proceed with the official eligibility certificate, I will need you to upload clear scans of your 12th-grade mark sheets. The current ones are slightly blurry.
+                            </div>
+<span class="text-[10px] text-outline ml-1">10:16 AM</span>
+</div>
+</div>
+<!-- Message: Student (Right) -->
+<div class="flex gap-3 max-w-[85%] md:max-w-[70%] ml-auto justify-end">
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-primary text-on-primary p-3 rounded-2xl rounded-br-sm text-sm shadow-sm">
+                                Hi Priya, thank you for the update. I apologize for the blurry scans. I will get them re-scanned properly today.
+                            </div>
+<span class="text-[10px] text-outline mr-1 flex items-center gap-1">
+                                10:30 AM
+                                <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'wght' 700;">done_all</span>
+</span>
+</div>
+</div>
+<!-- Message: Student (Right) - Attachment -->
+<div class="flex gap-3 max-w-[85%] md:max-w-[70%] ml-auto justify-end">
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-primary text-on-primary p-3 rounded-2xl rounded-br-sm text-sm shadow-sm flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container/30 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary">picture_as_pdf</span>
+</div>
+<div class="flex flex-col">
+<span class="font-medium text-xs">12th_Marksheet_HQ.pdf</span>
+<span class="text-[10px] text-inverse-primary">1.2 MB</span>
+</div>
+</div>
+<span class="text-[10px] text-outline mr-1 flex items-center gap-1">
+                                10:40 AM
+                                <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'wght' 700;">done_all</span>
+</span>
+</div>
+</div>
+<!-- Message: Counselor (Left) -->
+<div class="flex gap-3 max-w-[85%] md:max-w-[70%] mt-2">
+<img alt="Priya" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-auto" data-alt="A professional headshot of a female admission counselor in her mid-30s. She has warm brown skin, dark hair pulled back neatly, and is wearing a crisp white blouse with a navy blazer. She has a welcoming, confident smile. The background is a clean, bright, out-of-focus office setting, fitting the prestigious and supportive brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABqjDgwAesDq2Tt8-OniUs0_wGusvtTpy8uifqzfZmUfUnMudKITJQM9up-LQ0VwcfqedF-6biEotH3nP6bpJRTBKQMkGa9t3NK6orU6d-CKf_7rJqJ68kmengXEr8P7oxH-XbRFv5DkhV4qhkc5L9LXs9_BBDDfXJlcsWM6dhlsNfta7PBgo9B-F86m8-bwWhlE91cKGuVFs8GZFmbuxOStgPz3A2Veqt55ExVO8SvHNOWEThJZoOivPGskr_r55_NtgOtPOsIy8"/>
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-variant text-on-surface p-3 rounded-2xl rounded-bl-sm text-sm border border-outline-variant/20 shadow-sm">
+                                Perfect, I've received your transcripts. We need to wait about 48 hours for the academic committee to review these. I'll notify you as soon as the status changes in your portal.
+                            </div>
+<span class="text-[10px] text-outline ml-1">10:42 AM</span>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-3 md:p-4 bg-surface-container-lowest border-t border-surface-variant rounded-b-xl z-10">
+<div class="flex items-end gap-2 bg-surface rounded-xl border border-outline-variant p-1 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<button class="p-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-colors flex-shrink-0" title="Attach Document">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 text-sm font-body text-on-surface placeholder:text-outline max-h-32 overflow-y-auto" placeholder="Type your message..." rows="1" style="min-height: 44px;"></textarea>
+<button class="p-2.5 bg-primary text-on-primary hover:bg-primary-container rounded-lg transition-colors flex-shrink-0 shadow-sm" title="Send Message">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+<div class="mt-2 text-center md:text-left md:ml-2">
+<span class="text-[10px] text-on-surface-variant">Press Enter to send, Shift+Enter for new line. Communications are securely encrypted.</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_12px_rgba(0,0,0,0.05)] rounded-t-xl z-50">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-body text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-body text-label-sm mt-1">Uni</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<div class="px-4 py-1 bg-primary-container/20 rounded-full mb-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</div>
+<span class="font-body text-label-sm">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">checklist</span>
+<span class="font-body text-label-sm mt-1">Checklist</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

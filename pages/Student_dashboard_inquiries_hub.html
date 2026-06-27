@@ -1,0 +1,355 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MedGuide Russia - Inquiries</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#1b2127",
+                        "on-secondary-fixed": "#2b1700",
+                        "surface-bright": "#f7fafc",
+                        "on-secondary-container": "#744600",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d6e3ff",
+                        "background": "#f7fafc",
+                        "surface": "#f7fafc",
+                        "on-tertiary-container": "#989fa6",
+                        "tertiary-fixed": "#dde3eb",
+                        "secondary-container": "#ffb55c",
+                        "tertiary-container": "#30363c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#181c1e",
+                        "on-surface": "#181c1e",
+                        "surface-container-high": "#e5e9eb",
+                        "secondary-fixed": "#ffddba",
+                        "surface-container": "#ebeef0",
+                        "primary-container": "#1a365d",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "outline": "#74777f",
+                        "secondary-fixed-dim": "#ffb866",
+                        "inverse-on-surface": "#eef1f3",
+                        "secondary": "#875200",
+                        "on-tertiary-fixed-variant": "#41474e",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-variant": "#e0e3e5",
+                        "on-surface-variant": "#43474e",
+                        "surface-tint": "#455f88",
+                        "tertiary-fixed-dim": "#c1c7cf",
+                        "outline-variant": "#c4c6cf",
+                        "inverse-primary": "#adc7f7",
+                        "on-primary-container": "#86a0cd",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d7dadc",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f1f4f6",
+                        "primary": "#002045",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "on-tertiary-fixed": "#161c22",
+                        "on-primary-fixed-variant": "#2d476f",
+                        "primary-fixed-dim": "#adc7f7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "sm": "0.25rem",
+                        "md": "0.75rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body antialiased">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-tertiary docked full-width top-0 flex justify-between items-center w-full px-4 md:px-16 py-4 ml-0 md:ml-64 max-w-[calc(100%-16rem)] fixed z-40 border-b border-surface-container-highest">
+<div>
+<h1 class="font-headline text-headline-md font-semibold text-primary dark:text-on-tertiary tracking-tight">Welcome, Alexandr</h1>
+<p class="text-on-surface-variant text-label-md mt-1">Manage your university inquiries and applications.</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded font-label text-label-md font-semibold hover:bg-on-secondary-container transition-colors shadow-sm hidden sm:block">
+                New Inquiry
+            </button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBO-oTJcB36WpUBkOvq4kKfqNG04B6hkX5FRWjlZjuJO1t2pIPCfGCIYw05VgV29XgmcE2dkUcZiI15OHMQ6m1ot5wKavyTRhBi1yeha7kostxUYMpVS0x6wKwJlyL3oW9-UKps2tyj-46G0b-d-afi37U8T8DxR0g3XqmbwX7RCcaVwoJ-xrJzVHgqasCUc_KfrvHWIBiMsGc1L_bjFndM-LayamGBZ2JUQiVzE9Lj4C5IYPNGJpg63yDBozCNZy1JFR4n2gqDMLU">
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col w-64 h-full fixed left-0 top-0 bg-surface-container-lowest dark:bg-tertiary border-r border-outline-variant dark:border-tertiary-container flat no shadows flex flex-col h-screen py-8 px-4 z-50">
+<div class="mb-8 px-4">
+<h2 class="text-headline-md font-bold text-primary dark:text-on-tertiary tracking-tight">MedGuide Russia</h2>
+<p class="text-on-surface-variant text-label-sm mt-1 uppercase tracking-wider font-semibold">Medical Admissions</p>
+</div>
+<div class="flex-1 space-y-1 mt-4"><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed font-semibold border-r-4 border-primary dark:border-primary-fixed bg-surface-container-low dark:bg-tertiary-container transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="assignment" data-weight="fill" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span class="font-body text-label-md font-medium">Inquiries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-body text-label-md font-medium">Chat</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-body text-label-md font-medium">Uni Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="calculate">calculate</span>
+<span class="font-body text-label-md font-medium">Budget Calc</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="font-body text-label-md font-medium">Eligibility</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-body text-label-md font-medium">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="checklist">checklist</span>
+<span class="font-body text-label-md font-medium">Checklist</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-body text-label-md font-medium">Help</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container dark:hover:bg-tertiary-container transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body text-label-md font-medium">Settings</span>
+</a></div>
+<div class="mt-auto space-y-1">
+<button class="w-full bg-secondary text-on-secondary px-4 py-3 rounded-lg font-label text-label-md font-semibold hover:bg-on-secondary-container transition-colors shadow-sm flex items-center justify-center gap-2 mb-4">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Inquiry
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="feedback">feedback</span>
+<span class="font-body text-label-md">Help Improve</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body text-label-md">Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-0 md:ml-64 pt-24 px-4 md:px-16 pb-24 md:pb-12 max-w-[calc(100%-16rem)] w-full">
+<div class="max-w-container-max mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: New Inquiry Form (Bento Style) -->
+<div class="lg:col-span-4 space-y-stack-md">
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-high p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.04)] sticky top-28">
+<h3 class="text-headline-md font-headline font-semibold text-primary mb-4 border-b border-surface-container-high pb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="edit_document">edit_document</span>
+                        Draft Inquiry
+                    </h3>
+<form class="space-y-4">
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2" for="university">Target Institution</label>
+<select class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all appearance-none cursor-pointer" id="university">
+<option>General Inquiry</option>
+<option>Sechenov First Moscow State Medical University</option>
+<option>Pirogov Russian National Research Medical University</option>
+<option>Kazan Federal University</option>
+<option>Saint Petersburg State Pediatric Medical University</option>
+</select>
+</div>
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2" for="category">Topic</label>
+<select class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all appearance-none cursor-pointer" id="category">
+<option>Admission Requirements</option>
+<option>Fee Structure &amp; Scholarships</option>
+<option>Hostel Facilities</option>
+<option>Visa Process</option>
+<option>Other</option>
+</select>
+</div>
+<div>
+<label class="block text-label-md font-semibold text-on-surface mb-2" for="question">Your Question</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none" id="question" placeholder="Detail your query here..." rows="5"></textarea>
+</div>
+<button class="w-full bg-primary text-on-primary font-semibold text-label-md py-3 rounded hover:bg-primary-container transition-colors shadow-[0px_4px_12px_rgba(26,54,93,0.08)] flex justify-center items-center gap-2" type="button">
+                            Submit Inquiry
+                            <span class="material-symbols-outlined text-[18px]" data-icon="send">send</span>
+</button>
+</form>
+</div>
+<!-- Helpful Links Card -->
+<div class="bg-surface-container-low rounded-xl p-5 border border-surface-container-high">
+<h4 class="text-label-md font-semibold text-primary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="menu_book">menu_book</span>
+                        Quick Resources
+                    </h4>
+<ul class="space-y-2 text-body-sm text-on-surface-variant">
+<li class=""><a class="hover:text-primary hover:underline flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span> MBBS in Russia Guide 2024</a></li>
+<li class=""><a class="hover:text-primary hover:underline flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span> Document Legalization Steps</a></li>
+<li class=""><a class="hover:text-primary hover:underline flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span> MCI/NMC Approval Process</a></li>
+</ul>
+</div>
+</div>
+<!-- Right Column: Inquiry History Feed -->
+<div class="lg:col-span-8 space-y-stack-md">
+<!-- Filter Bar -->
+<div class="flex justify-between items-center bg-surface-container-lowest p-3 rounded-lg border border-surface-container-high">
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-full bg-primary text-on-primary text-label-sm font-semibold">All (12)</button>
+<button class="px-4 py-1.5 rounded-full bg-surface border border-outline-variant text-on-surface-variant text-label-sm font-medium hover:bg-surface-container transition-colors">Pending (2)</button>
+<button class="px-4 py-1.5 rounded-full bg-surface border border-outline-variant text-on-surface-variant text-label-sm font-medium hover:bg-surface-container transition-colors hidden sm:block">Resolved (10)</button>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]" data-icon="search">search</span>
+<input class="pl-9 pr-3 py-1.5 rounded border border-outline-variant bg-surface text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-48 sm:w-64" placeholder="Search ID or Keyword..." type="text">
+</div>
+</div>
+<!-- Inquiry Card: Pending -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-high p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.04)] relative overflow-hidden group hover:border-primary transition-colors duration-300">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-secondary-fixed text-on-secondary-fixed">
+                                Pending
+                            </span>
+<span class="text-label-sm text-outline font-medium tracking-wider">#INQ-8942</span>
+<span class="text-label-sm text-outline hidden sm:inline">•</span>
+<span class="text-label-sm text-outline hidden sm:inline flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span> Oct 24, 2023</span>
+</div>
+<button class="text-outline-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<h4 class="text-headline-md font-semibold text-primary mb-3">Kazan Federal University</h4>
+<div class="pl-4 border-l-2 border-surface-container-highest mb-4">
+<p class="text-body-md text-on-surface leading-relaxed">
+                            Hello, I am reviewing the fee structure for KFU. Does the first-year fee of 450,000 RUB include the medical insurance and visa extension charges, or are those calculated separately upon arrival in Kazan?
+                        </p>
+</div>
+<div class="bg-surface-container p-4 rounded-lg flex items-start gap-3 mt-4 border border-surface-variant">
+<span class="material-symbols-outlined text-outline mt-0.5" data-icon="schedule">schedule</span>
+<div>
+<p class="text-label-md font-medium text-on-surface-variant">Awaiting Counselor Response</p>
+<p class="text-body-sm text-outline mt-1">Usually replies within 24-48 hours. Your query has been assigned to <span class="font-medium text-primary">Dr. Elena M.</span></p>
+</div>
+</div>
+</div>
+<!-- Inquiry Card: Resolved -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-high p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.04)] relative overflow-hidden group hover:border-outline transition-colors duration-300">
+<div class="absolute top-0 left-0 w-1 h-full bg-surface-container-highest"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-surface-variant text-on-surface-variant">
+                                Resolved
+                            </span>
+<span class="text-label-sm text-outline font-medium tracking-wider">#INQ-8815</span>
+<span class="text-label-sm text-outline hidden sm:inline">•</span>
+<span class="text-label-sm text-outline hidden sm:inline flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span> Oct 18, 2023</span>
+</div>
+</div>
+<h4 class="text-headline-md font-semibold text-primary mb-3">Sechenov First Moscow State Medical University</h4>
+<div class="pl-4 border-l-2 border-surface-container-highest mb-4">
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                            Could you confirm if the NEET score requirement for Sechenov this year is 50th percentile, and what documents are needed for the initial eligibility check?
+                        </p>
+</div>
+<!-- Admin Reply Block -->
+<div class="bg-primary-fixed rounded-lg p-4 mt-4 border-l-4 border-primary">
+<div class="flex items-center gap-2 mb-2">
+<div class="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[14px]" data-icon="support_agent">support_agent</span>
+</div>
+<span class="text-label-md font-semibold text-primary">MedGuide Support Team</span>
+<span class="text-label-sm text-on-primary-container ml-auto">Oct 19, 2023</span>
+</div>
+<p class="text-body-md text-on-primary-fixed-variant leading-relaxed">
+                            Dear Alexandr, yes, the requirement remains the 50th percentile for General Category. For the initial check, please upload your 10th and 12th mark sheets, a scanned copy of your valid Passport, and your NEET scorecard via the 'Checklist' portal. Let us know if you need assistance with the upload.
+                        </p>
+</div>
+</div>
+<!-- Inquiry Card: Resolved (Older) -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-high p-6 shadow-[0px_4px_12px_rgba(26,54,93,0.04)] relative overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+<div class="absolute top-0 left-0 w-1 h-full bg-surface-container-highest"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-surface-variant text-on-surface-variant">
+                                Resolved
+                            </span>
+<span class="text-label-sm text-outline font-medium tracking-wider">#INQ-8501</span>
+<span class="text-label-sm text-outline hidden sm:inline">•</span>
+<span class="text-label-sm text-outline hidden sm:inline flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span> Sep 05, 2023</span>
+</div>
+</div>
+<h4 class="text-headline-md font-semibold text-primary mb-3">General Inquiry - Eligibility</h4>
+<div class="pl-4 border-l-2 border-surface-container-highest mb-4">
+<p class="text-body-md text-on-surface-variant line-clamp-2">
+                            I am currently waiting for my 12th board results but have already cleared NEET. Can I start the application process for Russian universities provisionally?
+                        </p>
+</div>
+<button class="text-primary font-semibold text-label-md hover:underline flex items-center gap-1">
+                        View Full Conversation <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="text-center py-4">
+<button class="px-6 py-2 border border-outline-variant rounded-full text-label-md font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">
+                        Load Older Inquiries
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest dark:bg-tertiary border-t border-outline-variant dark:border-tertiary-container shadow-lg fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 bg-surface-container-lowest dark:bg-tertiary">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-body text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-body text-label-sm mt-1">Uni</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-secondary-container font-bold active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg bg-surface-container-low" href="#">
+<span class="material-symbols-outlined" data-icon="chat" data-weight="fill" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-body text-label-sm mt-1">Inquiries</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="checklist">checklist</span>
+<span class="font-body text-label-sm mt-1">Checklist</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-body text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+
+
+</body></html>

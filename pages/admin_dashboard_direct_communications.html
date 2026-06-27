@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admission Control Center - Direct Chats</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-container": "#1a365d",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-high": "#e5e9eb",
+                        "on-primary-fixed": "#001b3c",
+                        "on-primary-fixed-variant": "#2d476f",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "on-tertiary-container": "#989fa6",
+                        "on-surface-variant": "#43474e",
+                        "on-tertiary-fixed": "#161c22",
+                        "secondary-container": "#ffb55c",
+                        "inverse-on-surface": "#eef1f3",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#adc7f7",
+                        "surface": "#f7fafc",
+                        "primary-fixed-dim": "#adc7f7",
+                        "surface-container-low": "#f1f4f6",
+                        "tertiary-fixed": "#dde3eb",
+                        "secondary-fixed": "#ffddba",
+                        "tertiary-fixed-dim": "#c1c7cf",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#1b2127",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d6e3ff",
+                        "background": "#f7fafc",
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed-dim": "#ffb866",
+                        "outline": "#74777f",
+                        "on-primary-container": "#86a0cd",
+                        "secondary": "#875200",
+                        "on-surface": "#181c1e",
+                        "surface-dim": "#d7dadc",
+                        "primary": "#002045",
+                        "on-secondary-fixed": "#2b1700",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#41474e",
+                        "on-secondary-container": "#744600",
+                        "tertiary-container": "#30363c",
+                        "surface-tint": "#455f88",
+                        "outline-variant": "#c4c6cf",
+                        "surface-bright": "#f7fafc",
+                        "on-background": "#181c1e",
+                        "surface-container": "#ebeef0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen antialiased flex">
+<!-- SideNavBar (from JSON) -->
+<nav class="bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col p-4 gap-2 z-20">
+<!-- Brand / Header area -->
+<div class="mb-8 px-2 flex flex-col gap-1">
+<div class="flex items-center gap-3">
+<img alt="Medical University Logo" class="w-10 h-10 rounded-DEFAULT object-cover" data-alt="A clean, professional 2D logo for a prestigious medical university, featuring a modern caduceus or shield emblem in deep academic blue and golden yellow against a white background, projecting institutional authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGpHi4ymlOE2XgjaUI3cvW4psx0tIrQHFX8T5pz2l1ao8Ypok2UQfEe6Z7eslvFIiW8ORZJ_x6k3hOh3JEr_UiWOMS1RXi1DX0ORV3ROYJmE188o0Iguk-IPXy6xgmE_vQnCP5W78pNTeWGtVVd8MRpPm8I_U90cyV2I9uDFEG9vLvwqfiyuowTAemTkHppNyApKDXqpMgUGWruRA1glg-78RC5l6DNxKBQNnmGKLecBrficrdqkBXl8ZKn2IPANHYN0QEtgQVojs"/>
+<h1 class="text-headline-md font-semibold text-primary">Academic Excellence</h1>
+</div>
+<p class="text-label-md text-on-surface-variant px-1 mt-2 font-medium">Admin Dashboard</p>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="inbox">inbox</span>
+<span class="font-body text-body-md font-medium">Inquiries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="chat">chat</span>
+<span class="font-body text-body-md">Direct Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="smart_toy">smart_toy</span>
+<span class="font-body text-body-md font-medium">AI Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="school">school</span>
+<span class="font-body text-body-md font-medium">Students</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="group">group</span>
+<span class="font-body text-body-md font-medium">Team</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="monitoring">monitoring</span>
+<span class="font-body text-body-md font-medium">Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="analytics">analytics</span>
+<span class="font-body text-body-md font-medium">Chat Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="reviews">reviews</span>
+<span class="font-body text-body-md font-medium">Feedback Hub</span>
+</a>
+</div>
+<div class="mt-auto pt-4 border-t border-outline-variant/50">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="settings">settings</span>
+<span class="font-body text-body-md font-medium">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden bg-surface-container-low">
+<!-- TopAppBar (from JSON) -->
+<header class="bg-surface docked full-width top-0 sticky border-b border-outline-variant flex justify-between items-center h-16 px-8 z-10 w-full shrink-0">
+<!-- Left: Title & Search -->
+<div class="flex items-center gap-8 flex-1">
+<h2 class="text-headline-md font-bold text-primary tracking-tight">Admission Control Center</h2>
+<div class="relative max-w-md w-full focus-within:ring-2 focus-within:ring-primary rounded-DEFAULT">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container rounded-DEFAULT border border-outline-variant text-body-md focus:outline-none focus:border-primary focus:ring-0 transition-colors" placeholder="Search direct chats..." type="text"/>
+</div>
+</div>
+<!-- Right: Actions & Profile -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors" title="Notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors" title="Help">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-4">
+<button class="font-label text-label-md font-semibold text-primary px-4 py-2 rounded-DEFAULT hover:bg-surface-container transition-colors border border-transparent">
+                        Support
+                    </button>
+<button class="font-label text-label-md font-bold bg-primary text-on-primary px-4 py-2 rounded-DEFAULT hover:bg-primary/90 transition-colors shadow-sm">
+                        New Inquiry
+                    </button>
+</div>
+<img alt="Admin User Avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant shadow-sm ml-2 cursor-pointer" data-alt="A highly professional headshot of a medical university admissions officer in business attire, well-lit with neutral background. High-quality corporate photography style appropriate for an enterprise dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2t3ShVx2XgLP6wCCJf25Ji9O37wezxzf7u75meXFa7we6nj0_HgtxkId9NQ4Yr4hsgx00uuPVyoZgBT2Ndoi0iylTtSf-3tnCwy_otbCK-TNTa6s3FvtHBErTmMJoqvwBYwKt6GlXSEYHHE6cmnJ3EwwIVz63V_2TYekeG9j970rYsRCtiXU5lKTSgia-Y_W2hG5R6yCK_HL__avfLw1Eoh9VXmQ2fdOKHfCbHNUmJpnutPrGurvjWchZs32Vd1k-qS7l65xZV_g"/>
+</div>
+</header>
+<!-- Chat Workspace -->
+<div class="flex-1 flex overflow-hidden p-6 gap-6 w-full max-w-[1600px] mx-auto">
+<!-- Left Pane: Conversation List -->
+<section class="w-80 flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden shrink-0">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h3 class="font-headline font-semibold text-primary text-body-lg">Active Chats</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- Chat Item (Active) -->
+<div class="p-4 border-b border-outline-variant/50 bg-primary/5 cursor-pointer border-l-4 border-l-primary hover:bg-primary/10 transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-semibold text-on-background text-label-md">Sarah Jenkins</span>
+<span class="text-label-sm text-on-surface-variant">10:42 AM</span>
+</div>
+<p class="text-body-md text-on-surface-variant line-clamp-1">I had a question regarding the clinical rotation schedules for year 3.</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">Prospective</span>
+</div>
+</div>
+<!-- Chat Item (Inactive) -->
+<div class="p-4 border-b border-outline-variant/50 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-semibold text-on-background text-label-md">David Chen</span>
+<span class="text-label-sm text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-body-md text-on-surface-variant line-clamp-1">Thank you for confirming my document submission.</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase tracking-wider">Applicant</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-wider">Doc Review</span>
+</div>
+</div>
+<!-- Chat Item (Inactive) -->
+<div class="p-4 border-b border-outline-variant/50 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-semibold text-on-background text-label-md font-bold">Emma Thompson</span>
+<span class="text-label-sm text-primary font-bold">Monday</span>
+</div>
+<p class="text-body-md text-on-surface-variant line-clamp-1 font-medium text-primary">Could you clarify the scholarship deadline?</p>
+<div class="mt-2 flex justify-between items-center">
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">Prospective</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+</div>
+</section>
+<!-- Middle Pane: Active Chat Window -->
+<section class="flex-1 flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden min-w-[400px]">
+<!-- Chat Header -->
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center shadow-[0_4px_12px_rgba(26,54,93,0.02)] z-10">
+<div class="flex items-center gap-4">
+<img alt="Sarah Jenkins" class="w-12 h-12 rounded-full object-cover border border-outline-variant" data-alt="A clean, professional portrait photo of a young female prospective medical student, bright lighting, neutral background, looking optimistic. Appropriate for a university application profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmRazeNR_EUpJFrFKOfWd8kNQc_X7QdIFB7Gway-hJ-nfxN57ONktH-WFRE31v8JYYfyuc9dIUVTVoBNAnPhK-PPTc2E2wQeznCqZBVtVIhNIMJVuPmuOkWZnhuB_OZCZSIfygUWgOxXq1gB-DUNr2AcwejmaghE0xN1zqGdPaJ71F9xWYlI_UeUiw4o5g67cFpoBrgVhauhfJHICf2aBaLiRMC-GfLwZMiugoEooLtmmiY1KyIe8kRVsAcwbigf01lEH0uh--th8"/>
+<div>
+<h3 class="font-headline font-bold text-primary text-body-lg">Sarah Jenkins</h3>
+<p class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-green-500"></span> Online now
+                            </p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-DEFAULT flex items-center justify-center text-on-surface-variant border border-outline-variant hover:bg-surface-container-low transition-colors" title="Video Call">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+</button>
+<button class="w-10 h-10 rounded-DEFAULT flex items-center justify-center text-on-surface-variant border border-outline-variant hover:bg-surface-container-low transition-colors" title="More Options">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Chat History -->
+<div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-background">
+<div class="text-center">
+<span class="text-label-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full font-medium">Today, 9:00 AM</span>
+</div>
+<!-- Admin Message -->
+<div class="flex justify-end gap-3">
+<div class="max-w-[70%]">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3 shadow-[0_2px_8px_rgba(0,32,69,0.08)]">
+<p class="text-body-md">Good morning Sarah. We've received your preliminary application for the MBBS program. Do you have any specific questions about the curriculum?</p>
+</div>
+<span class="text-[11px] text-on-surface-variant mt-1 block text-right">9:05 AM</span>
+</div>
+</div>
+<!-- Student Message -->
+<div class="flex justify-start gap-3">
+<img alt="Sarah Jenkins" class="w-8 h-8 rounded-full object-cover self-end mb-5 border border-outline-variant" data-alt="Small thumbnail portrait of a young female student, neutral professional lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyUIVHrt83yX8fhtCPlv5xYxnrc0nqKsjknCXgOfE87XqKNUmEALY3SAY5GeLG1LzDvkOrwkp-ZtjGlI_bmQkXWqPUBqWrIAp631vimxdqAU8dJhXgehceUWOxl1OgkCNP-6l0soMyqIxjHmi5vG5n7LDwv5wkHy4zFbGq5PLBsYrNyOLl6YMwkfS0hagk87wH8AI5cZR7T9mutJIU36OA3u1QfgXO_SJOZyEpiOP_tdtH_sRMRIpX5jsdJ3bWaVZRZs9TjmnzrsM"/>
+<div class="max-w-[70%]">
+<div class="bg-surface-container-lowest border border-outline-variant text-on-background rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+<p class="text-body-md">Good morning! Yes, thank you for reaching out. I had a question regarding the clinical rotation schedules for year 3. Specifically, are students able to choose their preferred affiliated hospitals?</p>
+</div>
+<span class="text-[11px] text-on-surface-variant mt-1 block ml-1">10:42 AM</span>
+</div>
+</div>
+</div>
+<!-- Message Input Area -->
+<div class="p-4 border-t border-outline-variant bg-surface-bright">
+<div class="flex gap-3 items-end">
+<button class="w-10 h-10 rounded-DEFAULT flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors shrink-0" title="Attach file">
+<span class="material-symbols-outlined" data-icon="attach_file">attach_file</span>
+</button>
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all overflow-hidden shadow-sm">
+<textarea class="w-full bg-transparent border-none text-body-md p-3 resize-none focus:ring-0 focus:outline-none" placeholder="Type a message..." rows="2"></textarea>
+</div>
+<button class="h-10 px-6 rounded-DEFAULT bg-primary text-on-primary font-label font-bold text-label-md hover:bg-primary/90 transition-colors shadow-sm shrink-0 flex items-center gap-2">
+<span>Send</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="send">send</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2 pl-12 pr-2">
+<p class="text-[11px] text-on-surface-variant font-medium">Press <kbd class="px-1 py-0.5 bg-surface-variant rounded border border-outline-variant/30">Enter</kbd> to send, <kbd class="px-1 py-0.5 bg-surface-variant rounded border border-outline-variant/30">Shift + Enter</kbd> for new line</p>
+<button class="text-[11px] text-primary font-bold hover:underline">Use AI Template</button>
+</div>
+</div>
+</section>
+<!-- Right Pane: Student Profile Summary -->
+<aside class="w-72 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-y-auto shrink-0 hidden lg:block">
+<!-- Profile Header -->
+<div class="p-6 border-b border-outline-variant text-center flex flex-col items-center">
+<div class="relative">
+<img alt="Sarah Jenkins" class="w-20 h-20 rounded-full object-cover border-2 border-surface-container-lowest shadow-sm mb-3" data-alt="A clean, professional portrait photo of a young female prospective medical student, bright lighting, neutral background, looking optimistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbcc3ZfiB-PQIrI8--gjM5Dm_Zl7ZnVHpHBraaWVf4J-QVvVYb7xb37fUj7cCOvfwo2ZOY4vWAR-k5JZ-282G7Pvvdr6hc1lLo9sgIKBKA0-ajjE0dJOL3OtFAllsYEeZOWCttylLHhtaZt6y1pDSTYV3aR2zIiCtp2rvIinyEUd1F48aXFgOf3446vw_GCvZXSpzgkOEd7oGQ1F3sXbJhKohVnNTfCHHX4WI23GktAeLPWaHrZ-V6J9M2W2K4mr-hrx8Ft-k1fio"/>
+<div class="absolute bottom-3 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<h3 class="font-headline font-bold text-primary text-headline-md">Sarah Jenkins</h3>
+<p class="text-body-md text-on-surface-variant">Pre-Med Track</p>
+<span class="mt-3 px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container text-label-sm font-bold uppercase tracking-wider border border-secondary-container/50">
+                        High Intent
+                    </span>
+</div>
+<!-- Accordion Data Sections -->
+<div class="p-4 flex flex-col gap-4">
+<!-- Detail Group -->
+<div class="bg-surface-container-low rounded-lg p-4 border border-outline-variant/50">
+<h4 class="font-headline font-semibold text-label-md text-primary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="contact_page">contact_page</span>
+                            Application Status
+                        </h4>
+<div class="flex flex-col gap-2 text-body-md">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Stage</span>
+<span class="font-medium text-on-background">Inquiry</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Target Term</span>
+<span class="font-medium text-on-background">Fall 2025</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Probability</span>
+<span class="font-medium text-green-600">85%</span>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="flex flex-col gap-2 mt-2">
+<button class="w-full text-left px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container rounded-DEFAULT transition-colors flex items-center gap-3 border border-transparent">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span>
+                            View Full Application
+                        </button>
+<button class="w-full text-left px-4 py-2 text-label-md font-semibold text-primary hover:bg-surface-container rounded-DEFAULT transition-colors flex items-center gap-3 border border-transparent">
+<span class="material-symbols-outlined text-[18px]" data-icon="event_note">event_note</span>
+                            Schedule Interview
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

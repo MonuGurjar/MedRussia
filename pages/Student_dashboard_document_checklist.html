@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checklist (Documents) - MedGuide Russia</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#ffdad6",
+                      "primary-container": "#1a365d",
+                      "inverse-primary": "#adc7f7",
+                      "surface-container": "#ebeef0",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#989fa6",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-tint": "#455f88",
+                      "tertiary": "#1b2127",
+                      "on-tertiary-fixed": "#161c22",
+                      "surface-container-high": "#e5e9eb",
+                      "on-secondary": "#ffffff",
+                      "on-background": "#181c1e",
+                      "surface": "#f7fafc",
+                      "surface-variant": "#e0e3e5",
+                      "on-primary-fixed-variant": "#2d476f",
+                      "secondary-container": "#ffb55c",
+                      "primary-fixed-dim": "#adc7f7",
+                      "primary": "#002045",
+                      "tertiary-fixed-dim": "#c1c7cf",
+                      "on-secondary-container": "#744600",
+                      "tertiary-fixed": "#dde3eb",
+                      "tertiary-container": "#30363c",
+                      "outline-variant": "#c4c6cf",
+                      "on-tertiary-fixed-variant": "#41474e",
+                      "on-secondary-fixed-variant": "#673d00",
+                      "on-secondary-fixed": "#2b1700",
+                      "inverse-surface": "#2d3133",
+                      "surface-bright": "#f7fafc",
+                      "inverse-on-surface": "#eef1f3",
+                      "on-error-container": "#93000a",
+                      "surface-dim": "#d7dadc",
+                      "secondary-fixed": "#ffddba",
+                      "background": "#f7fafc",
+                      "on-surface-variant": "#43474e",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary": "#875200",
+                      "on-surface": "#181c1e",
+                      "on-primary": "#ffffff",
+                      "surface-container-low": "#f1f4f6",
+                      "outline": "#74777f",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#001b3c",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#86a0cd",
+                      "secondary-fixed-dim": "#ffb866",
+                      "primary-fixed": "#d6e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.5rem",
+                      "sm": "0.25rem",
+                      "md": "0.75rem",
+                      "lg": "1rem",
+                      "xl": "1.5rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                  "unit": "8px",
+                  "container-max": "1280px",
+                  "gutter": "24px",
+                  "margin-desktop": "64px",
+                  "margin-mobile": "20px",
+                  "stack-sm": "8px",
+                  "stack-md": "16px",
+                  "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "headline": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "body": [
+                              "Inter"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                  "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                  "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                  "headline-lg-mobile": ["28px", { lineHeight: "36px", fontWeight: "600" }],
+                  "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                  "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                  "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                  "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "500" }],
+                  "label-sm": ["12px", { lineHeight: "16px", fontWeight: "600" }]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; color: #181c1e; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f7fafc; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #74777f; }
+
+        /* Drag and drop zone transition */
+        .drop-zone { transition: all 0.2s ease; border: 2px dashed #e2e8f0; }
+        .drop-zone.dragover { background-color: #f1f4f6; border-color: #002045; }
+    </style>
+</head>
+<body class="bg-background flex h-screen overflow-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col w-64 h-full fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant py-8 px-4 z-40">
+<!-- Brand -->
+<div class="flex items-center gap-3 mb-10 px-4">
+<div class="w-10 h-10 rounded bg-primary flex items-center justify-center text-on-primary font-bold text-xl">
+                M
+            </div>
+<div>
+<h1 class="text-headline-md font-bold text-primary leading-tight">MedGuide Russia</h1>
+<p class="text-label-sm text-on-surface-variant font-medium">Medical Admissions</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1 flex-grow overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                Inquiries
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+                Chat
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+                Uni Explorer
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="calculate">calculate</span>
+                Budget Calc
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+                Eligibility
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+                Profile
+            </a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-semibold border-r-4 border-primary bg-surface-container-low font-body text-label-md" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="checklist" data-weight="fill">checklist</span>
+                Checklist
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Help
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+<!-- CTA & Footer -->
+<div class="mt-auto pt-6 border-t border-outline-variant flex flex-col gap-4">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded font-semibold text-label-md hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                New Inquiry
+            </button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="feedback">feedback</span>
+                    Help Improve
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+                    Sign Out
+                </a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-64 relative min-w-0 bg-background h-screen overflow-y-auto">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-4 md:px-16 py-4 bg-surface sticky top-0 z-30">
+<div class="md:hidden flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold text-sm">M</div>
+<span class="font-headline text-headline-md font-semibold text-primary">MedGuide Russia</span>
+</div>
+<!-- Spacer for desktop center alignment if needed, or left aligned title -->
+<div class="hidden md:block">
+<h2 class="font-headline text-headline-md font-semibold text-on-surface">Application Checklist</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hidden md:block bg-primary text-on-primary px-4 py-2 rounded font-semibold text-label-md hover:bg-primary-container transition-colors scale-95 active:scale-100">
+                    New Inquiry
+                </button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqiluI-t0cIgl2Yom19J2FUOCBV_eo-HkuDUA9xQJpRKps6NcsNL1CWzsqK_GOJ4eZ-MDX9uugYBeAU0DxjKVLAJDUx0uuj5RqOUU8qrvQxBcz6Hw1AT61ErB6da9SZVm3CcHPxMrpKkkhpVjyjM3ttfn50ST3qO_ypAgf5Dnht6bYHPr9fNQqUndmcZIAB3LULvAZVQlbR9M9VqzMfSJaAMjWNQoWpXNHDNa0AG_7ij6EUEU87M7wYTFj6NnfksTnSuJQCAsaIZE"/>
+</div>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<div class="flex-1 p-4 md:px-[64px] md:py-[40px] max-w-[1024px] mx-auto w-full mb-20 md:mb-0">
+<!-- Header Section with Progress -->
+<div class="mb-stack-lg">
+<h1 class="text-headline-lg text-primary mb-2 font-headline">Required Documents for Admission</h1>
+<p class="text-body-md text-on-surface-variant mb-6 max-w-2xl">Please upload clear, scanned copies of the following documents. These are essential for initiating your university admission process and visa application.</p>
+<!-- Progress Indicator -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center justify-between gap-6">
+<div class="flex-1">
+<div class="flex justify-between items-end mb-2">
+<span class="text-label-md text-on-surface font-semibold">Document Completion</span>
+<span class="text-headline-md text-primary font-bold">66%</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full w-2/3 transition-all duration-500 ease-out"></div>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-4 border-l border-outline-variant pl-6">
+<div class="text-center">
+<div class="text-headline-md font-bold text-on-surface">2</div>
+<div class="text-label-sm text-on-surface-variant uppercase tracking-wider">Completed</div>
+</div>
+<div class="text-center">
+<div class="text-headline-md font-bold text-error">1</div>
+<div class="text-label-sm text-on-surface-variant uppercase tracking-wider">Pending</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Document List -->
+<div class="flex flex-col gap-stack-md">
+<!-- Item 1: Verified -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant flex flex-col md:flex-row gap-6 items-start md:items-center relative overflow-hidden group hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow">
+<!-- Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#059669]"></div>
+<!-- Content -->
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<h3 class="text-body-lg font-semibold text-on-surface">10th/12th Marksheet</h3>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#d1fae5] text-[#065f46] text-label-sm font-semibold border border-[#a7f3d0]">
+<span class="material-symbols-outlined text-[14px] icon-fill">check_circle</span>
+                                Verified
+                            </span>
+</div>
+<p class="text-body-md text-on-surface-variant">Combined PDF or separate high-resolution images of both marksheets.</p>
+<!-- File Attachment Info -->
+<div class="flex items-center gap-3 mt-2 bg-surface-container-low p-3 rounded-lg border border-outline-variant w-max">
+<div class="w-8 h-8 rounded bg-surface flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md text-on-surface font-medium truncate max-w-[200px]">Sharma_Marksheets_Final.pdf</span>
+<span class="text-label-sm text-on-surface-variant">2.4 MB • Uploaded on Oct 12, 2023</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full md:w-auto flex items-center gap-3 pt-4 md:pt-0 border-t md:border-t-0 border-outline-variant mt-2 md:mt-0">
+<button class="flex items-center justify-center gap-2 px-4 py-2 bg-transparent text-primary border-1.5 border-primary rounded font-semibold text-label-md hover:bg-surface-container-low transition-colors w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+                            View
+                        </button>
+</div>
+</div>
+<!-- Item 2: Uploaded (Awaiting Verification) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant flex flex-col md:flex-row gap-6 items-start md:items-center relative overflow-hidden group hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow">
+<!-- Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#2563eb]"></div>
+<!-- Content -->
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<h3 class="text-body-lg font-semibold text-on-surface">Passport Copy</h3>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#dbeafe] text-[#1e40af] text-label-sm font-semibold border border-[#bfdbfe]">
+<span class="material-symbols-outlined text-[14px]">cloud_done</span>
+                                Uploaded
+                            </span>
+</div>
+<p class="text-body-md text-on-surface-variant">Scanned copy of the first and last page. Must be valid for at least 18 months.</p>
+<!-- File Attachment Info -->
+<div class="flex items-center gap-3 mt-2 bg-surface-container-low p-3 rounded-lg border border-outline-variant w-max">
+<div class="w-8 h-8 rounded bg-surface flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">image</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md text-on-surface font-medium truncate max-w-[200px]">Passport_Front_Back.jpg</span>
+<span class="text-label-sm text-on-surface-variant">1.1 MB • Uploaded Today</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full md:w-auto flex items-center gap-3 pt-4 md:pt-0 border-t md:border-t-0 border-outline-variant mt-2 md:mt-0">
+<button class="flex items-center justify-center gap-2 px-4 py-2 bg-transparent text-primary border-1.5 border-primary rounded font-semibold text-label-md hover:bg-surface-container-low transition-colors w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+                            Replace
+                        </button>
+</div>
+</div>
+<!-- Item 3: Pending (Action Required) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border-2 border-secondary-container flex flex-col gap-4 relative overflow-hidden group shadow-[0px_4px_12px_rgba(26,54,93,0.04)]">
+<!-- Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#d97706]"></div>
+<!-- Header -->
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<h3 class="text-body-lg font-semibold text-on-surface">NEET Scorecard</h3>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] text-label-sm font-semibold border border-[#fde68a]">
+<span class="material-symbols-outlined text-[14px]">pending_actions</span>
+                                    Pending
+                                </span>
+</div>
+<p class="text-body-md text-on-surface-variant">Official scorecard downloaded from the NTA website indicating qualification status.</p>
+</div>
+</div>
+<!-- Drag and Drop Zone -->
+<div class="drop-zone mt-2 rounded-lg bg-surface flex flex-col items-center justify-center py-8 px-4 cursor-pointer hover:bg-surface-container-low">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary mb-3">
+<span class="material-symbols-outlined text-[24px]">upload_file</span>
+</div>
+<p class="text-body-md text-on-surface font-medium mb-1">Drag &amp; drop your file here</p>
+<p class="text-label-sm text-on-surface-variant mb-4">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
+<button class="bg-primary text-on-primary px-6 py-2 rounded font-semibold text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                            Browse Files
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bottom spacing for mobile nav -->
+<div class="h-8 md:h-0"></div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest border-t border-outline-variant shadow-lg flex justify-around items-center px-4 py-3">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-body text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-body text-label-sm mt-1">Uni</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-body text-label-sm mt-1">Chat</span>
+</a>
+<!-- Active State -->
+<a class="flex flex-col items-center justify-center text-primary font-bold p-2 rounded-lg bg-surface-container-low" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="checklist" data-weight="fill">checklist</span>
+<span class="font-body text-label-sm mt-1">Checklist</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-container-high transition-transform duration-150 active:scale-90 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-body text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

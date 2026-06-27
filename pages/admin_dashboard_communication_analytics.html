@@ -1,0 +1,359 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Chat Insights - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e0e3e5",
+                    "primary-container": "#1a365d",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-high": "#e5e9eb",
+                    "on-primary-fixed": "#001b3c",
+                    "on-primary-fixed-variant": "#2d476f",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed-variant": "#673d00",
+                    "on-tertiary-container": "#989fa6",
+                    "on-surface-variant": "#43474e",
+                    "on-tertiary-fixed": "#161c22",
+                    "secondary-container": "#ffb55c",
+                    "inverse-on-surface": "#eef1f3",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#adc7f7",
+                    "surface": "#f7fafc",
+                    "primary-fixed-dim": "#adc7f7",
+                    "surface-container-low": "#f1f4f6",
+                    "tertiary-fixed": "#dde3eb",
+                    "secondary-fixed": "#ffddba",
+                    "tertiary-fixed-dim": "#c1c7cf",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary": "#1b2127",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#d6e3ff",
+                    "background": "#f7fafc",
+                    "inverse-surface": "#2d3133",
+                    "secondary-fixed-dim": "#ffb866",
+                    "outline": "#74777f",
+                    "on-primary-container": "#86a0cd",
+                    "secondary": "#875200",
+                    "on-surface": "#181c1e",
+                    "surface-dim": "#d7dadc",
+                    "primary": "#002045",
+                    "on-secondary-fixed": "#2b1700",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#41474e",
+                    "on-secondary-container": "#744600",
+                    "tertiary-container": "#30363c",
+                    "surface-tint": "#455f88",
+                    "outline-variant": "#c4c6cf",
+                    "surface-bright": "#f7fafc",
+                    "on-background": "#181c1e",
+                    "surface-container": "#ebeef0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "sm": "0.25rem",
+                    "md": "0.75rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "container-max": "1280px",
+                    "gutter": "24px",
+                    "margin-desktop": "64px",
+                    "margin-mobile": "20px",
+                    "stack-sm": "8px",
+                    "stack-md": "16px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background flex min-h-screen">
+<!-- SideNavBar -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col p-4 gap-2 z-50">
+<!-- Header -->
+<div class="flex items-center gap-4 px-2 mb-6 mt-2">
+<img alt="Medical University Logo" class="w-10 h-10 rounded-DEFAULT object-cover border border-outline-variant" data-alt="A clean, modern, and highly professional emblem representing a prestigious medical university. The logo features deep blue and subtle gold accents, set against a pristine white background. The design is sharp, academic, and conveys authority and excellence in healthcare education." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu7pqH5VUF_n8xPKZd1WsFCKLr_6Qtzfcr-QOk3Axuu0kpHDaB0QhNElDn0B7Ug1Gpgg_-x7-2iqcme8gm6M2z7jXRn6sYAnHcybAmgG1G-88Iq4-laJGdKdIob0HeOgJSAtcBTRbj5FPXL0Gf-Q3-b2glQSeX0o9Reu1aSdWmiEAU6jII_dK3Xc9aagZqFAk4E-yXWYZz5pCrCeDWnsQc_fVh30ti6a1PS2jvcLiUZ2Rchdi9vZMC4_VNebrv57cqNKjcreg_r1g">
+<div class="flex flex-col">
+<span class="text-headline-md font-semibold text-primary text-sm leading-tight">Academic Excellence</span>
+<span class="text-label-sm text-on-surface-variant font-medium">Admin Dashboard</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">inbox</span>
+<span class="">Inquiries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+<span class="">Direct Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+<span class="">AI Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span class="">Students</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="">Team</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+<span class="">Insights</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="">Chat Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">reviews</span>
+<span class="">Feedback Hub</span>
+</a>
+
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-body text-body-md active:scale-95 duration-150 mt-auto" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="">Settings</span>
+</a></div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-64 flex flex-col min-h-screen bg-surface">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 sticky bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-8 z-40">
+<div class="flex items-center gap-4">
+<h1 class="text-headline-md font-bold text-primary tracking-tight">Admission Control Center</h1>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search -->
+<div class="relative focus-within:ring-2 focus-within:ring-primary rounded-DEFAULT">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT text-body-md text-on-surface focus:outline-none w-64 placeholder:text-outline" placeholder="Search..." type="text">
+</div>
+<!-- Icons -->
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full focus-within:ring-2 focus-within:ring-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full focus-within:ring-2 focus-within:ring-primary">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-4 border-l border-outline-variant pl-6">
+<button class="text-label-md font-medium text-primary hover:bg-surface-container-low px-4 py-2 rounded-DEFAULT transition-colors">Support</button>
+<button class="bg-primary text-on-primary text-label-md font-semibold px-4 py-2 rounded-DEFAULT hover:bg-primary-container transition-colors shadow-sm">New Inquiry</button>
+<img alt="Admin User Avatar" class="w-8 h-8 rounded-full object-cover ml-2 border border-outline-variant cursor-pointer" data-alt="A professional studio headshot of a female university administrator. She is wearing a dark, tailored blazer over a crisp white blouse. The lighting is soft and flattering, typical of high-end corporate photography. The background is a clean, neutral light gray, perfectly matching a modern, light-themed digital interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5uJxXbu212nIzidrLvXHQ6xesVxaVZqiL7Lej1-NF-o0gdVbfSDBU2oGm7ADcqOgDuO6sj_Yj5VPMIFkrBh_n-hX0qUDuN73DPg-bb8A7YaisCwROOEPfO8RHfqeWEHQ5uKWq0bh7uxm4X5fIhf4slTuHh_wG_NHC1o8BRhBmuGmJK1QJAqAPTEhYwNs86euKeEd2DuZgthbYZLKpTLZ3rK2C2hiq6q0QRDqJFAxeDShgF6VyTtct5jUf3THBSyPDP2S3znO0SIE">
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<div class="p-8 max-w-container-max mx-auto w-full flex flex-col gap-stack-lg">
+<!-- Page Title Area -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline text-[32px] font-bold text-primary leading-tight tracking-tight">Chat Performance Analytics</h2>
+<p class="font-body text-body-md text-on-surface-variant mt-1">Real-time metrics and sentiment analysis across all communication channels.</p>
+</div>
+<div class="flex gap-2">
+<select class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-4 py-2 text-label-md text-on-surface font-medium focus:ring-2 focus:ring-primary focus:outline-none">
+<option>Last 7 Days</option>
+<option>Last 30 Days</option>
+<option>This Quarter</option>
+</select>
+<button class="flex items-center gap-2 border border-outline-variant bg-surface-container-lowest px-4 py-2 rounded-DEFAULT text-label-md font-medium text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                    </button>
+</div>
+</div>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<span class="font-body text-label-md text-on-surface-variant font-medium">Avg Response Time</span>
+<div class="bg-surface-container p-2 rounded-DEFAULT text-surface-tint">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-[32px] font-bold text-primary">1.4</span>
+<span class="font-body text-body-md text-on-surface-variant">min</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-semibold text-[#2e7d32]">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+                        12% vs last week
+                    </div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<span class="font-body text-label-md text-on-surface-variant font-medium">Resolution Rate</span>
+<div class="bg-surface-container p-2 rounded-DEFAULT text-surface-tint">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-[32px] font-bold text-primary">94.2</span>
+<span class="font-body text-body-md text-on-surface-variant">%</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-semibold text-[#2e7d32]">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+                        2.1% vs last week
+                    </div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<span class="font-body text-label-md text-on-surface-variant font-medium">AI Handover Rate</span>
+<div class="bg-surface-container p-2 rounded-DEFAULT text-secondary-container">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-[32px] font-bold text-primary">18.5</span>
+<span class="font-body text-body-md text-on-surface-variant">%</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-medium text-on-surface-variant">
+                        Requires human agent
+                    </div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col justify-between h-36">
+<div class="flex justify-between items-start">
+<span class="font-body text-label-md text-on-surface-variant font-medium">Peak Chat Volume</span>
+<div class="bg-surface-container p-2 rounded-DEFAULT text-surface-tint">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-[32px] font-bold text-primary">245</span>
+<span class="font-body text-body-md text-on-surface-variant">chats/hr</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-medium text-on-surface-variant">
+                        Typically 10:00 AM - 12:00 PM
+                    </div>
+</div>
+</div>
+<!-- Charts Section (Asymmetric Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Main Bar Chart (Spans 2 cols) -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-[20px] font-semibold text-primary">Chat Volume by Hour</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<!-- CSS Mock Chart Canvas -->
+<div class="flex-1 flex items-end gap-2 h-64 mt-4 border-b border-outline-variant pb-2 relative">
+<!-- Y Axis labels -->
+<div class="absolute left-0 top-0 h-full flex flex-col justify-between text-label-sm text-outline w-8 pr-2 text-right">
+<span class="">300</span>
+<span class="">200</span>
+<span class="">100</span>
+<span class="">0</span>
+</div>
+<!-- Bars Container -->
+<div class="flex-1 flex items-end justify-between ml-10 h-full pl-2">
+<!-- Mock Bars -->
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[20%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[35%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-container hover:bg-primary transition-colors rounded-t-sm h-[80%] group relative"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">245</div></div>
+<div class="w-full max-w-[40px] bg-primary-container hover:bg-primary transition-colors rounded-t-sm h-[95%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[60%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[45%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[30%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[50%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-container hover:bg-primary transition-colors rounded-t-sm h-[70%] group relative"></div>
+<div class="w-full max-w-[40px] bg-primary-fixed hover:bg-primary transition-colors rounded-t-sm h-[25%] group relative"></div>
+</div>
+</div>
+<!-- X Axis Labels -->
+<div class="flex justify-between ml-12 mt-3 text-label-sm text-outline px-2">
+<span class="">8 AM</span>
+<span class="">10 AM</span>
+<span class="">12 PM</span>
+<span class="">2 PM</span>
+<span class="">4 PM</span>
+<span class="">6 PM</span>
+</div>
+</div>
+<!-- Sentiment Analysis Block -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-[20px] font-semibold text-primary">Sentiment Summary</h3>
+<span class="material-symbols-outlined text-outline">mood</span>
+</div>
+<div class="flex flex-col gap-6 flex-1 justify-center">
+<!-- Positive -->
+<div>
+<div class="flex justify-between text-label-md mb-2">
+<span class="font-medium text-primary flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary-container"></span> Positive</span>
+<span class="font-bold text-on-surface">68%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 68%"></div>
+</div>
+</div>
+<!-- Neutral -->
+<div>
+<div class="flex justify-between text-label-md mb-2">
+<span class="font-medium text-on-surface-variant flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-outline-variant"></span> Neutral</span>
+<span class="font-bold text-on-surface">24%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2">
+<div class="bg-outline-variant h-2 rounded-full" style="width: 24%"></div>
+</div>
+</div>
+<!-- Negative -->
+<div>
+<div class="flex justify-between text-label-md mb-2">
+<span class="font-medium text-on-secondary-container flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary-container"></span> Needs Attention</span>
+<span class="font-bold text-on-surface">8%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2">
+<div class="bg-secondary-container h-2 rounded-full" style="width: 8%"></div>
+</div>
+</div>
+<div class="mt-4 p-4 bg-surface-container-low rounded-DEFAULT border border-surface-variant">
+<p class="text-label-sm text-on-surface-variant leading-relaxed">
+                                Insight: Sentiment has improved by 4% this week. The majority of positive feedback is associated with the <span class="font-semibold text-primary">Financial Aid Inquiry</span> workflow.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

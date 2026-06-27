@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Eligibility Check - MedGuide Student Portal</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#86a0cd",
+                    "surface-container": "#ebeef0",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#181c1e",
+                    "on-tertiary-container": "#989fa6",
+                    "tertiary-fixed": "#dde3eb",
+                    "on-primary-fixed": "#001b3c",
+                    "secondary-fixed-dim": "#ffb866",
+                    "surface-bright": "#f7fafc",
+                    "surface-variant": "#e0e3e5",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#c1c7cf",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#adc7f7",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2d3133",
+                    "surface-tint": "#455f88",
+                    "primary-container": "#1a365d",
+                    "on-secondary-fixed": "#2b1700",
+                    "outline": "#74777f",
+                    "on-primary-fixed-variant": "#2d476f",
+                    "surface-dim": "#d7dadc",
+                    "primary-fixed": "#d6e3ff",
+                    "surface-container-low": "#f1f4f6",
+                    "on-background": "#181c1e",
+                    "secondary-fixed": "#ffddba",
+                    "on-secondary-container": "#744600",
+                    "primary": "#002045",
+                    "secondary-container": "#ffb55c",
+                    "surface-container-high": "#e5e9eb",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-surface-variant": "#43474e",
+                    "primary-fixed-dim": "#adc7f7",
+                    "surface": "#f7fafc",
+                    "outline-variant": "#c4c6cf",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#eef1f3",
+                    "on-tertiary-fixed": "#161c22",
+                    "tertiary": "#1b2127",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#41474e",
+                    "on-secondary-fixed-variant": "#673d00",
+                    "tertiary-container": "#30363c",
+                    "background": "#f7fafc",
+                    "secondary": "#875200"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased min-h-screen flex selection:bg-primary/20">
+<!-- Shared Component: SideNavBar (Extracted and Adapted to Theme) -->
+<aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col flex-shrink-0 hidden md:flex">
+<div class="p-6 flex flex-col h-full">
+<!-- Profile -->
+<div class="flex gap-3 mb-8 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-outline-variant/30" data-alt="A small, professional portrait placeholder representing a medical student's profile picture. Soft studio lighting on a neutral grey background. The style is clean and corporate." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCiIrAD2ie9IM3PP6Uy6n5LGF7PeqBFbyTehxrJIfueQ84gJj9a2ggq40G2Ur1Etp74cgL20YnVlglKCQXAy7WawLfQiuMuXfR7T1sSyKFsg1R3cUmuxn96F-3bhfbm5PJaOHtCk7R1cRYBnJDfm85z06OfVipyFyX-bF7DZFDdKmXEBTD2_j0EhgdZWaSetOfbHuvUmA7Xuh1M46On8t_WvGJ8IsXUJK5S3mduUENjXDOmOfsBXxGbpkwdmtWAJ8awbFGlU_DHmRw&quot;);"></div>
+<div class="flex flex-col">
+<h1 class="text-on-surface text-base font-semibold leading-tight font-headline">MedGuide</h1>
+<p class="text-on-surface-variant text-sm font-normal leading-tight mt-0.5">Student Portal</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1.5 flex-1"><!-- Navigation Links -->
+<div class="flex flex-col gap-1.5 flex-1">
+  <!-- Inquiries -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">assignment</span>
+    <span class="text-sm font-medium">Inquiries</span>
+  </a>
+  <!-- Chat -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">chat</span>
+    <span class="text-sm font-medium">Chat</span>
+  </a>
+  <!-- Uni Explorer -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">account_balance</span>
+    <span class="text-sm font-medium">Uni Explorer</span>
+  </a>
+  <!-- Budget Calc -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">calculate</span>
+    <span class="text-sm font-medium">Budget Calc</span>
+  </a>
+  <!-- Eligibility (Active) -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-container-highest text-on-surface font-semibold" href="#">
+    <span class="material-symbols-outlined text-[24px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+    <span class="text-sm">Eligibility</span>
+  </a>
+  <!-- Profile -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">person</span>
+    <span class="text-sm font-medium">Profile</span>
+  </a>
+  <!-- Checklist -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">checklist</span>
+    <span class="text-sm font-medium">Checklist</span>
+  </a>
+  <!-- Help -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">help</span>
+    <span class="text-sm font-medium">Help</span>
+  </a>
+  <!-- Settings -->
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">settings</span>
+    <span class="text-sm font-medium">Settings</span>
+  </a>
+</div>
+<!-- Footer Links -->
+<div class="mt-auto pt-4 border-t border-outline-variant/30 flex flex-col gap-1.5">
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">feedback</span>
+    <span class="text-sm font-medium">Help Improve</span>
+  </a>
+  <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface group" href="#">
+    <span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">logout</span>
+    <span class="text-sm font-medium">Sign Out</span>
+  </a>
+</div></nav>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto">
+<!-- Top Nav (Mobile only fallback) -->
+<div class="md:hidden flex items-center justify-between p-4 bg-surface-container-lowest border-b border-outline-variant">
+<h1 class="text-on-surface text-lg font-semibold font-headline">MedGuide</h1>
+<button class="text-on-surface-variant p-2 rounded-md hover:bg-surface-container">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<div class="p-6 md:p-12 lg:py-16 lg:px-24 max-w-4xl mx-auto flex flex-col gap-10">
+<!-- Header Section -->
+<div class="flex flex-col gap-3 text-center items-center">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-fixed text-primary mb-2">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<h2 class="font-display text-3xl md:text-4xl font-bold text-on-surface tracking-tight">Check Your Eligibility</h2>
+<p class="font-body text-base md:text-lg text-on-surface-variant max-w-2xl">
+                    Enter your academic details below to instantly verify your qualification for leading Russian medical universities and discover your options.
+                </p>
+</div>
+<!-- Main Form Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 md:p-10 shadow-sm relative overflow-hidden">
+<!-- Decorative top border accent -->
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<form class="flex flex-col gap-8 relative z-10">
+<!-- Row 1: Academic Scores -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+<!-- 12th PCB % -->
+<div class="flex flex-col gap-2.5">
+<label class="font-label text-sm font-semibold text-on-surface flex justify-between" for="pcb-score">
+                                12th PCB % <span aria-hidden="true" class="text-error">*</span>
+</label>
+<div class="relative group">
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-4 pr-10 py-3.5 text-on-surface font-body focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder-outline-variant transition-colors hover:border-outline" id="pcb-score" max="100" min="0" name="pcb-score" placeholder="e.g. 75.5" required="" step="0.1" type="number">
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">percent</span>
+</div>
+</div>
+<!-- NEET Score -->
+<div class="flex flex-col gap-2.5">
+<label class="font-label text-sm font-semibold text-on-surface flex justify-between" for="neet-score">
+                                NEET Score <span aria-hidden="true" class="text-error">*</span>
+</label>
+<div class="relative group">
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-4 pr-10 py-3.5 text-on-surface font-body focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder-outline-variant transition-colors hover:border-outline" id="neet-score" max="720" min="0" name="neet-score" placeholder="e.g. 450" required="" type="number">
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">school</span>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<hr class="border-outline-variant/50">
+<!-- Row 2: Status & Categories -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+<!-- Category -->
+<div class="flex flex-col gap-2.5">
+<label class="font-label text-sm font-semibold text-on-surface flex justify-between" for="category">
+                                Application Category <span aria-hidden="true" class="text-error">*</span>
+</label>
+<div class="relative group">
+<select class="w-full bg-surface border border-outline-variant rounded-lg pl-4 pr-10 py-3.5 text-on-surface font-body focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors hover:border-outline cursor-pointer" id="category" name="category" required="">
+<option class="text-outline-variant" disabled="" selected="" value="">Select Category</option>
+<option value="general">General</option>
+<option value="obc">OBC</option>
+<option value="sc">SC</option>
+<option value="st">ST</option>
+</select>
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+<!-- Passport Status -->
+<div class="flex flex-col gap-2.5">
+<label class="font-label text-sm font-semibold text-on-surface flex justify-between" for="passport">
+                                Passport Status <span aria-hidden="true" class="text-error">*</span>
+</label>
+<div class="relative group">
+<select class="w-full bg-surface border border-outline-variant rounded-lg pl-4 pr-10 py-3.5 text-on-surface font-body focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors hover:border-outline cursor-pointer" id="passport" name="passport" required="">
+<option class="text-outline-variant" disabled="" selected="" value="">Select Status</option>
+<option value="ready">Valid Passport Ready</option>
+<option value="applied">Applied / In Process</option>
+<option value="not_applied">Not Yet Applied</option>
+</select>
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="pt-4 mt-2">
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary font-label text-base font-bold py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all duration-200 shadow-sm hover:shadow-md focus:ring-4 focus:ring-primary-fixed focus:outline-none" type="button">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+                            Analyze Eligibility
+                        </button>
+</div>
+</form>
+</div>
+<!-- Result Placeholder Block -->
+<div class="bg-surface-container-low border border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center min-h-[200px] text-center gap-4 transition-all duration-300">
+<div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container-highest border border-outline-variant/40 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-outline-variant animate-pulse"></span>
+<span class="text-on-surface-variant text-xs font-bold uppercase tracking-widest font-label">Status: Pending Analysis</span>
+</div>
+<div class="max-w-md space-y-2">
+<h3 class="text-on-surface font-headline font-semibold text-lg">Awaiting Input</h3>
+<p class="text-on-surface-variant font-body text-sm leading-relaxed">
+                        Fill out your academic details above and click 'Analyze Eligibility' to generate your personalized report and view university recommendations that match your profile.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

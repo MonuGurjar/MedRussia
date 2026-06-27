@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Team Management - Academic Excellence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#74777f",
+                        "surface-container-low": "#f1f4f6",
+                        "primary-fixed-dim": "#adc7f7",
+                        "secondary-container": "#ffb55c",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary-fixed-variant": "#41474e",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#181c1e",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ebeef0",
+                        "surface-bright": "#f7fafc",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "surface-tint": "#455f88",
+                        "tertiary-fixed": "#dde3eb",
+                        "tertiary-fixed-dim": "#c1c7cf",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-background": "#181c1e",
+                        "on-tertiary-fixed": "#161c22",
+                        "on-secondary-fixed": "#2b1700",
+                        "inverse-primary": "#adc7f7",
+                        "surface-dim": "#d7dadc",
+                        "surface-container-high": "#e5e9eb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#989fa6",
+                        "on-surface-variant": "#43474e",
+                        "background": "#f7fafc",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#1b2127",
+                        "on-primary-fixed": "#001b3c",
+                        "inverse-on-surface": "#eef1f3",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1a365d",
+                        "on-secondary-container": "#744600",
+                        "on-primary-container": "#86a0cd",
+                        "secondary": "#875200",
+                        "secondary-fixed": "#ffddba",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#ffb866",
+                        "surface": "#f7fafc",
+                        "primary-fixed": "#d6e3ff",
+                        "primary": "#002045",
+                        "tertiary-container": "#30363c",
+                        "outline-variant": "#c4c6cf",
+                        "on-primary-fixed-variant": "#2d476f",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-surface": "#2d3133"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {},
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    "fontSize": {}
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-low h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline font-body text-body-md flex flex-col h-full p-4 gap-2 z-20">
+<div class="px-4 py-6 mb-4 border-b border-surface-container">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-fixed" data-icon="local_hospital">local_hospital</span>
+</div>
+<div class="overflow-hidden">
+<h1 class="text-headline-md font-semibold text-primary dark:text-primary-fixed truncate" title="Academic Excellence">Academic Excellence</h1>
+<p class="text-label-sm text-on-surface-variant truncate">Admin Dashboard</p>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="inbox">inbox</span>
+<span>Inquiries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span>Direct Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span>AI Chats</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Students</span>
+</a>
+<!-- Active State Navigation -->
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="group" data-weight="fill" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Team</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span>Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Chat Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="reviews">reviews</span>
+<span>Feedback Hub</span>
+</a>
+</div>
+<div class="mt-auto pt-2 border-t border-surface-container">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors active:scale-95 transition-transform duration-150 hover:bg-surface-container-high dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 sticky ml-64 bg-surface dark:bg-surface-dim border-b border-outline-variant font-headline text-label-md flex justify-between items-center h-16 px-8 w-[calc(100%-16rem)] z-10">
+<div class="flex items-center gap-6">
+<h2 class="text-headline-md font-bold text-primary">Admission Control Center</h2>
+<div class="relative hidden lg:block text-on-surface-variant focus-within:ring-2 focus-within:ring-primary rounded-lg transition-colors hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:outline-none focus:border-primary w-64 text-body-md text-on-surface" placeholder="Search team members..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors focus-within:ring-2 focus-within:ring-primary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors focus-within:ring-2 focus-within:ring-primary">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<button class="text-primary border border-outline-variant hover:bg-surface-container-low transition-colors px-4 py-2 rounded-lg font-medium">Support</button>
+<button class="bg-primary text-on-primary hover:bg-primary-container px-4 py-2 rounded-lg font-medium shadow-sm">New Inquiry</button>
+<div class="w-8 h-8 rounded-full overflow-hidden ml-2 border border-outline-variant">
+<img alt="Admin User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an administrative user, isolated against a light gray background. The lighting is soft and corporate, matching the high-end academic dashboard aesthetic. The subject is wearing business casual attire." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEatzu3BxMQhrywcKsWptkoOoXr48Uli6SX93YBiYfMAXsy1kdCD_BfArDKdb2o94KwF4fp4HzmQsoz3cc_stCuDIgU-WejcRKX5DQ6lS_gTNjFPn8hK4pANPRUJ0WlmH5JXal9zpS7HNO64EwK7OMqxlbCfzYw5bAuf5LGXPQqIn1WEViB6Jc1E8F4SFGQPnwIGtbQTpqlc9Y56bgvwpZB--JnpftRMIgYKevyVEDLQeTGJHgn5KpXvqMfXCHqfMuE20Yu7kHhpE"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 p-8 xl:p-12 max-w-[1400px]">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h1 class="text-3xl font-bold text-primary tracking-tight mb-1">Admin Team</h1>
+<p class="text-on-surface-variant text-body-md">Manage user access, roles, and administrative privileges.</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-container hover:shadow-md transition-all duration-200 px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                Add New Admin
+            </button>
+</div>
+<!-- Team Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center shadow-sm hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-200 group relative overflow-hidden">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-surface-container mb-4 shadow-sm">
+<img alt="Team Member Avatar" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A professional headshot of a female team member in her late twenties, wearing a crisp white blouse. Soft, even lighting creates a clinical yet approachable tone against a light studio background. High-quality corporate portraiture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy5ZtVZ7ZCaBZmybS5dHqBwXlpVH9769V0E5uEFHUPGVx7nmAw8L-C3McE_3xqj3zqhP1Qn0DCnW-pdBtjZ2zU_baedokQLSgOJuBJEoRd_DRi55jsOw0VpefvVpkTH5FYIK0HZkE6UVRY9_oxOaba_Fdz_iNPdiVRaUXBo7061EaRY8ouskTTyzi5TwGO2UDprZorGuoxZ-dg9NHJgflRb_o7GYFRtFCW9H4H4UvwQypUuuvUgN7vMwTnuGOWxwdrEl6_nNd_PwM"/>
+</div>
+<h3 class="text-[18px] font-semibold text-primary">Sarah Jenkins</h3>
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-label-sm font-semibold mt-1.5 mb-2">Director of Admissions</span>
+<p class="text-body-sm text-on-surface-variant mb-6">s.jenkins@academic.edu</p>
+<div class="flex items-center gap-3 w-full mt-auto pt-4 border-t border-surface-container">
+<button class="flex-1 bg-transparent border border-outline-variant text-on-surface hover:bg-surface-container hover:text-primary transition-colors py-2 rounded font-medium text-label-md flex justify-center items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-error hover:bg-error-container rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center shadow-sm hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-200 group relative overflow-hidden">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-surface-container mb-4 shadow-sm">
+<img alt="Team Member Avatar" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A professional headshot of a male administrative staff member with short dark hair, wearing a light blue dress shirt. The portrait is taken under bright, clean light in a corporate environment. The aesthetic is clean, academic, and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANhcFJezW0bkSEqj4QrfV0FkHGDkEQTT8l59FGrHx55MAbsSbw_DVKTRamZNcEls1Qz3PiaWUUsPT3sUffkHjRvqZRmXSToStftjH4-ziQ1hdBuUC6v-80PnGp_QD-I0TP35rY9kgcVezfyaIEPwAkOJXZ5hSX4XpLmmRJ95rofuT9aRED3kOT_qP-qVWEVBmCD_e9kk02gIh9Ox8JRBzTl803og4MfxManXv6QBH4OaiAB_2THPnZQvd0Vj9UIZaYaxrmQvZvf6g"/>
+</div>
+<h3 class="text-[18px] font-semibold text-primary">Marcus Chen</h3>
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-3 py-1 rounded-full text-label-sm font-semibold mt-1.5 mb-2">Senior Counselor</span>
+<p class="text-body-sm text-on-surface-variant mb-6">m.chen@academic.edu</p>
+<div class="flex items-center gap-3 w-full mt-auto pt-4 border-t border-surface-container">
+<button class="flex-1 bg-transparent border border-outline-variant text-on-surface hover:bg-surface-container hover:text-primary transition-colors py-2 rounded font-medium text-label-md flex justify-center items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-error hover:bg-error-container rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center shadow-sm hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-200 group relative overflow-hidden">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-surface-container mb-4 shadow-sm">
+<img alt="Team Member Avatar" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A professional headshot of a mature female academic professional wearing glasses and a dark blazer. The lighting highlights a confident, experienced demeanor. Shot against a neutral, bright background suitable for a high-end dashboard interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaDcYnV1Y-rY8YpP9_VxUAg7_VXarfmKiHrOxN9OKqC3URk_qkOnL8ykg8xEPgYt8FoD8BIWUziVKy-_BMEyQ8rKN3wOuvGzzpZvnj8Gpz6Xc1rGezNigpfaQdiowubADJkIMZczN6fmSThpgdG78g6of0c4GWQdDsOv-7BTY1aM8oZ7TJ7E2ASzKSOBv32-oRg-O2A7GeCWfzGFLv9eEHvxqkNqjZPqSlWtUXNus9Os76XuuC24vAjb9cKcEFxG6xysPnvnV832o"/>
+</div>
+<h3 class="text-[18px] font-semibold text-primary">Dr. Emily Rossi</h3>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-label-sm font-semibold mt-1.5 mb-2">Medical Assessor</span>
+<p class="text-body-sm text-on-surface-variant mb-6">e.rossi@academic.edu</p>
+<div class="flex items-center gap-3 w-full mt-auto pt-4 border-t border-surface-container">
+<button class="flex-1 bg-transparent border border-outline-variant text-on-surface hover:bg-surface-container hover:text-primary transition-colors py-2 rounded font-medium text-label-md flex justify-center items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-error hover:bg-error-container rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center shadow-sm hover:shadow-[0px_4px_12px_rgba(26,54,93,0.08)] transition-shadow duration-200 group relative overflow-hidden">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-surface-container mb-4 shadow-sm">
+<div class="w-full h-full bg-surface-container-high flex items-center justify-center text-headline-md text-outline font-semibold">
+                        JD
+                    </div>
+</div>
+<h3 class="text-[18px] font-semibold text-primary">James Doe</h3>
+<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-label-sm font-semibold mt-1.5 mb-2">Support Staff</span>
+<p class="text-body-sm text-on-surface-variant mb-6">j.doe@academic.edu</p>
+<div class="flex items-center gap-3 w-full mt-auto pt-4 border-t border-surface-container">
+<button class="flex-1 bg-transparent border border-outline-variant text-on-surface hover:bg-surface-container hover:text-primary transition-colors py-2 rounded font-medium text-label-md flex justify-center items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-error hover:bg-error-container rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
