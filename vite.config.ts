@@ -12,6 +12,7 @@ export default defineConfig({
     host: '0.0.0.0',
   },
   plugins: [react()],
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   base: "/",
   resolve: {
     alias: {
