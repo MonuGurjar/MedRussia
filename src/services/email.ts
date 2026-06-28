@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 
 export interface EmailTemplateParams {
     student_name: string;
@@ -12,11 +13,15 @@ export interface EmailTemplateParams {
 
 export const sendReplyNotification = async (params: EmailTemplateParams): Promise<boolean> => {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
     const response = await fetch('/api/email', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(params)
     });
 

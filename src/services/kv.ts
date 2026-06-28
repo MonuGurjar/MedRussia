@@ -1,5 +1,6 @@
 
 import { FeedbackEntry, AppSettings, ChatSession, PlatformFeedback, User, DirectChat } from '../types';
+import { supabase } from '../lib/supabase';
 import { TeamMember } from '../data/teamData';
 
 // Keys for Redis
@@ -15,11 +16,15 @@ const KEY_DIRECT_CHATS = 'med_russia:direct_chats';
 // Helper to interact with Vercel Serverless Function proxy
 const upstashFetch = async (command: string, ...args: any[]) => {
     try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        
         const response = await fetch('/api/db', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ command, args }),
         });
 

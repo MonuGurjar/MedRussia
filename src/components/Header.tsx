@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div onClick={() => { setShowDropdown(false); onLogoClick(); }} className="flex items-center gap-3 cursor-pointer group">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary font-bold text-lg transition-transform group-hover:scale-105">M</div>
           <div className="leading-tight hidden sm:block">
-            <span className="text-headline-md text-primary block" style={{ fontSize: '18px', lineHeight: '24px' }}>MedGuide Russia</span>
+            <span className="text-headline-md text-primary block" style={{ fontSize: '18px', lineHeight: '24px' }}>MBBS Russia</span>
             <span className="text-label-sm text-on-surface-variant">Medical Admissions</span>
           </div>
         </div>

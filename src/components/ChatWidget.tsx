@@ -4,6 +4,7 @@ import { getSettings } from '../services/settings';
 import { AppSettings, ChatSession } from '../types';
 import { getChatResponse } from '../services/gemini';
 import { logChatSession } from '../services/db';
+import { supabase } from '../lib/supabase';
 
 interface Message { id: number; text: string; sender: 'user' | 'bot'; isError?: boolean; }
 interface ChatWidgetProps { isLifted?: boolean; }
@@ -36,7 +37,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
   const fabRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    try { const storedUser = localStorage.getItem('mr_active_user'); if (storedUser) setIsAuthenticated(true); } catch (e) {}
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session?.user);
+    });
     try { const count = sessionStorage.getItem(GUEST_MSG_COUNT_KEY); if (count) setGuestMessageCount(parseInt(count, 10)); } catch (e) {}
     if (!sessionIdRef.current) {
       const existingId = sessionStorage.getItem('mr_chat_session_id');
@@ -77,8 +80,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
 
   const saveSessionToDB = async () => {
     const chatMessages = messages.map(m => ({ role: m.sender === 'user' ? 'user' : 'model' as 'user' | 'model', text: m.text, timestamp: m.id }));
-    let userDetails: any = {};
-    try { const storedUser = localStorage.getItem('mr_active_user'); if (storedUser) { const u = JSON.parse(storedUser); userDetails = { userId: u.id, visitorName: u.name }; } } catch (e) {}
+    let userDetails = { userId: 'anonymous', visitorName: 'Guest' };
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        userDetails = { userId: session.user.id, visitorName: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User' };
+      }
+    } catch (e) {}
     const session: ChatSession = { id: sessionIdRef.current, startTime: sessionStartTimeRef.current, lastMessageTime: Date.now(), messages: chatMessages, messageCount: chatMessages.length, userId: userDetails.userId, visitorName: userDetails.visitorName || `Visitor-${sessionIdRef.current.substring(0, 4)}` };
     await logChatSession(session);
   };

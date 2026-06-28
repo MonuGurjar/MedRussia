@@ -1,7 +1,14 @@
-
 import crypto from 'crypto';
+import { strictLimiter, checkRateLimit } from './ratelimit';
+import { logAuditEvent } from './audit';
+import { withAuth, AuthUser } from '../src/lib/apiAuth';
 
-export default async function handler(request, response) {
+async function handler(request, response, user) {
+  const rateLimitResult = await checkRateLimit(request, strictLimiter);
+  if (!rateLimitResult.success) {
+    return response.status(429).json({ error: 'Too many requests, please try again later.' });
+  }
+
   // Helper to get credentials from either individual vars or CLOUDINARY_URL
   const getCreds = () => {
       if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -79,6 +86,10 @@ export default async function handler(request, response) {
                // 'not found' is acceptable if we are cleaning up db
                throw new Error(data.error?.message || 'Cloudinary delete failed');
           }
+          
+          const ipAddress = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown_ip';
+          await logAuditEvent('system', 'FILE_DELETED', { public_id }, ipAddress);
+          
           return response.status(200).json({ success: true, result: data });
       } catch (error) {
           console.error('Delete Proxy Error:', error);
@@ -91,8 +102,20 @@ export default async function handler(request, response) {
     try {
         const { fileData } = request.body; // Expecting Base64 string
 
-        if (!fileData) {
+        if (!fileData || typeof fileData !== 'string') {
             return response.status(400).json({ error: 'No file data provided' });
+        }
+
+        // Security: Validate file type
+        const mimeTypeMatch = fileData.match(/^data:(image\/jpeg|image\/png|image\/jpg|application\/pdf);base64,/i);
+        if (!mimeTypeMatch) {
+            return response.status(400).json({ error: 'Invalid file type. Only JPEG, PNG, and PDF are allowed.' });
+        }
+
+        // Security: Validate file size (Base64 is ~33% larger than binary)
+        // 4MB binary = ~5.4MB base64
+        if (fileData.length > 5.5 * 1024 * 1024) {
+            return response.status(413).json({ error: 'File size exceeds 4MB limit' });
         }
 
         // Cloudinary Unsigned Upload API
@@ -113,6 +136,10 @@ export default async function handler(request, response) {
         }
 
         const data = await res.json();
+        
+        const ipAddress = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown_ip';
+        await logAuditEvent('system', 'FILE_UPLOADED', { public_id: data.public_id, format: data.format }, ipAddress);
+        
         return response.status(200).json({ 
             secure_url: data.secure_url,
             public_id: data.public_id,
@@ -128,3 +155,5 @@ export default async function handler(request, response) {
 
   return response.status(405).json({ error: 'Method Not Allowed' });
 }
+
+export default withAuth(handler);

@@ -42,7 +42,7 @@ export const TeamPage: React.FC = () => {
       </div>
 
       <div className="text-center mt-4 md:mt-10 mb-10 md:mb-16 max-w-4xl mx-auto px-margin-mobile">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-sm font-semibold uppercase tracking-wider mb-5 border border-outline-variant"><span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>The People Behind MedGuide Russia</div>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-sm font-semibold uppercase tracking-wider mb-5 border border-outline-variant"><span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>The People Behind MBBS Russia</div>
         <h1 className="text-3xl md:text-6xl font-bold text-on-surface tracking-tight leading-tight mb-3 md:mb-5">Meet Our <span className="text-primary">Team</span></h1>
         <p className="text-sm md:text-xl text-on-surface-variant font-medium max-w-2xl mx-auto leading-relaxed">Real students and mentors who've been through the journey. We don't just guide — we've walked the same path.</p>
       </div>

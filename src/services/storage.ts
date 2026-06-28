@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -25,12 +26,16 @@ export const uploadFileToCloudinary = async (file: File): Promise<UploadResponse
 
     const base64Data = await toBase64(file);
 
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
     // 2. Send to Server Proxy
     const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ fileData: base64Data })
     });
 
@@ -50,11 +55,15 @@ export const uploadFileToCloudinary = async (file: File): Promise<UploadResponse
 
 export const deleteFileFromCloudinary = async (publicId: string, resourceType: string = 'image'): Promise<void> => {
     try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
         const response = await fetch('/api/upload', {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ public_id: publicId, resource_type: resourceType })
         });
 

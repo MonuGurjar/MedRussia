@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FeedbackEntry, AIAnalysis, User, AppSettings, AdminRole, ChatSession, PlatformFeedback, FeatureFlags, DirectChat, DirectMessage, DirectMessageAttachment, DocumentMetadata } from '../types';
 import { analyzeFeedback, generateSmartReply, analyzeChatHistory, generateStudentRecommendation, generateEmailDraft } from '../services/gemini';
-import { addReply, registerUser, getAllAdmins, getAllStudents, deleteFeedback, deleteUser, updateUser, getChatHistory, getAllPlatformFeedback, updatePlatformFeedbackStatus, getUserFeedback, sendNotificationToUser, verifyUserDocument, removeUserDocument, saveChatSessionToUpstash, getTeamMembers, saveTeamMembers } from '../services/db';
+import { addReply, registerUser, getAllAdmins, getAllStudents, deleteFeedback, deleteUser, updateUser, getChatHistory, getAllPlatformFeedback, updatePlatformFeedbackStatus, getUserFeedback, sendNotificationToUser, verifyUserDocument, deleteUserDocument, saveChatSessionToUpstash, getTeamMembers, saveTeamMembers } from '../services/db';
 import { TeamMember } from '../data/teamData';
 import { getAllDirectChats, sendDirectMessage, escalateChat, closeDirectChat } from '../services/directChat';
 import { deleteFileFromCloudinary } from '../services/storage';
@@ -10,12 +10,13 @@ import { getSettings, saveSettings } from '../services/settings';
 import { sendReplyNotification, sendTestEmail, sendDirectEmail } from '../services/email';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { useLiveSync } from '../hooks/useLiveSync';
+import { AuditLogsPage } from './AuditLogsPage';
 
 interface AdminDashboardProps { feedbackList: FeedbackEntry[]; onRefresh: () => void; onLogout: () => void; isLoading?: boolean; currentUser: User; theme: 'light' | 'dark'; toggleTheme: () => void; }
-type Tab = 'inquiries' | 'students' | 'admins' | 'insights' | 'settings' | 'chats' | 'chat_insights' | 'feedback_hub' | 'direct_chats';
+type Tab = 'inquiries' | 'students' | 'admins' | 'insights' | 'settings' | 'chats' | 'chat_insights' | 'feedback_hub' | 'direct_chats' | 'audit_logs';
 
 const PERMISSIONS: Record<AdminRole, Tab[]> = {
-  'super_admin': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'settings'],
+  'super_admin': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'audit_logs', 'settings'],
   'manager': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'settings'],
   'chat_officer': ['inquiries', 'admins', 'direct_chats'],
   'editor': ['admins', 'settings'],
@@ -24,7 +25,7 @@ const PERMISSIONS: Record<AdminRole, Tab[]> = {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: initialFeedbackList, onRefresh, onLogout, isLoading, currentUser, theme, toggleTheme }) => {
   const navigate = useNavigate();
-  const allowedTabs = PERMISSIONS[currentUser.adminRole || 'support'] || PERMISSIONS['support'];
+  const allowedTabs = PERMISSIONS[currentUser.adminRole || 'super_admin'] || PERMISSIONS['super_admin'];
   const [activeTab, setActiveTab] = useState<Tab>(allowedTabs[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [viewingStudent, setViewingStudent] = useState<User | null>(null);
@@ -104,7 +105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
   const handleAIAnalysis = async () => { setLoadingAI(true); try { const r = await analyzeFeedback(localFeedback); setAnalysis(r); } catch (e: any) { alert(`Error: ${e.message}`); } finally { setLoadingAI(false); } };
   const handleChatAnalysis = async () => { setLoadingAI(true); try { const s = await getChatHistory(); const r = await analyzeChatHistory(s); setChatAnalysis(r); } catch (e: any) { alert(`Error: ${e.message}`); } finally { setLoadingAI(false); } };
   const handleVerifyDoc = async (t: any, s: any, r?: string) => { if (!viewingStudent) return; try { await verifyUserDocument(viewingStudent.id, t, s, r); alert("Updated"); setRejectingDoc(null); } catch (e: any) { alert(e.message); } };
-  const handleDeleteDoc = async (t: any, p?: string) => { if (!viewingStudent) return; if (window.confirm("Delete?")) { if (p) await deleteFileFromCloudinary(p); await removeUserDocument(viewingStudent.id, t); alert("Deleted"); } };
+  const handleDeleteDoc = async (t: any, p?: string) => { if (!viewingStudent) return; if (window.confirm("Delete?")) { if (p) await deleteFileFromCloudinary(p); await deleteUserDocument(viewingStudent.id, t); alert("Deleted"); } };
   const handleDeleteUser = async (email: string) => { if (window.confirm("Delete User?")) { await deleteUser(email); setViewingStudent(null); setStudents(await getAllStudents()); } };
   const handleCreateAdmin = async () => { setIsCreatingAdmin(true); try { await registerUser({ name: newAdminName, email: newAdminEmail, password: newAdminPass, role: 'admin', adminRole: newAdminRole }); alert("Created"); setAdmins(await getAllAdmins()); } catch (e: any) { alert(e.message); } finally { setIsCreatingAdmin(false); } };
   const handleUpdateAdmin = async () => { if (editingAdmin) { await updateUser(editingAdmin); alert("Updated"); setAdmins(await getAllAdmins()); setEditingAdmin(null); } };
@@ -139,6 +140,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
     { id: 'insights', label: 'Insights', icon: 'auto_awesome' },
     { id: 'chat_insights', label: 'Chat Insights', icon: 'psychology' },
     { id: 'feedback_hub', label: 'Feedback Hub', icon: 'rate_review' },
+    { id: 'audit_logs', label: 'Audit Logs', icon: 'manage_search' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ].filter(item => allowedTabs.includes(item.id as any));
 
@@ -386,10 +388,737 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
             </div>
           )}
 
-          {/* Fallbacks for other tabs since user only cared about "inquiries", "chats" mostly */}
-          {activeTab === 'students' && <div className="max-w-6xl mx-auto"><h2 className="text-2xl font-bold text-slate-900 mb-6">Student Directory</h2><div className="text-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-500">Student list rendering...</div></div>}
-          {activeTab === 'admins' && <div className="max-w-6xl mx-auto"><h2 className="text-2xl font-bold text-slate-900 mb-6">Team Management</h2><div className="text-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-500">Team list rendering...</div></div>}
-          {activeTab === 'settings' && <div className="max-w-4xl mx-auto"><h2 className="text-2xl font-bold text-slate-900 mb-6">Platform Settings</h2><div className="text-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-500">Settings panel rendering...</div></div>}
+          {/* STUDENTS TAB */}
+          {activeTab === 'students' && (
+            <div className="max-w-7xl mx-auto">
+              {!viewingStudent ? (
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-slate-900">Student Directory</h2>
+                    <div className="flex items-center gap-4">
+                      <select className={inputCls} value={studentSort} onChange={(e: any) => setStudentSort(e.target.value)}>
+                        <option value="name">Sort by Name</option>
+                        <option value="email">Sort by Email</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className={`${cardCls} overflow-hidden`}>
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
+                        <tr>
+                          <th className="p-4">Student</th>
+                          <th className="p-4">Contact</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {sortedStudents.map(student => (
+                          <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">
+                                {student.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900">{student.name}</p>
+                                <p className="text-xs text-slate-500">Joined recently</p>
+                              </div>
+                            </td>
+                            <td className="p-4 text-slate-600">
+                              <p>{student.email}</p>
+                              <p className="text-xs text-slate-400">{student.phone || 'No phone'}</p>
+                            </td>
+                            <td className="p-4">
+                              <span className="px-2 py-1 bg-blue-50 text-blue-700 font-semibold text-xs rounded uppercase">
+                                {student.eligibilityData ? 'Evaluated' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <button onClick={() => setViewingStudent(student)} className="px-4 py-1.5 bg-[#0f172a] text-white text-xs font-bold rounded hover:bg-slate-800 transition-colors">
+                                View Profile
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {sortedStudents.length === 0 && (
+                          <tr><td colSpan={4} className="p-8 text-center text-slate-500">No students found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  {/* Student Detail Header */}
+                  <div className={`${cardCls} p-6 flex items-start gap-6 relative`}>
+                    <button onClick={() => setViewingStudent(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-50 rounded-full transition-colors">
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                    
+                    <div className="w-20 h-20 rounded-full bg-indigo-100 text-indigo-700 font-bold text-2xl flex items-center justify-center shrink-0">
+                      {viewingStudent.name.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold text-slate-900">{viewingStudent.name}</h2>
+                      <p className="text-slate-500">{viewingStudent.email} • {viewingStudent.phone || 'No phone'}</p>
+                      <div className="mt-4 flex gap-2">
+                        <button onClick={() => setStudentTab('profile')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${studentTab === 'profile' ? 'bg-[#0f172a] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Profile</button>
+                        <button onClick={() => setStudentTab('documents')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${studentTab === 'documents' ? 'bg-[#0f172a] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Documents</button>
+                        <button onClick={() => setStudentTab('activity')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${studentTab === 'activity' ? 'bg-[#0f172a] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Activity & Comms</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PROFILE TAB */}
+                  {studentTab === 'profile' && (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className={`${cardCls} p-6`}>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Demographics</h3>
+                        <div className="space-y-3 text-sm">
+                          <p className="flex justify-between"><span className="text-slate-500">Name</span> <span className="font-medium text-slate-900">{viewingStudent.name}</span></p>
+                          <p className="flex justify-between"><span className="text-slate-500">Email</span> <span className="font-medium text-slate-900">{viewingStudent.email}</span></p>
+                          <p className="flex justify-between"><span className="text-slate-500">Phone</span> <span className="font-medium text-slate-900">{viewingStudent.phone || 'N/A'}</span></p>
+                          <p className="flex justify-between"><span className="text-slate-500">University</span> <span className="font-medium text-slate-900">{viewingStudent.university || 'N/A'}</span></p>
+                        </div>
+                        <div className="mt-8 border-t border-slate-100 pt-4">
+                          <button onClick={() => handleDeleteUser(viewingStudent.email)} className="text-red-500 text-sm font-bold hover:underline flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[18px]">delete_forever</span> Delete Student Account
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`${cardCls} p-6`}>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Eligibility Data</h3>
+                        {viewingStudent.eligibilityData ? (
+                          <div className="space-y-3 text-sm">
+                            <p className="flex justify-between"><span className="text-slate-500">NEET Score</span> <span className="font-bold text-slate-900">{viewingStudent.eligibilityData.neetScore}</span></p>
+                            <p className="flex justify-between"><span className="text-slate-500">12th PCB %</span> <span className="font-medium text-slate-900">{viewingStudent.eligibilityData.pcbPercentage}%</span></p>
+                            <p className="flex justify-between"><span className="text-slate-500">Category</span> <span className="font-medium text-slate-900">{viewingStudent.eligibilityData.category}</span></p>
+                            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">AI Verdict</p>
+                              <p className="text-sm text-slate-800 whitespace-pre-wrap">{viewingStudent.eligibilityResult || 'Pending'}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500">No eligibility data submitted yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DOCUMENTS TAB */}
+                  {studentTab === 'documents' && (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {['marksheet', 'passport', 'neetScoreCard'].map(docKey => {
+                        const doc = viewingStudent.documents?.[docKey as keyof typeof viewingStudent.documents];
+                        return (
+                          <div key={docKey} className={`${cardCls} p-5 flex flex-col`}>
+                            <h4 className="font-bold text-slate-900 mb-1 capitalize">{docKey.replace(/([A-Z])/g, ' $1').trim()}</h4>
+                            {doc ? (
+                              <>
+                                <div className="flex items-center gap-3 mb-4">
+                                  <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${doc.status === 'verified' ? 'bg-emerald-100 text-emerald-700' : doc.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {doc.status}
+                                  </span>
+                                  <span className="text-xs text-slate-400">{new Date(doc.uploadedAt).toLocaleDateString()}</span>
+                                </div>
+                                <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-2 mb-4 bg-blue-50 text-blue-700 font-semibold rounded-lg hover:bg-blue-100 transition-colors text-sm">
+                                  <span className="material-symbols-outlined text-[18px]">visibility</span> View Document
+                                </a>
+                                {doc.status === 'uploaded' && (
+                                  <div className="mt-auto grid grid-cols-2 gap-2">
+                                    <button onClick={() => handleVerifyDoc(docKey, 'verified')} className="py-2 bg-emerald-500 text-white font-bold rounded-lg text-sm hover:bg-emerald-600 transition-colors">Approve</button>
+                                    <button onClick={() => setRejectingDoc({ type: docKey, id: viewingStudent.id })} className="py-2 bg-red-50 text-red-600 font-bold rounded-lg text-sm hover:bg-red-100 transition-colors">Reject</button>
+                                  </div>
+                                )}
+                                {rejectingDoc?.type === docKey && (
+                                  <div className="mt-3 p-3 bg-red-50 rounded-lg">
+                                    <input type="text" className={`${inputCls} mb-2 bg-white`} placeholder="Reason for rejection..." value={rejectionRemarks} onChange={e => setRejectionRemarks(e.target.value)} />
+                                    <div className="flex gap-2">
+                                      <button onClick={() => handleVerifyDoc(docKey, 'rejected', rejectionRemarks)} className="px-3 py-1 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700">Confirm Reject</button>
+                                      <button onClick={() => setRejectingDoc(null)} className="px-3 py-1 bg-slate-200 text-slate-700 rounded text-xs font-bold hover:bg-slate-300">Cancel</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="py-8 text-center text-slate-400 bg-slate-50 rounded-lg mt-2 border border-dashed border-slate-200 flex-1 flex flex-col justify-center items-center">
+                                <span className="material-symbols-outlined text-[32px] mb-2 opacity-50">description</span>
+                                <p className="text-sm">Not uploaded yet</p>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* ACTIVITY & COMMS TAB */}
+                  {studentTab === 'activity' && (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className={`${cardCls} flex flex-col max-h-[600px]`}>
+                        <div className="p-6 border-b border-slate-100">
+                          <h3 className="text-lg font-bold text-slate-900">Communication Center</h3>
+                        </div>
+                        <div className="p-4 border-b border-slate-100 flex gap-4">
+                           <button onClick={() => setActiveCommTab('email')} className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeCommTab === 'email' ? 'border-[#0f172a] text-[#0f172a]' : 'border-transparent text-slate-500'}`}>Direct Email</button>
+                           <button onClick={() => setActiveCommTab('notification')} className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeCommTab === 'notification' ? 'border-[#0f172a] text-[#0f172a]' : 'border-transparent text-slate-500'}`}>In-App Notification</button>
+                        </div>
+                        <div className="p-6 flex-1 overflow-y-auto">
+                           {activeCommTab === 'email' ? (
+                             <div className="space-y-4">
+                               <div className="flex flex-wrap gap-2 mb-4">
+                                  {['welcome', 'docs_needed', 'verified', 'payment'].map(tpl => (
+                                    <button key={tpl} onClick={() => applyEmailTemplate(tpl)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold hover:bg-slate-200 capitalize">
+                                      {tpl.replace('_', ' ')}
+                                    </button>
+                                  ))}
+                               </div>
+                               <div>
+                                 <label className={labelCls}>Subject</label>
+                                 <input type="text" className={inputCls} value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Email Subject" />
+                               </div>
+                               <div>
+                                 <label className={labelCls}>Body</label>
+                                 <textarea className={`${inputCls} min-h-[150px] resize-none`} value={emailBody} onChange={e => setEmailBody(e.target.value)} placeholder="Type message..." />
+                               </div>
+                               <button onClick={handleSendEmail} disabled={sendingEmail || !emailBody.trim()} className="w-full py-2.5 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-70 transition-colors">
+                                 {sendingEmail ? 'Sending...' : 'Send Email'}
+                               </button>
+                             </div>
+                           ) : (
+                             <div className="space-y-4">
+                                <div>
+                                  <label className={labelCls}>Notification Type</label>
+                                  <select className={inputCls} value={notificationType} onChange={e => setNotificationType(e.target.value)}>
+                                    <option value="info">Information</option>
+                                    <option value="success">Success</option>
+                                    <option value="alert">Alert / Warning</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className={labelCls}>Message</label>
+                                  <textarea className={`${inputCls} min-h-[100px] resize-none`} value={notificationMsg} onChange={e => setNotificationMsg(e.target.value)} placeholder="Keep it brief..." />
+                                </div>
+                                <button onClick={handleSendNotification} disabled={sendingNotification || !notificationMsg.trim()} className="w-full py-2.5 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-70 transition-colors">
+                                 {sendingNotification ? 'Sending...' : 'Push Notification'}
+                               </button>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+
+                      <div className={`${cardCls} flex flex-col max-h-[600px]`}>
+                        <div className="p-6 border-b border-slate-100">
+                          <h3 className="text-lg font-bold text-slate-900">Unified Activity Log</h3>
+                        </div>
+                        <div className="p-6 flex-1 overflow-y-auto">
+                          {studentActivityLog.length === 0 ? (
+                            <p className="text-center text-slate-500 py-10">No activity recorded yet.</p>
+                          ) : (
+                            <div className="space-y-6">
+                              {studentActivityLog.map((log, i) => (
+                                <div key={i} className="flex gap-4 relative">
+                                  {i !== studentActivityLog.length - 1 && <div className="absolute top-8 left-3.5 w-0.5 h-full bg-slate-200"></div>}
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 ${log.type === 'doc' ? 'bg-emerald-100 text-emerald-600' : log.type === 'inquiry' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      {log.type === 'doc' ? 'description' : log.type === 'inquiry' ? 'help' : 'forum'}
+                                    </span>
+                                  </div>
+                                  <div className="pb-4">
+                                    <p className="font-bold text-slate-900 text-sm">{log.label}</p>
+                                    <p className="text-xs text-slate-400 mb-1">{formatTime(log.date)}</p>
+                                    <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg mt-1">{log.desc}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {/* ADMINS & TEAM TAB */}
+          {activeTab === 'admins' && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Team & Admin Management</h2>
+                <div className="flex gap-4">
+                  <button onClick={() => setIsCreatingAdmin(true)} className="px-4 py-2 bg-[#0f172a] text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">add</span> New Admin
+                  </button>
+                  <button onClick={() => {
+                     setEditingTeamCard({id: Date.now().toString(), name:'', role:'', profileImage:'', bio:'', emoji:'👨‍💼', specialization:'', isFeatured:false});
+                  }} className="px-4 py-2 bg-slate-200 text-slate-800 text-sm font-bold rounded-lg hover:bg-slate-300 transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">person_add</span> Add Public Team Card
+                  </button>
+                </div>
+              </div>
+
+              {/* Admin Accounts */}
+              <div className={`${cardCls} overflow-hidden mb-8`}>
+                <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400">admin_panel_settings</span>
+                  <h3 className="font-bold text-slate-900">Platform Administrators</h3>
+                </div>
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs">
+                    <tr>
+                      <th className="p-4">Name</th>
+                      <th className="p-4">Email</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {admins.map(admin => (
+                      <tr key={admin.id}>
+                        <td className="p-4 font-bold text-slate-900 flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
+                             {admin.name.charAt(0)}
+                           </div>
+                           {admin.name}
+                        </td>
+                        <td className="p-4 text-slate-600">{admin.email}</td>
+                        <td className="p-4">
+                           <span className="px-2 py-1 bg-purple-50 text-purple-700 font-semibold text-[10px] rounded uppercase tracking-wide">
+                             {admin.adminRole || 'admin'}
+                           </span>
+                        </td>
+                        <td className="p-4">
+                           <span className="px-2 py-1 bg-emerald-50 text-emerald-700 font-semibold text-[10px] rounded uppercase">Active</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {admins.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-500">No admins found.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Public Team Cards */}
+              <div className={`${cardCls} overflow-hidden`}>
+                <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400">groups</span>
+                  <h3 className="font-bold text-slate-900">Public Team Cards (About Us Section)</h3>
+                </div>
+                {teamMembers.length === 0 ? (
+                  <p className="p-8 text-center text-slate-500">No team members added for the public site.</p>
+                ) : (
+                  <div className="grid md:grid-cols-3 gap-6 p-6 bg-slate-50/50">
+                    {teamMembers.map(member => (
+                      <div key={member.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group">
+                        <button onClick={() => {
+                          setEditingTeamCard(member);
+                        }} className="absolute top-4 right-4 p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-indigo-50 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                        </button>
+                        <button onClick={() => handleDeleteTeamCard(member.id)} className="absolute top-4 right-14 p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-red-50 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all">
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                        <div className="w-20 h-20 rounded-full bg-slate-200 mx-auto mb-4 overflow-hidden border-4 border-slate-50">
+                          {member.profileImage ? (
+                            <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-2xl">{member.name.charAt(0)}</div>
+                          )}
+                        </div>
+                        <h4 className="text-center font-bold text-slate-900 text-lg">{member.name}</h4>
+                        <p className="text-center text-sm font-semibold text-indigo-600 mb-3">{member.role}</p>
+                        <p className="text-center text-xs text-slate-500">{member.bio}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Edit/Create Team Member Modal Overlay */}
+              {editingTeamCard && (
+                <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className={`${cardCls} w-full max-w-md p-6 relative`}>
+                    <button onClick={() => setEditingTeamCard(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                    <h3 className="text-xl font-bold text-slate-900 mb-6">{editingTeamCard.id ? 'Edit Team Member' : 'New Team Member'}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className={labelCls}>Full Name</label>
+                        <input type="text" className={inputCls} value={editingTeamCard.name} onChange={e => setEditingTeamCard({...editingTeamCard, name: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Role / Title</label>
+                        <input type="text" className={inputCls} value={editingTeamCard.role} onChange={e => setEditingTeamCard({...editingTeamCard, role: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Profile Image URL</label>
+                        <input type="text" className={inputCls} value={editingTeamCard.profileImage || ''} onChange={e => setEditingTeamCard({...editingTeamCard, profileImage: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Short Bio</label>
+                        <textarea className={`${inputCls} min-h-[80px] resize-none`} value={editingTeamCard.bio} onChange={e => setEditingTeamCard({...editingTeamCard, bio: e.target.value})} />
+                      </div>
+                      <button onClick={() => handleSaveTeamCard(editingTeamCard)} disabled={isSavingTeamCard} className="w-full py-2.5 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-70 transition-colors mt-2">
+                        {isSavingTeamCard ? 'Saving...' : 'Save Card'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Create Admin Modal Overlay */}
+              {isCreatingAdmin && (
+                <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className={`${cardCls} w-full max-w-md p-6 relative`}>
+                    <button onClick={() => setIsCreatingAdmin(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                    <h3 className="text-xl font-bold text-slate-900 mb-6">Create New Admin</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className={labelCls}>Full Name</label>
+                        <input type="text" className={inputCls} value={newAdminName} onChange={e => setNewAdminName(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Email Address</label>
+                        <input type="email" className={inputCls} value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Temporary Password</label>
+                        <input type="password" className={inputCls} value={newAdminPass} onChange={e => setNewAdminPass(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Role Level</label>
+                        <select className={inputCls} value={newAdminRole} onChange={e => setNewAdminRole(e.target.value as AdminRole)}>
+                          <option value="manager">Manager</option>
+                          <option value="chat_officer">Chat Officer</option>
+                          <option value="editor">Content Editor</option>
+                          <option value="support">Support Staff</option>
+                        </select>
+                      </div>
+                      <button onClick={handleCreateAdmin} disabled={isCreatingAdmin || !newAdminEmail || !newAdminPass || !newAdminName} className="w-full py-2.5 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-70 transition-colors mt-2">
+                        {isCreatingAdmin ? 'Creating...' : 'Create Admin Account'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === 'settings' && settings && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Platform Settings</h2>
+                <button onClick={handleSaveSettings} disabled={isSavingSettings} className="px-6 py-2.5 bg-[#0f172a] text-white font-bold rounded-lg shadow-sm hover:bg-slate-800 disabled:opacity-70 transition-colors">
+                  {isSavingSettings ? 'Saving...' : 'Save All Settings'}
+                </button>
+              </div>
+
+              <div className={`${cardCls} p-6`}>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Feature Flags</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {Object.entries(settings.features || {}).filter(([key]) => key !== 'eligibilityCheck').map(([key, value]) => (
+                    <div key={key} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                      <div>
+                        <p className="font-semibold text-slate-900 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                        <p className="text-xs text-slate-500">Enable or disable this module globally.</p>
+                      </div>
+                      <button onClick={() => handleToggleFeature(key as keyof FeatureFlags)} className={`w-12 h-6 rounded-full transition-colors relative ${value ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                        <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${value ? 'translate-x-6' : 'translate-x-0'}`}></span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`${cardCls} p-6`}>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">System Prompts</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelCls}>Eligibility Checker AI Prompt</label>
+                    <textarea 
+                      className={`${inputCls} min-h-[100px] resize-none`} 
+                      value={settings.systemPrompts?.eligibilityChecker || ''} 
+                      onChange={e => setSettings({...settings, systemPrompts: {...settings.systemPrompts, eligibilityChecker: e.target.value} as any})}
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">Instructions for Groq when analyzing a student's eligibility.</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Chat Bot Welcome Message</label>
+                    <input 
+                      type="text" 
+                      className={inputCls} 
+                      value={settings.chatBot.welcomeMessage} 
+                      onChange={e => setSettings({...settings, chatBot: {...settings.chatBot, welcomeMessage: e.target.value}})}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Chat Bot AI Prompt</label>
+                    <textarea 
+                      className={`${inputCls} min-h-[100px] resize-none`} 
+                      value={settings.systemPrompts?.chatBot || ''} 
+                      onChange={e => setSettings({...settings, systemPrompts: {...settings.systemPrompts, chatBot: e.target.value} as any})}
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">Instructions for Groq when responding to inquiries in the chat widget.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+          {/* AI CHATS TAB */}
+          {activeTab === 'chats' && (
+            <div className="max-w-7xl mx-auto h-[calc(100vh-160px)] flex gap-6">
+              {/* Sidebar List */}
+              <div className={`${cardCls} w-80 shrink-0 flex flex-col`}>
+                <div className="p-4 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900">AI Chat Sessions</h3>
+                  <p className="text-xs text-slate-500">{chatSessions.length} total sessions</p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                  {chatSessions.length === 0 ? (
+                    <p className="p-4 text-center text-sm text-slate-500">No AI chats found.</p>
+                  ) : (
+                    chatSessions.map(session => (
+                      <button key={session.id} onClick={() => setViewingChat(session)} className={`w-full text-left p-3 rounded-lg transition-colors flex items-center justify-between group ${viewingChat?.id === session.id ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50 border border-transparent'}`}>
+                        <div>
+                          <p className={`font-semibold text-sm truncate ${viewingChat?.id === session.id ? 'text-indigo-900' : 'text-slate-700'}`}>{session.visitorName || 'Anonymous'}</p>
+                          <p className="text-xs text-slate-400 mt-1">{new Date(session.lastMessageTime).toLocaleString()}</p>
+                        </div>
+                        <div onClick={e => { e.stopPropagation(); handleDeleteChat(session.id); }} className="w-8 h-8 rounded hover:bg-red-100 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all" title="Delete Session">
+                           <span className="material-symbols-outlined text-[16px]">delete</span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Chat View */}
+              <div className={`${cardCls} flex-1 flex flex-col`}>
+                {viewingChat ? (
+                  <>
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-indigo-600">robot_2</span> AI Chat Transcript
+                        </h3>
+                        <p className="text-sm text-slate-500 mt-1">Chatting with: <span className="font-medium text-slate-700">{viewingChat.visitorName || 'Anonymous Visitor'}</span></p>
+                      </div>
+                      <span className="px-3 py-1 bg-slate-200 text-slate-700 text-xs font-bold rounded-full">{viewingChat.messageCount} Messages</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
+                      {viewingChat.messages.map((m, i) => (
+                        <div key={i} className={`flex gap-4 ${m.role === 'model' ? '' : 'flex-row-reverse'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 ${m.role === 'model' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}`}>
+                            {m.role === 'model' ? <span className="material-symbols-outlined text-[16px]">robot_2</span> : <span className="material-symbols-outlined text-[16px]">person</span>}
+                          </div>
+                          <div className={`p-4 rounded-2xl max-w-[80%] ${m.role === 'model' ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm' : 'bg-[#0f172a] text-white rounded-tr-sm'}`}>
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</p>
+                            <p className={`text-[10px] mt-2 ${m.role === 'model' ? 'text-slate-400' : 'text-slate-400'}`}>{new Date(m.timestamp).toLocaleTimeString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                    <span className="material-symbols-outlined text-4xl mb-4 opacity-50">forum</span>
+                    <p>Select a chat session to view the transcript</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* CHAT INSIGHTS TAB */}
+          {activeTab === 'chat_insights' && (
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">AI Chat Insights</h2>
+                  <p className="text-slate-500 mt-1">Analyze all recorded AI chat sessions to discover common questions and concerns.</p>
+                </div>
+                <button onClick={handleChatAnalysis} disabled={loadingAI || chatSessions.length === 0} className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
+                  <span className={`material-symbols-outlined ${loadingAI ? 'animate-spin' : ''}`}>magic_button</span> 
+                  {loadingAI ? 'Analyzing Transcripts...' : 'Generate AI Insights'}
+                </button>
+              </div>
+
+              {chatAnalysis ? (
+                 <div className="grid lg:grid-cols-3 gap-6">
+                   <div className="lg:col-span-2 space-y-6">
+                     <div className={`${cardCls} p-8 bg-gradient-to-br from-indigo-50 to-white border-indigo-100`}>
+                        <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-indigo-600">summarize</span> Executive Summary</h3>
+                        <p className="text-slate-700 leading-relaxed">{chatAnalysis.summary}</p>
+                     </div>
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-amber-500">warning</span> Common User Concerns</h3>
+                        <ul className="space-y-3">
+                          {chatAnalysis.commonConcerns.map((c, i) => (
+                             <li key={i} className="flex gap-3 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100"><span className="text-amber-500 font-bold">•</span> {c}</li>
+                          ))}
+                        </ul>
+                     </div>
+                     {chatAnalysis.strategicInsight && (
+                       <div className={`${cardCls} p-6 bg-slate-900 text-white`}>
+                          <h3 className="font-bold mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-emerald-400">lightbulb</span> Strategic Recommendation</h3>
+                          <p className="text-slate-300 leading-relaxed">{chatAnalysis.strategicInsight}</p>
+                       </div>
+                     )}
+                   </div>
+                   <div className="space-y-6">
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4">Sentiment Analysis</h3>
+                        <div className="space-y-4">
+                           <div>
+                             <div className="flex justify-between text-sm mb-1"><span className="text-emerald-600 font-semibold">Positive</span><span>{chatAnalysis.sentiment.positive}%</span></div>
+                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-emerald-500 h-full" style={{width: `${chatAnalysis.sentiment.positive}%`}}></div></div>
+                           </div>
+                           <div>
+                             <div className="flex justify-between text-sm mb-1"><span className="text-slate-600 font-semibold">Neutral</span><span>{chatAnalysis.sentiment.neutral}%</span></div>
+                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-slate-400 h-full" style={{width: `${chatAnalysis.sentiment.neutral}%`}}></div></div>
+                           </div>
+                           <div>
+                             <div className="flex justify-between text-sm mb-1"><span className="text-red-600 font-semibold">Negative</span><span>{chatAnalysis.sentiment.negative}%</span></div>
+                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-red-500 h-full" style={{width: `${chatAnalysis.sentiment.negative}%`}}></div></div>
+                           </div>
+                        </div>
+                     </div>
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4">Key Themes</h3>
+                        <div className="space-y-3">
+                          {chatAnalysis.themes.map((t, i) => (
+                             <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                               <span className="font-medium text-slate-700">{t.topic}</span>
+                               <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{t.count} mentions</span>
+                             </div>
+                          ))}
+                        </div>
+                     </div>
+                   </div>
+                 </div>
+              ) : (
+                <div className={`${cardCls} p-12 flex flex-col items-center justify-center text-center`}>
+                  <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined text-3xl">analytics</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">No Insights Generated Yet</h3>
+                  <p className="text-slate-500 max-w-md mx-auto">Click the button above to run Groq AI analysis on all past chat sessions to discover what students are asking the bot about most frequently.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* INQUIRY INSIGHTS TAB */}
+          {activeTab === 'insights' && (
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Inquiry Insights</h2>
+                  <p className="text-slate-500 mt-1">Analyze all admission inquiries to discover trends and user needs.</p>
+                </div>
+                <button onClick={handleAIAnalysis} disabled={loadingAI || localFeedback.length === 0} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
+                  <span className={`material-symbols-outlined ${loadingAI ? 'animate-spin' : ''}`}>magic_button</span> 
+                  {loadingAI ? 'Analyzing Inquiries...' : 'Generate Form Insights'}
+                </button>
+              </div>
+
+              {analysis ? (
+                 <div className="grid lg:grid-cols-3 gap-6">
+                   <div className="lg:col-span-2 space-y-6">
+                     <div className={`${cardCls} p-8 bg-gradient-to-br from-blue-50 to-white border-blue-100`}>
+                        <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-blue-600">summarize</span> Executive Summary</h3>
+                        <p className="text-slate-700 leading-relaxed">{analysis.summary}</p>
+                     </div>
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-amber-500">warning</span> Common User Concerns</h3>
+                        <ul className="space-y-3">
+                          {analysis.commonConcerns.map((c, i) => (
+                             <li key={i} className="flex gap-3 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100"><span className="text-amber-500 font-bold">•</span> {c}</li>
+                          ))}
+                        </ul>
+                     </div>
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-emerald-500">add_task</span> Suggested Content Ideas</h3>
+                        <ul className="space-y-3">
+                          {analysis.suggestedContentIdeas.map((c, i) => (
+                             <li key={i} className="flex gap-3 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100"><span className="text-emerald-500 font-bold">•</span> {c}</li>
+                          ))}
+                        </ul>
+                     </div>
+                   </div>
+                   <div className="space-y-6">
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4">Key Themes</h3>
+                        <div className="space-y-3">
+                          {analysis.themes.map((t, i) => (
+                             <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                               <span className="font-medium text-slate-700">{t.topic}</span>
+                               <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{t.count} mentions</span>
+                             </div>
+                          ))}
+                        </div>
+                     </div>
+                   </div>
+                 </div>
+              ) : (
+                <div className={`${cardCls} p-12 flex flex-col items-center justify-center text-center`}>
+                  <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined text-3xl">insights</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">No Insights Generated Yet</h3>
+                  <p className="text-slate-500 max-w-md mx-auto">Click the button above to run Groq AI analysis on all past student inquiries to discover what students are looking for most frequently.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* FEEDBACK HUB TAB */}
+          {activeTab === 'feedback_hub' && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Platform Feedback Hub</h2>
+                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-bold text-xs">{platformFeedback.length} entries</span>
+              </div>
+              <div className={`${cardCls} overflow-hidden`}>
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-xs">
+                    <tr>
+                      <th className="p-4">Date</th>
+                      <th className="p-4">Type</th>
+                      <th className="p-4 w-1/2">Message</th>
+                      <th className="p-4">Sender</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {platformFeedback.length === 0 ? (
+                      <tr><td colSpan={4} className="p-8 text-center text-slate-500">No platform feedback found.</td></tr>
+                    ) : (
+                      platformFeedback.sort((a, b) => b.timestamp - a.timestamp).map(fb => (
+                        <tr key={fb.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 whitespace-nowrap text-slate-600">{new Date(fb.timestamp).toLocaleDateString()}</td>
+                          <td className="p-4">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-700 font-semibold text-[10px] rounded uppercase">{fb.feedbackType}</span>
+                          </td>
+                          <td className="p-4 text-slate-800">{fb.message}</td>
+                          <td className="p-4 text-slate-500 text-xs">
+                            {fb.email ? <a href={`mailto:${fb.email}`} className="text-indigo-600 hover:underline">{fb.email}</a> : 'Anonymous'}
+                            <br/><span className="capitalize text-slate-400">({fb.userRole})</span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'audit_logs' && <AuditLogsPage />}
 
         </main>
       </div>

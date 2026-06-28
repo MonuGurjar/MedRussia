@@ -8,12 +8,15 @@ import { Login } from './components/Login';
 import { ChatWidget } from './components/ChatWidget';
 import { CurrencyConverter } from './components/CurrencyConverter';
 import { SocialFab } from './components/SocialFab';
-import { LegalModal, LegalPageType } from './components/LegalPages';
+import { LegalModal, LegalPageType, LegalPage } from './components/LegalPages';
+import { UniversitiesList } from './components/UniversitiesList';
+import { UniversityDetails } from './components/UniversityDetails';
 import { LandingPage } from './components/LandingPage';
 import { TeamPage } from './components/TeamPage';
 import { getAllFeedback, syncUsers } from './services/db';
 import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
+import { supabase } from './lib/supabase';
 
 const ProtectedRoute = ({ children, role, user }: { children?: React.ReactNode, role?: 'admin' | 'student', user: User | null }) => {
   if (!user) return <Navigate to="/auth" replace />;
@@ -25,6 +28,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [showCurrencyConverter, setShowCurrencyConverter] = useState(false);
   const [heroNeetScore, setHeroNeetScore] = useState('');
@@ -57,25 +61,64 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('mr_active_user');
-    if (savedUser) {
-      try { setCurrentUser(JSON.parse(savedUser)); } catch (e) { console.error("Failed to parse user", e); }
-    }
     refreshData();
+
+    // Initialize Supabase Auth Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        try {
+          const res = await fetch(`/api/users?id=${session.user.id}`, {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+          });
+          if (res.ok) {
+            const profile = await res.json();
+            setCurrentUser(profile);
+            localStorage.setItem('mr_active_user', JSON.stringify(profile));
+          } else if (event === 'SIGNED_IN') {
+            // New user from OAuth
+            const newUser: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              role: 'student',
+              name: session.user.user_metadata?.full_name || 'New User',
+              shortlistedUniversities: [],
+              documents: {},
+              notifications: [],
+            };
+            await fetch('/api/users', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify(newUser)
+            });
+            setCurrentUser(newUser);
+          }
+        } catch (e) {
+          console.error('Error fetching user profile', e);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLoginSuccess = (user: User) => {
-    localStorage.setItem('mr_active_user', JSON.stringify(user));
     setCurrentUser(user);
-    navigate(user.role === 'admin' ? '/admin' : '/user');
-    refreshData();
+    if (user.role === 'admin') navigate('/admin', { replace: true });
+    else navigate('/user', { replace: true });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('mr_active_user');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
     navigate('/');
-    refreshData();
   };
 
   const handleHeaderAction = () => {
@@ -136,17 +179,29 @@ const App: React.FC = () => {
               handleSpecificNavigation={(v) => { if (v === 'compare') navigate('/compare'); }}
               refreshData={refreshData}
               FAQ_DATA={FAQ_DATA}
+              currentUser={currentUser}
             />
           } />
 
+          <Route path="/universities" element={<UniversitiesList />} />
+          <Route path="/university/:id" element={<UniversityDetails />} />
+
           <Route path="/auth" element={
-            !currentUser ? (
+            isAuthLoading ? (
+              <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                <p className="text-on-surface-variant font-medium animate-pulse">Authenticating...</p>
+              </div>
+            ) : !currentUser ? (
               <Login onAuthSuccess={handleLoginSuccess} onCancel={() => navigate('/')} onShowLegal={(page) => setActiveLegalPage(page)} />
             ) : <Navigate to={currentUser.role === 'admin' ? '/admin' : '/user'} replace />
           } />
 
           <Route path="/compare" element={<UniversityCompare />} />
           <Route path="/team" element={<TeamPage />} />
+          <Route path="/privacy" element={<LegalPage page="privacy" />} />
+          <Route path="/terms" element={<LegalPage page="terms" />} />
+          <Route path="/disclaimer" element={<LegalPage page="disclaimer" />} />
 
           <Route path="/admin" element={
             <ProtectedRoute role="admin" user={currentUser}>
@@ -174,7 +229,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-on-primary font-bold text-lg">MG</div>
                   <div>
-                    <span className="text-lg font-bold tracking-tight block text-white">MedGuide Russia</span>
+                    <span className="text-lg font-bold tracking-tight block text-white">MBBS Russia</span>
                     <span className="text-on-primary-container text-xs font-semibold">Medical Admissions</span>
                   </div>
                 </div>
@@ -191,7 +246,7 @@ const App: React.FC = () => {
               <div className="space-y-5">
                 <h4 className="text-label-sm text-on-tertiary-container uppercase tracking-widest">Resources</h4>
                 <ul className="space-y-3">
-                  {[{ label: 'Privacy Policy', action: () => setActiveLegalPage('privacy') }, { label: 'Terms of Service', action: () => setActiveLegalPage('terms') }, { label: 'Disclaimer', action: () => setActiveLegalPage('disclaimer') }].map(i => (
+                  {[{ label: 'Privacy Policy', action: () => { navigate('/privacy'); window.scrollTo(0,0); } }, { label: 'Terms of Service', action: () => { navigate('/terms'); window.scrollTo(0,0); } }, { label: 'Disclaimer', action: () => { navigate('/disclaimer'); window.scrollTo(0,0); } }].map(i => (
                     <li key={i.label}><button onClick={i.action} className="text-on-tertiary-container hover:text-white text-sm font-medium transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-fixed-dim" />{i.label}</button></li>
                   ))}
                 </ul>
@@ -207,7 +262,7 @@ const App: React.FC = () => {
           </div>
           <div className="border-t border-white/5">
             <div className="max-w-container-max mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-on-tertiary-container text-xs font-medium">© {new Date().getFullYear()} MedGuide Russia. Made with ❤ in Russia & India</p>
+              <p className="text-on-tertiary-container text-xs font-medium">© {new Date().getFullYear()} MBBS Russia. Made with ❤ in Russia & India</p>
               <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 border border-white/10 flex items-center justify-center text-on-tertiary-container hover:text-white transition-all">
                 <span className="material-symbols-outlined" style={{fontSize:'18px'}}>keyboard_arrow_up</span>
               </button>

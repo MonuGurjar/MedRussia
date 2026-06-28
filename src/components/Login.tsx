@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { registerUser, loginUser, getSecurityQuestion, resetPassword } from '../services/db';
+import { registerUser, loginUser } from '../services/db';
+import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { LegalPageType } from './LegalPages';
 
@@ -11,8 +12,6 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
   const [formData, setFormData] = useState({ identifier: '', password: '', name: '', email: '', phone: '' });
   const [resetStep, setResetStep] = useState<1 | 2 | 3>(1);
   const [resetEmail, setResetEmail] = useState('');
-  const [securityQuestion, setSecurityQuestion] = useState('');
-  const [securityAnswer, setSecurityAnswer] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -35,14 +34,29 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
 
   const handleForgotStep1 = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true); setError('');
-    try { const question = await getSecurityQuestion(resetEmail); if (question) { setSecurityQuestion(question); setResetStep(2); } else { setError("Email not found or no security question set."); } } catch (e) { setError("Lookup failed"); } finally { setIsSubmitting(false); }
+    try { 
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail);
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccessMsg("Password reset email sent! Please check your inbox."); 
+        setTimeout(() => { setMode('login'); setResetStep(1); setResetEmail(''); setSuccessMsg(''); }, 3000); 
+      }
+    } catch (e) { setError("Failed to send reset email"); } finally { setIsSubmitting(false); }
   };
 
-  const handleForgotStep2 = (e: React.FormEvent) => { e.preventDefault(); if (!securityAnswer.trim()) { setError("Answer required"); return; } setError(''); setResetStep(3); };
-
-  const handleForgotStep3 = async (e: React.FormEvent) => {
-    e.preventDefault(); setIsSubmitting(true); setError('');
-    try { const success = await resetPassword(resetEmail, securityAnswer, newPassword); if (success) { setSuccessMsg("Password reset successfully! Please login."); setTimeout(() => { setMode('login'); setResetStep(1); setResetEmail(''); setSecurityAnswer(''); setNewPassword(''); setSuccessMsg(''); }, 2000); } else { setError("Incorrect security answer."); } } catch (e) { setError("Reset failed"); } finally { setIsSubmitting(false); }
+  const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ 
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth`
+        }
+      });
+      if (error) setError(error.message);
+    } catch (e) {
+      setError("OAuth login failed");
+    }
   };
 
   const inputCls = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-[15px]";
@@ -128,13 +142,11 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
               </button>
             </form>
           ) : (
-            <form onSubmit={resetStep === 1 ? handleForgotStep1 : resetStep === 2 ? handleForgotStep2 : handleForgotStep3} className="space-y-5">
-              {resetStep === 1 && <div><label className={labelCls}>Enter Email Address</label><input type="email" required className={inputCls} value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="email@example.com" /></div>}
-              {resetStep === 2 && <div><label className={labelCls}>Security Question</label><div className="p-4 bg-slate-50 rounded-xl text-sm font-bold text-slate-800 border border-slate-200 mb-4">{securityQuestion}</div><label className={labelCls}>Your Answer</label><input type="text" required className={inputCls} value={securityAnswer} onChange={e => setSecurityAnswer(e.target.value)} placeholder="Answer..." /></div>}
-              {resetStep === 3 && <div><label className={labelCls}>New Password</label><input type="password" required className={inputCls} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New Password" /></div>}
+            <form onSubmit={handleForgotStep1} className="space-y-5">
+              <div><label className={labelCls}>Enter Email Address</label><input type="email" required className={inputCls} value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="email@example.com" /></div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setMode('login'); setResetStep(1); }} className="flex-1 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-[14px]">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-[14px]">{isSubmitting ? '...' : (resetStep === 3 ? 'Reset Password' : 'Next')}</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-[14px]">{isSubmitting ? 'Sending...' : 'Send Reset Link'}</button>
               </div>
             </form>
           )}
@@ -148,10 +160,10 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <button type="button" className="flex justify-center items-center py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                <button type="button" onClick={() => handleOAuthLogin('google')} className="flex justify-center items-center py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                   <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/><path d="M1 1h22v22H1z" fill="none"/></svg>
                 </button>
-                <button type="button" className="flex justify-center items-center py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                <button type="button" onClick={() => handleOAuthLogin('facebook')} className="flex justify-center items-center py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                    <svg className="w-5 h-5 text-slate-900" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.78.78-.04 1.84-.71 3.24-.65 1.16.06 2.07.41 2.86 1.03-1.8 1.17-1.52 3.63.35 4.54-.53 1.48-1.12 2.84-2.18 3.97-1.07 1.13-1.63 1.13-2.31 1.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.02 4.41-3.74 4.25z"/></svg>
                 </button>
               </div>

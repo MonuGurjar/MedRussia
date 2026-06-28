@@ -17,7 +17,7 @@ export const PlatformFeedbackModal: React.FC<PlatformFeedbackModalProps> = ({ cl
       await savePlatformFeedback({ feedbackType: formData.feedbackType as any, message: formData.message, email: formData.email, userRole: activeUser ? 'user' : 'guest' });
       setFormData({ feedbackType: 'Feature suggestion', message: '', email: '' });
       setIsOpen(false);
-      alert("Thank you! Your feedback helps us improve MedGuide Russia.");
+      alert("Thank you! Your feedback helps us improve MBBS Russia.");
     } catch (error) { alert("Failed to submit feedback."); } finally { setIsSubmitting(false); }
   };
 
@@ -40,7 +40,7 @@ export const PlatformFeedbackModal: React.FC<PlatformFeedbackModalProps> = ({ cl
             </button>
             <div className="mb-6">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4"><span className="material-symbols-outlined" style={{fontSize:'24px'}}>rate_review</span></div>
-              <h3 className="text-headline-md text-on-surface">Help Improve MedGuide Russia</h3>
+              <h3 className="text-headline-md text-on-surface">Help Improve MBBS Russia</h3>
               <p className="text-body-md text-on-surface-variant mt-2">Spotted a bug? Have a cool feature idea? We'd love to hear from you!</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">

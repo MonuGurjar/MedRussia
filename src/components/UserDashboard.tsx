@@ -86,6 +86,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [uniSearch, setUniSearch] = useState('');
   const [shortlist, setShortlist] = useState<string[]>(user.shortlistedUniversities || []);
+  const [budgetFilter, setBudgetFilter] = useState<string>('all');
+  const [cityFilter, setCityFilter] = useState<string[]>([]);
+  const [citySearch, setCitySearch] = useState('');
   const [newInquiry, setNewInquiry] = useState({ targetUniversity: '', message: '', budget: '', currentStatus: 'NEET Aspirant' as any });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eligibilityDataFound, setEligibilityDataFound] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
     if (pendingScore) { setEligibilityDataFound(pendingScore); setEligibilityForm(prev => ({ ...prev, neetScore: pendingScore })); setNewInquiry(prev => ({ ...prev, currentStatus: 'NEET Aspirant', message: `Eligibility Check: My NEET Score is ${pendingScore}. What are my chances?`, budget: 'Not sure yet' })); setActiveView('eligibility'); localStorage.removeItem('mr_neet_score'); }
   }, [user.id]);
 
-  const handleToggleShortlist = (uni: string) => { const newList = toggleShortlist(user.id, uni); setShortlist([...newList]); };
+  const handleToggleShortlist = async (uni: string) => { const newList = await toggleShortlist(user.id, uni); setShortlist([...newList]); };
 
   const handleSubmitInquiry = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true);
@@ -129,11 +132,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
 
   const handleSaveSecurityQuestion = async () => {
     if (!recoveryData.answer.trim()) return;
-    try { const updatedUser = { ...user, recoveryQuestion: recoveryData.question, recoveryAnswer: recoveryData.answer }; await updateUser(updatedUser); localStorage.setItem('mr_active_user', JSON.stringify(updatedUser)); setShowSecurityPrompt(false); alert("Recovery question saved!"); } catch (e) { alert("Failed to save security question."); }
+    try { const updatedUser = { ...user, recoveryQuestion: recoveryData.question, recoveryAnswer: recoveryData.answer }; await updateUser(updatedUser); setShowSecurityPrompt(false); alert("Recovery question saved!"); } catch (e) { alert("Failed to save security question."); }
   };
 
   const handleCheckEligibility = async () => { setCheckingEligibility(true); try { const result = await checkEligibility(eligibilityForm); setEligibilityResult(result); await updateUserEligibility(user.id, eligibilityForm, result); } catch (e) { alert("Failed check"); } finally { setCheckingEligibility(false); } };
-  const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); localStorage.setItem('mr_active_user', JSON.stringify(updatedUser)); setIsUpdatingProfile(false); alert('Profile updated!'); } catch (e) { setIsUpdatingProfile(false); } };
+  const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); setIsUpdatingProfile(false); alert('Profile updated!'); } catch (e) { setIsUpdatingProfile(false); } };
   const handleSettingsSave = async () => { setSavingSettings(true); await new Promise(r => setTimeout(r, 800)); if (passData.new && passData.new !== passData.confirm) { alert("Passwords do not match!"); setSavingSettings(false); return; } setPassData({ current: '', new: '', confirm: '' }); setSavingSettings(false); alert("Settings updated!"); };
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { if (file.size > 2 * 1024 * 1024) { alert("Image too large"); return; } const reader = new FileReader(); reader.onloadend = () => setAvatar(reader.result as string); reader.readAsDataURL(file); } };
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Max 5MB"); return; } setUploadingDoc(type); try { const uploadData = await uploadFileToCloudinary(file); const metaData: DocumentMetadata = { url: uploadData.secure_url, publicId: uploadData.public_id, status: 'uploaded', uploadedAt: Date.now() }; await updateUserDocuments(user.id, type, metaData); if (!user.documents) user.documents = {}; user.documents[type] = metaData; alert(`Uploaded!`); } catch (err: any) { alert(`Failed: ${err.message}`); } finally { setUploadingDoc(null); } };
@@ -145,6 +148,21 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const inputCls = "w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800";
   const labelCls = "text-xs font-bold text-slate-500 mb-1.5 block tracking-wide";
   const cardCls = "bg-white rounded-[24px] shadow-sm border border-slate-200";
+
+  const allCities = Array.from(new Set(RUSSIAN_UNIVERSITIES.map(u => getUniversityData(u).location))).sort();
+  const handleCityToggle = (city: string) => setCityFilter(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]);
+
+  const filteredUnis = RUSSIAN_UNIVERSITIES.filter(uniName => {
+    const data = getUniversityData(uniName);
+    if (budgetFilter === '<300k' && data.tuition_fee_rub >= 300000) return false;
+    if (budgetFilter === '300k-500k' && (data.tuition_fee_rub < 300000 || data.tuition_fee_rub > 500000)) return false;
+    if (budgetFilter === '500k-700k' && (data.tuition_fee_rub < 500000 || data.tuition_fee_rub > 700000)) return false;
+    if (budgetFilter === '>700k' && data.tuition_fee_rub <= 700000) return false;
+
+    if (cityFilter.length > 0 && !cityFilter.includes(data.location)) return false;
+
+    return true;
+  });
   
   // Custom scrollbar classes added in global css (assumed) or just use standard
   return (
@@ -156,7 +174,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#0B1A30] rounded flex items-center justify-center text-white font-bold text-sm shadow-sm">M</div>
             <div>
-              <h1 className="font-bold text-[#0B1A30] text-lg leading-tight">MedGuide Russia</h1>
+              <h1 className="font-bold text-[#0B1A30] text-lg leading-tight">MBBS Russia</h1>
               <p className="text-[10px] font-semibold text-slate-500 tracking-wider">MEDICAL ADMISSIONS</p>
             </div>
           </div>
@@ -217,9 +235,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
               <span className="material-symbols-outlined text-[24px]">notifications_none</span>
               {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>}
             </button>
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-[#0f172a] text-white flex items-center justify-center font-bold">
+            <button onClick={() => setActiveView('profile' as any)} className="w-10 h-10 rounded-full overflow-hidden bg-[#0f172a] text-white flex items-center justify-center font-bold cursor-pointer hover:ring-2 hover:ring-slate-300 transition-all">
                {avatar ? <img src={avatar} className="w-full h-full object-cover" alt="Avatar" /> : user.name.charAt(0)}
-            </div>
+            </button>
           </div>
         </header>
 
@@ -424,7 +442,32 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                       </div>
                     </>
                   ) : (
-                    <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Select a chat to view</div>
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/50">
+                      <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                        <span className="material-symbols-outlined text-[32px]">support_agent</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">How can we help you today?</h3>
+                      <p className="text-slate-500 mb-8 max-w-sm">Start a new conversation with our admission counselors to get answers to your questions.</p>
+                      
+                      <div className="w-full max-w-lg bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                        <div className="border border-slate-200 rounded-xl bg-slate-50 flex items-center p-2 focus-within:border-slate-400 transition-colors">
+                          <label className="p-2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                            <span className="material-symbols-outlined">attach_file</span>
+                            <input type="file" className="hidden" onChange={handleStudentChatFileUpload} />
+                          </label>
+                          <input type="text" className="flex-1 bg-transparent border-none outline-none text-sm px-2 text-slate-800" placeholder="Type your message to start a new chat..." value={studentChatMsg} onChange={e => setStudentChatMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleStartNewChat()} />
+                          <button onClick={handleStartNewChat} className="bg-[#0f172a] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-800 transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">send</span>
+                          </button>
+                        </div>
+                        {studentChatAttachment && (
+                          <div className="mt-3 text-left bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-2">
+                             <span className="material-symbols-outlined text-[14px]">attach_file</span> {studentChatAttachment.name}
+                             <button onClick={() => setStudentChatAttachment(null)} className="hover:text-blue-900 ml-1"><span className="material-symbols-outlined text-[14px]">close</span></button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                </div>
             </div>
@@ -437,16 +480,17 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                 <div className="w-full md:w-56 shrink-0 space-y-8">
                    <div className="flex justify-between items-center">
                      <h3 className="font-bold text-slate-900 text-base">Filters</h3>
-                     <button className="text-xs text-amber-600 font-bold hover:text-amber-700">Clear All</button>
+                     <button onClick={() => { setBudgetFilter('all'); setCityFilter([]); }} className="text-xs text-amber-600 font-bold hover:text-amber-700">Clear All</button>
                    </div>
                    
                    <div>
                      <h4 className="font-bold text-slate-800 text-sm mb-4">Annual Budget (RUB)</h4>
                      <div className="space-y-3 text-sm text-slate-600">
-                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> &lt; 300,000 ₽</label>
-                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" defaultChecked /> <span className="font-medium text-slate-900">300k - 500k ₽</span></label>
-                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> 500k - 700k ₽</label>
-                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> &gt; 700,000 ₽</label>
+                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" checked={budgetFilter === 'all'} onChange={() => setBudgetFilter('all')} className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> <span className={budgetFilter === 'all' ? 'font-medium text-slate-900' : ''}>Any Budget</span></label>
+                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" checked={budgetFilter === '<300k'} onChange={() => setBudgetFilter('<300k')} className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> <span className={budgetFilter === '<300k' ? 'font-medium text-slate-900' : ''}>&lt; 300,000 ₽</span></label>
+                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" checked={budgetFilter === '300k-500k'} onChange={() => setBudgetFilter('300k-500k')} className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> <span className={budgetFilter === '300k-500k' ? 'font-medium text-slate-900' : ''}>300k - 500k ₽</span></label>
+                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" checked={budgetFilter === '500k-700k'} onChange={() => setBudgetFilter('500k-700k')} className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> <span className={budgetFilter === '500k-700k' ? 'font-medium text-slate-900' : ''}>500k - 700k ₽</span></label>
+                       <label className="flex items-center gap-3 cursor-pointer"><input type="radio" name="b" checked={budgetFilter === '>700k'} onChange={() => setBudgetFilter('>700k')} className="w-4 h-4 text-purple-600 focus:ring-purple-600 accent-purple-600" /> <span className={budgetFilter === '>700k' ? 'font-medium text-slate-900' : ''}>&gt; 700,000 ₽</span></label>
                      </div>
                    </div>
 
@@ -454,12 +498,18 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                      <h4 className="font-bold text-slate-800 text-sm mb-4">City</h4>
                      <div className="relative mb-3">
                        <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-[18px]">search</span>
-                       <input type="text" placeholder="Search cities..." className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-9 pr-3 text-sm focus:ring-1 focus:ring-slate-300 outline-none" />
+                       <input type="text" placeholder="Search cities..." value={citySearch} onChange={e => setCitySearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-9 pr-3 text-sm focus:ring-1 focus:ring-slate-300 outline-none" />
                      </div>
-                     <div className="space-y-3 text-sm text-slate-600">
-                       <label className="flex items-center gap-3 justify-between cursor-pointer"><div className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 rounded text-purple-600 focus:ring-purple-600 accent-purple-600" defaultChecked /> <span className="font-medium text-slate-900">Moscow</span></div><span className="text-slate-400">12</span></label>
-                       <label className="flex items-center gap-3 justify-between cursor-pointer"><div className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 rounded text-purple-600 focus:ring-purple-600 accent-purple-600" /> St. Petersburg</div><span className="text-slate-400">8</span></label>
-                       <label className="flex items-center gap-3 justify-between cursor-pointer"><div className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 rounded text-purple-600 focus:ring-purple-600 accent-purple-600" defaultChecked /> <span className="font-medium text-slate-900">Kazan</span></div><span className="text-slate-400">3</span></label>
+                     <div className="space-y-3 text-sm text-slate-600 max-h-48 overflow-y-auto pr-2">
+                       {allCities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())).map(city => (
+                         <label key={city} className="flex items-center gap-3 justify-between cursor-pointer">
+                           <div className="flex items-center gap-3">
+                             <input type="checkbox" checked={cityFilter.includes(city)} onChange={() => handleCityToggle(city)} className="w-4 h-4 rounded text-purple-600 focus:ring-purple-600 accent-purple-600" /> 
+                             <span className={cityFilter.includes(city) ? 'font-medium text-slate-900' : ''}>{city}</span>
+                           </div>
+                           <span className="text-slate-400">{RUSSIAN_UNIVERSITIES.filter(u => getUniversityData(u).location === city).length}</span>
+                         </label>
+                       ))}
                      </div>
                    </div>
                 </div>
@@ -469,17 +519,18 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Discover Universities</h3>
-                      <p className="text-sm text-slate-500 mt-1">Showing {RUSSIAN_UNIVERSITIES.length} institutions matching your criteria.</p>
+                      <p className="text-sm text-slate-500 mt-1">Showing {filteredUnis.length} institutions matching your criteria.</p>
                     </div>
                     <div className="flex gap-2 flex-wrap justify-end max-w-sm">
-                       <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1">300k - 500k ₽ <button className="material-symbols-outlined text-[14px]">close</button></span>
-                       <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1">Moscow, Kazan <button className="material-symbols-outlined text-[14px]">close</button></span>
+                       {budgetFilter !== 'all' && <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1">{budgetFilter} <button onClick={() => setBudgetFilter('all')} className="material-symbols-outlined text-[14px]">close</button></span>}
+                       {cityFilter.map(c => <span key={c} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1">{c} <button onClick={() => handleCityToggle(c)} className="material-symbols-outlined text-[14px]">close</button></span>)}
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {RUSSIAN_UNIVERSITIES.map((uniName, idx) => {
+                    {filteredUnis.map((uniName, idx) => {
                        const data = getUniversityData(uniName);
+                       const isShortlisted = shortlist.includes(uniName);
                        return (
                          <div key={idx} className="bg-white rounded-[24px] border border-slate-200 overflow-hidden flex flex-col group shadow-sm">
                            <div className="h-44 bg-gradient-to-br from-slate-700 to-slate-900 relative">
@@ -488,8 +539,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                               <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-900 flex items-center gap-1">
                                 <span className="material-symbols-outlined text-[14px]">star</span> #{idx + 1} Ranked
                               </div>
-                              <button className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
-                                <span className="material-symbols-outlined text-[18px]">favorite_border</span>
+                              <button onClick={() => handleToggleShortlist(uniName)} className={`absolute top-3 right-3 w-8 h-8 ${isShortlisted ? 'bg-red-500 text-white' : 'bg-black/20 text-white'} backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:text-red-500 transition-colors`}>
+                                <span className="material-symbols-outlined text-[18px]">{isShortlisted ? 'favorite' : 'favorite_border'}</span>
                               </button>
                               <div className="absolute bottom-3 left-3 text-white text-xs font-semibold flex items-center gap-1 drop-shadow-md">
                                 <span className="material-symbols-outlined text-[14px]">location_on</span> {data.location}
@@ -514,7 +565,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                              
                              <div className="flex gap-2">
                                <button className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors">Details</button>
-                               <button className="flex-1 py-2.5 bg-[#0f172a] text-white font-bold rounded-xl text-sm hover:bg-slate-800 transition-colors">Shortlist</button>
+                               <button onClick={() => handleToggleShortlist(uniName)} className={`flex-1 py-2.5 ${isShortlisted ? 'bg-slate-200 text-slate-700' : 'bg-[#0f172a] text-white'} font-bold rounded-xl text-sm hover:bg-slate-800 transition-colors`}>
+                                 {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+                               </button>
                              </div>
                            </div>
                          </div>
@@ -552,40 +605,51 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                      <div>
                        <label className="text-xs font-bold text-slate-500 mb-1.5 block tracking-wide">12th PCB % <span className="text-red-500">*</span></label>
                        <div className="relative">
-                         <input type="number" className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 pr-12 transition-shadow" placeholder="e.g. 75.5" />
+                         <input type="number" value={eligibilityForm.pcbPercentage} onChange={e => setEligibilityForm({...eligibilityForm, pcbPercentage: e.target.value})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 pr-12 transition-shadow" placeholder="e.g. 75.5" />
                          <span className="absolute right-3 top-3 bottom-3 flex items-center justify-center bg-slate-100 text-slate-400 font-bold px-3 rounded-xl">%</span>
                        </div>
                      </div>
                      <div>
                        <label className="text-xs font-bold text-slate-500 mb-1.5 block tracking-wide">NEET Score <span className="text-red-500">*</span></label>
                        <div className="relative">
-                         <input type="number" className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 pr-12 transition-shadow" placeholder="e.g. 450" />
+                         <input type="number" value={eligibilityForm.neetScore} onChange={e => setEligibilityForm({...eligibilityForm, neetScore: e.target.value})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 pr-12 transition-shadow" placeholder="e.g. 450" />
                          <span className="material-symbols-outlined absolute right-3 top-3 bottom-3 flex items-center justify-center text-slate-400 bg-slate-100 px-2 rounded-xl">school</span>
                        </div>
                      </div>
                      <div>
                        <label className="text-xs font-bold text-slate-500 mb-1.5 block tracking-wide">Application Category <span className="text-red-500">*</span></label>
-                       <select className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 appearance-none cursor-pointer transition-shadow" style={{ backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6"/></svg>\')', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.2em' }}><option>Select Category</option><option>General</option></select>
+                       <select value={eligibilityForm.category} onChange={e => setEligibilityForm({...eligibilityForm, category: e.target.value as 'General' | 'Reserved'})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 appearance-none cursor-pointer transition-shadow" style={{ backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6"/></svg>\')', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.2em' }}><option>General</option><option>Reserved</option></select>
                      </div>
                      <div>
                        <label className="text-xs font-bold text-slate-500 mb-1.5 block tracking-wide">Passport Status <span className="text-red-500">*</span></label>
-                       <select className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 appearance-none cursor-pointer transition-shadow" style={{ backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6"/></svg>\')', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.2em' }}><option>Select Status</option><option>Ready</option></select>
+                       <select value={eligibilityForm.passportStatus} onChange={e => setEligibilityForm({...eligibilityForm, passportStatus: e.target.value as any})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 appearance-none cursor-pointer transition-shadow" style={{ backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6"/></svg>\')', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.2em' }}><option>Have</option><option>Applied</option><option>No</option></select>
                      </div>
                   </div>
-                  <button className="w-full mt-8 py-4 bg-[#0f172a] text-white font-bold rounded-2xl text-[15px] hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-md">
-                    <span className="material-symbols-outlined text-[20px]">analytics</span> Analyze Eligibility
+                  <button onClick={handleCheckEligibility} disabled={checkingEligibility} className="w-full mt-8 py-4 bg-[#0f172a] text-white font-bold rounded-2xl text-[15px] hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-md">
+                    {checkingEligibility ? <span className="animate-spin material-symbols-outlined text-[20px]">refresh</span> : <span className="material-symbols-outlined text-[20px]">analytics</span>} 
+                    {checkingEligibility ? 'Analyzing...' : 'Analyze Eligibility'}
                   </button>
                </div>
 
                <div className="bg-slate-50/50 border border-slate-200 border-dashed rounded-3xl p-8 text-center text-slate-500">
-                  <div className="bg-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-4">STATUS: PENDING ANALYSIS</div>
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">Awaiting Input</h3>
-                  <p className="text-[13px] max-w-sm mx-auto leading-relaxed">Fill out your academic details above and click 'Analyze Eligibility' to generate your personalized report and view university recommendations.</p>
+                  {eligibilityResult ? (
+                    <>
+                      <div className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-4 ${getEligibilityStatus(eligibilityResult) === 'eligible' ? 'bg-emerald-200 text-emerald-800' : getEligibilityStatus(eligibilityResult) === 'borderline' ? 'bg-amber-200 text-amber-800' : 'bg-red-200 text-red-800'}`}>STATUS: {getEligibilityStatus(eligibilityResult)}</div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-2">Analysis Complete</h3>
+                      <p className="text-[13px] max-w-sm mx-auto leading-relaxed">{eligibilityResult}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-4">STATUS: PENDING ANALYSIS</div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-2">Awaiting Input</h3>
+                      <p className="text-[13px] max-w-sm mx-auto leading-relaxed">Fill out your academic details above and click 'Analyze Eligibility' to generate your personalized report and view university recommendations.</p>
+                    </>
+                  )}
                </div>
              </div>
           )}
 
-          {/* CHECKLIST TAB */}
+           {/* CHECKLIST TAB */}
           {activeView === 'documents' && (
              <div className="max-w-4xl mx-auto">
                <h2 className="text-2xl font-bold text-slate-900 mb-2">Required Documents for Admission</h2>
@@ -593,67 +657,67 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                
                <div className={`${cardCls} p-6 flex justify-between items-center mb-8`}>
                  <div className="flex-1 pr-12">
-                   <div className="flex justify-between mb-2"><span className="text-sm font-bold text-slate-900">Document Completion</span><span className="text-lg font-bold text-[#0f172a]">66%</span></div>
-                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#0f172a] w-2/3"></div></div>
+                   <div className="flex justify-between mb-2"><span className="text-sm font-bold text-slate-900">Document Completion</span><span className="text-lg font-bold text-[#0f172a]">{Math.round((['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length / 3) * 100)}%</span></div>
+                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#0f172a] transition-all" style={{ width: `${Math.round((['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length / 3) * 100)}%` }}></div></div>
                  </div>
                  <div className="flex gap-8 border-l border-slate-200 pl-8 text-center">
-                   <div><div className="text-2xl font-bold text-slate-900">2</div><div className="text-[10px] font-bold text-slate-500 tracking-wider">COMPLETED</div></div>
-                   <div><div className="text-2xl font-bold text-red-600">1</div><div className="text-[10px] font-bold text-slate-500 tracking-wider">PENDING</div></div>
+                   <div><div className="text-2xl font-bold text-slate-900">{['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length}</div><div className="text-[10px] font-bold text-slate-500 tracking-wider">COMPLETED</div></div>
+                   <div><div className="text-2xl font-bold text-red-600">{3 - ['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length}</div><div className="text-[10px] font-bold text-slate-500 tracking-wider">PENDING</div></div>
                  </div>
                </div>
 
                <div className="space-y-6">
-                 {/* Card 1 */}
-                 <div className={`${cardCls} overflow-hidden border-l-4 border-l-emerald-500`}>
-                   <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-3">10th/12th Marksheet <span className="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">check_circle</span> Verified</span></h3>
-                          <p className="text-slate-500 text-sm mt-1">Combined PDF or separate high-resolution images of both marksheets.</p>
-                        </div>
-                        <button className="text-sm font-semibold text-slate-700 flex items-center gap-1 hover:text-[#0f172a]"><span className="material-symbols-outlined text-[18px]">visibility</span> View</button>
-                      </div>
-                      <div className="inline-flex items-center gap-3 p-2.5 border border-slate-200 rounded-lg bg-slate-50 text-sm w-80">
-                        <span className="material-symbols-outlined text-slate-400">picture_as_pdf</span>
-                        <div className="flex-1 min-w-0"><p className="font-semibold text-slate-700 truncate">Sharma_Marksheets_Final.pdf</p><p className="text-xs text-slate-400">2.4 MB • Uploaded on Oct 12, 2023</p></div>
-                      </div>
-                   </div>
-                 </div>
-
-                 {/* Card 2 */}
-                 <div className={`${cardCls} overflow-hidden border-l-4 border-l-blue-500`}>
-                   <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-3">Passport Copy <span className="bg-blue-100 text-blue-700 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">cloud_done</span> Uploaded</span></h3>
-                          <p className="text-slate-500 text-sm mt-1">Scanned copy of the first and last page. Must be valid for at least 18 months.</p>
-                        </div>
-                        <button className="text-sm font-semibold text-slate-700 flex items-center gap-1 hover:text-[#0f172a]"><span className="material-symbols-outlined text-[18px]">sync</span> Replace</button>
-                      </div>
-                      <div className="inline-flex items-center gap-3 p-2.5 border border-slate-200 rounded-lg bg-slate-50 text-sm w-80">
-                        <span className="material-symbols-outlined text-slate-400">image</span>
-                        <div className="flex-1 min-w-0"><p className="font-semibold text-slate-700 truncate">Passport_Front_Back.jpg</p><p className="text-xs text-slate-400">1.1 MB • Uploaded Today</p></div>
-                      </div>
-                   </div>
-                 </div>
-
-                 {/* Card 3 (Pending) */}
-                 <div className={`${cardCls} overflow-hidden border border-amber-400 shadow-md relative`}>
-                   <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
-                   <div className="p-6">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-3">NEET Scorecard <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">pending_actions</span> Pending</span></h3>
-                        <p className="text-slate-500 text-sm mt-1">Official scorecard downloaded from the NTA website indicating qualification status.</p>
-                      </div>
-                      <div className="border-2 border-dashed border-slate-300 bg-slate-50/50 rounded-xl p-8 text-center cursor-pointer hover:bg-slate-50 transition-colors">
-                        <div className="w-12 h-12 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <span className="material-symbols-outlined">upload_file</span>
-                        </div>
-                        <h4 className="font-bold text-slate-700 mb-1">Drag & drop your file here</h4>
-                        <p className="text-xs text-slate-400">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
-                      </div>
-                   </div>
-                 </div>
+                 {[
+                    { id: 'marksheet', title: '10th/12th Marksheet', desc: 'Combined PDF or separate high-resolution images of both marksheets.' },
+                    { id: 'passport', title: 'Passport Copy', desc: 'Scanned copy of the first and last page. Must be valid for at least 18 months.' },
+                    { id: 'neetScoreCard', title: 'NEET Scorecard', desc: 'Official scorecard downloaded from the NTA website indicating qualification status.' }
+                 ].map(doc => {
+                    const docData = user.documents?.[doc.id];
+                    const isUploaded = !!docData;
+                    const isVerified = docData?.status === 'verified';
+                    
+                    return (
+                       <div key={doc.id} className={`${cardCls} overflow-hidden border-l-4 ${isVerified ? 'border-l-emerald-500' : isUploaded ? 'border-l-blue-500' : 'border-l-amber-500 border border-amber-400 shadow-md relative'}`}>
+                         {!isUploaded && <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>}
+                         <div className="p-6">
+                            <div className="mb-4 flex justify-between items-start">
+                              <div>
+                                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-3">{doc.title} 
+                                   {isVerified ? <span className="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">check_circle</span> Verified</span>
+                                   : isUploaded ? <span className="bg-blue-100 text-blue-700 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">cloud_done</span> Uploaded</span>
+                                   : <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[14px]">pending_actions</span> Pending</span>}
+                                </h3>
+                                <p className="text-slate-500 text-sm mt-1">{doc.desc}</p>
+                              </div>
+                              {isUploaded && (
+                                <div className="flex gap-3">
+                                   <a href={docData.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-slate-700 flex items-center gap-1 hover:text-[#0f172a]"><span className="material-symbols-outlined text-[18px]">visibility</span> View</a>
+                                   <label className="text-sm font-semibold text-slate-700 flex items-center gap-1 hover:text-[#0f172a] cursor-pointer"><span className="material-symbols-outlined text-[18px]">sync</span> Replace
+                                      <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />
+                                   </label>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {isUploaded ? (
+                              <div className="inline-flex items-center gap-3 p-2.5 border border-slate-200 rounded-lg bg-slate-50 text-sm max-w-sm w-full">
+                                <span className="material-symbols-outlined text-slate-400">description</span>
+                                <div className="flex-1 min-w-0"><p className="font-semibold text-slate-700 truncate">{docData.publicId?.split('/').pop() || 'Document'}</p><p className="text-xs text-slate-400">Uploaded {new Date(docData.uploadedAt || Date.now()).toLocaleDateString()}</p></div>
+                              </div>
+                            ) : (
+                              <label className="block border-2 border-dashed border-slate-300 bg-slate-50/50 rounded-xl p-8 text-center cursor-pointer hover:bg-slate-50 transition-colors">
+                                <div className="w-12 h-12 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                  {uploadingDoc === doc.id ? <span className="animate-spin material-symbols-outlined">refresh</span> : <span className="material-symbols-outlined">upload_file</span>}
+                                </div>
+                                <h4 className="font-bold text-slate-700 mb-1">{uploadingDoc === doc.id ? 'Uploading...' : 'Click to upload your file'}</h4>
+                                <p className="text-xs text-slate-400">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
+                                <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} disabled={uploadingDoc !== null} />
+                              </label>
+                            )}
+                         </div>
+                       </div>
+                    );
+                 })}
                </div>
              </div>
           )}
@@ -702,9 +766,105 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
              </div>
           )}
           
-          {/* HELP AND SETTINGS FALLBACKS (Simplistic versions since mockups didn't detail them) */}
-          {activeView === 'settings' && <div className="max-w-2xl mx-auto"><div className={`${cardCls} p-8`}><h2 className="text-2xl font-bold text-slate-900 mb-6">Settings</h2><p className="text-slate-500">Preferences go here.</p></div></div>}
-          {activeView === 'help' && <div className="max-w-2xl mx-auto"><div className={`${cardCls} p-8`}><h2 className="text-2xl font-bold text-slate-900 mb-6">Help Center</h2><p className="text-slate-500">Help content goes here.</p></div></div>}
+          {/* SETTINGS TAB */}
+          {activeView === 'settings' && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className={`${cardCls} p-8`}>
+                <h2 className="text-2xl font-bold text-[#0f172a] mb-6">Security Settings</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelCls}>Current Password</label>
+                    <input type="password" className={inputCls} placeholder="Enter current password" value={passData.current} onChange={e => setPassData({...passData, current: e.target.value})} />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>New Password</label>
+                      <input type="password" className={inputCls} placeholder="Enter new password" value={passData.new} onChange={e => setPassData({...passData, new: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Confirm New Password</label>
+                      <input type="password" className={inputCls} placeholder="Confirm new password" value={passData.confirm} onChange={e => setPassData({...passData, confirm: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                  <button onClick={handleSettingsSave} disabled={savingSettings} className="px-6 py-2.5 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-70 text-sm">
+                    {savingSettings ? 'Saving...' : 'Update Password'}
+                  </button>
+                </div>
+              </div>
+
+              <div className={`${cardCls} p-8`}>
+                <h2 className="text-xl font-bold text-[#0f172a] mb-4">Security Question</h2>
+                <p className="text-sm text-slate-500 mb-6">Set a security question to help recover your account if you lose access.</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelCls}>Question</label>
+                    <select className={inputCls} value={recoveryData.question} onChange={e => setRecoveryData({...recoveryData, question: e.target.value})}>
+                      <option value="maiden">What is your mother's maiden name?</option>
+                      <option value="pet">What was the name of your first pet?</option>
+                      <option value="city">In what city were you born?</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Answer</label>
+                    <input type="text" className={inputCls} placeholder="Your answer" value={recoveryData.answer} onChange={e => setRecoveryData({...recoveryData, answer: e.target.value})} />
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <button onClick={handleSaveSecurityQuestion} className="px-6 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-sm">Save Security Question</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* HELP CENTER TAB */}
+          {activeView === 'help' && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className={`${cardCls} p-8 bg-gradient-to-r from-blue-600 to-[#0f172a] text-white`}>
+                <h2 className="text-3xl font-bold mb-3">Help Center</h2>
+                <p className="text-blue-100 max-w-lg leading-relaxed">Find answers to common questions about studying MBBS in Russia or contact our support team directly.</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className={`${cardCls} p-6`}>
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined">school</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Admission Process</h3>
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-3">Learn about the steps required to apply to top Russian medical universities, deadlines, and prerequisites.</p>
+                  <a href="#" className="text-blue-600 text-sm font-semibold hover:underline">Read Guide &rarr;</a>
+                </div>
+
+                <div className={`${cardCls} p-6`}>
+                  <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined">description</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Document Preparation</h3>
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-3">Detailed information on passport requirements, apostille, translations, and NEET scorecards.</p>
+                  <a href="#" className="text-green-600 text-sm font-semibold hover:underline">View Checklist Guide &rarr;</a>
+                </div>
+
+                <div className={`${cardCls} p-6`}>
+                  <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined">payments</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Fees & Financials</h3>
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-3">Information about tuition fees, hostel charges, living expenses, and currency conversion.</p>
+                  <a href="#" className="text-purple-600 text-sm font-semibold hover:underline">Fee Structures &rarr;</a>
+                </div>
+
+                <div className={`${cardCls} p-6`}>
+                  <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined">support_agent</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Contact Support</h3>
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-3">Need personalized help? Open a direct chat with our admission counselors for immediate assistance.</p>
+                  <button onClick={() => setActiveView('chats')} className="text-orange-600 text-sm font-semibold hover:underline">Open Communications &rarr;</button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </main>
       </div>

@@ -62,9 +62,11 @@ const callGroq = async (messages: any[], jsonMode = false, temperature = 0.7) =>
 };
 
 export const checkEligibility = async (data: EligibilityData): Promise<string> => {
+    const settings = await getSettings();
+    const systemPrompt = settings.systemPrompts?.eligibilityChecker || 'You are an expert admission counselor for MBBS in Russia. Evaluate this student\'s eligibility.';
     const currentYear = new Date().getFullYear();
     const prompt = `
-        You are an expert admission counselor for MBBS in Russia. Evaluate this student's eligibility.
+        ${systemPrompt}
 
         STUDENT DATA:
         - 12th PCB Percentage: ${data.pcbPercentage}%
@@ -82,10 +84,11 @@ export const checkEligibility = async (data: EligibilityData): Promise<string> =
         2. NEET: General ~137+, Reserved ~107+. If failed, NOT ELIGIBLE.
         3. Age: 17 by 31 Dec ${currentYear}.
 
-        Provide a structured response:
-        Status: [ELIGIBLE / NOT ELIGIBLE / CONDITIONALLY ELIGIBLE]
-        Reason: [Brief explanation]
-        Advice: [Next steps]
+        Return ONLY a very small 3-5 line response formatted strictly like this:
+        Status: [ELIGIBLE / NOT ELIGIBLE / BORDERLINE]
+        Good Points: [1-2 short bullet points on what is good]
+        To Improve: [1-2 short bullet points on what needs improvement or next steps]
+        (Do NOT include raw markdown text like boldings or extra commentary.)
     `;
 
     try {

@@ -20,7 +20,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     universityCompare: true,
     chatWidget: true,
     whatsappFab: true,
-    studentLogin: true
+    studentLogin: true,
+  },
+  systemPrompts: {
+    eligibilityChecker: 'You are an expert admission counselor for MBBS in Russia. Evaluate this student\'s eligibility.',
+    chatBot: 'You are an AI assistant representing MedRussia. Help the student with their inquiries.'
   }
 };
 

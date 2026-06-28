@@ -215,4 +215,8 @@ export interface AppSettings {
   };
   themeConfig?: ThemeConfig;
   features?: FeatureFlags;
+  systemPrompts?: {
+    eligibilityChecker: string;
+    chatBot: string;
+  };
 }

@@ -1,5 +1,6 @@
 
 import { FeedbackEntry, User, FeedbackReply, EligibilityData, ChatSession, PlatformFeedback, UserNotification, DocumentMetadata } from '../types';
+import { supabase } from '../lib/supabase';
 import {
   saveFeedbackToUpstash,
   fetchFeedbackFromUpstash,
@@ -36,62 +37,59 @@ const getAdminsSafe = async (): Promise<User[]> => {
   return admins || [];
 };
 
-export const registerUser = async (user: Omit<User, 'id'>): Promise<User> => {
-  // Determine target collection based on role
-  const isTargetAdmin = user.role === 'admin';
-  const collection = isTargetAdmin ? await getAdminsSafe() : await fetchUsersFromUpstash();
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers = new Headers(options.headers);
+  if (session?.access_token) {
+    headers.set('Authorization', `Bearer ${session.access_token}`);
+  }
+  return fetch(url, { ...options, headers });
+};
 
-  if (collection.find((u: any) => u.email === user.email)) {
-    throw new Error("Email already registered");
+export const registerUser = async (user: Omit<User, 'id'>): Promise<User> => {
+  const { data, error } = await supabase.auth.signUp({
+    email: user.email,
+    password: user.password!,
+  });
+
+  if (error || !data.user) {
+    throw new Error(error?.message || 'Registration failed');
   }
 
-  // Create User Object
   const newUser: User = {
     ...user,
-    id: Math.random().toString(36).substr(2, 9),
+    id: data.user.id,
     shortlistedUniversities: [],
     role: user.role || 'student',
     documents: {},
-    notifications: [] // Initialize empty notifications
+    notifications: [],
+    password: undefined // Don't store password in MongoDB
   };
 
-  // Save to correct Cloud Store
-  if (isTargetAdmin) {
-    const updatedAdmins = [...collection, newUser];
-    await saveAdminsToUpstash(updatedAdmins);
-  } else {
-    await saveUserToUpstash(newUser);
-    // (Optional) Keep saving students to local storage as backup
-    const localUsers = getLocal<User>(USERS_KEY);
-    localUsers.push(newUser);
-    localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
-  }
+  const res = await authFetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newUser)
+  });
+
+  if (!res.ok) throw new Error('Failed to create profile');
 
   return newUser;
 };
 
 export const updateUser = async (user: User): Promise<void> => {
-  if (user.role === 'admin') {
-    const admins = await getAdminsSafe();
-    const index = admins.findIndex(a => a.id === user.id);
-    if (index !== -1) {
-      admins[index] = user;
-      await saveAdminsToUpstash(admins);
-    }
-  } else {
-    // Update Local
-    const localUsers = getLocal<User>(USERS_KEY);
-    const index = localUsers.findIndex(u => u.id === user.id);
-    if (index !== -1) {
-      localUsers[index] = user;
-    } else {
-      localUsers.push(user);
-    }
-    localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
-
-    // Update Cloud
-    await saveUserToUpstash(user);
-  }
+  const res = await authFetch('/api/users', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user)
+  });
+  if (!res.ok) throw new Error('Failed to update profile');
+  
+  const localUsers = getLocal<User>(USERS_KEY);
+  const index = localUsers.findIndex(u => u.id === user.id);
+  if (index !== -1) localUsers[index] = user;
+  else localUsers.push(user);
+  localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
 };
 
 export const sendNotificationToUser = async (userId: string, notification: Omit<UserNotification, 'id' | 'timestamp' | 'isRead'>): Promise<void> => {
@@ -126,65 +124,24 @@ export const sendNotificationToUser = async (userId: string, notification: Omit<
 };
 
 export const loginUser = async (email: string, password?: string): Promise<User | null> => {
-  // 1. Check Admins (from KV)
-  const admins = await getAdminsSafe();
-  const adminMatch = admins.find(a => (a.email === email || a.name === email) && a.password === password);
-  if (adminMatch) return adminMatch;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: password || '',
+  });
 
-  // 2. Check Students (from KV)
-  const students = await fetchUsersFromUpstash();
-  const studentMatch = students.find((u: any) => (u.email === email || u.name === email) && u.password === password);
+  if (error || !data.user) {
+    throw new Error(error?.message || 'Login failed');
+  }
 
-  return studentMatch || null;
+  const res = await authFetch(`/api/users?id=${data.user.id}`);
+  if (!res.ok) throw new Error('Profile not found');
+  
+  return await res.json();
 };
 
 // --- PASSWORD RECOVERY ---
 
-export const getSecurityQuestion = async (email: string): Promise<string | null> => {
-  const students = await fetchUsersFromUpstash();
-  const user = students.find((u: any) => u.email === email);
-  if (user && user.recoveryQuestion) {
-    return user.recoveryQuestion;
-  }
-
-  // Also check admins
-  const admins = await getAdminsSafe();
-  const admin = admins.find(a => a.email === email);
-  if (admin && admin.recoveryQuestion) {
-    return admin.recoveryQuestion;
-  }
-
-  return null;
-};
-
-export const resetPassword = async (email: string, answer: string, newPassword: string): Promise<boolean> => {
-  // Check students
-  const students = await fetchUsersFromUpstash();
-  const studentIndex = students.findIndex((u: any) => u.email === email);
-
-  if (studentIndex !== -1) {
-    const user = students[studentIndex];
-    if (user.recoveryAnswer && user.recoveryAnswer.toLowerCase() === answer.toLowerCase().trim()) {
-      user.password = newPassword;
-      await saveUserToUpstash(user);
-      return true;
-    }
-  }
-
-  // Check admins
-  const admins = await getAdminsSafe();
-  const adminIndex = admins.findIndex((a: any) => a.email === email);
-  if (adminIndex !== -1) {
-    const admin = admins[adminIndex];
-    if (admin.recoveryAnswer && admin.recoveryAnswer.toLowerCase() === answer.toLowerCase().trim()) {
-      admin.password = newPassword;
-      await saveAdminsToUpstash(admins); // Admins are saved as a block
-      return true;
-    }
-  }
-
-  return false;
-};
+// Password recovery is now handled by Supabase in Login.tsx
 
 // --- DOCUMENTS ---
 
@@ -200,40 +157,22 @@ export const updateUserDocuments = async (userId: string, docType: 'marksheet' |
 
   user.documents[docType] = metadata;
 
-  // 3. Save Local
-  users[userIndex] = user;
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-  // 4. Update Active Session
-  const currentUser = JSON.parse(localStorage.getItem('mr_active_user') || '{}');
-  if (currentUser.id === userId) {
-    localStorage.setItem('mr_active_user', JSON.stringify(user));
-  }
-
-  await saveUserToUpstash(user);
+  // Securely update the user via the authenticated API
+  await updateUser(user);
 
   return user;
 };
 
-export const removeUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard'): Promise<User> => {
-  const users = await fetchUsersFromUpstash();
-  const userIndex = users.findIndex((u: any) => u.id === userId);
+export const deleteUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard'): Promise<User> => {
+  const users = getLocal<User>(USERS_KEY);
+  const userIndex = users.findIndex(u => u.id === userId);
 
   if (userIndex === -1) throw new Error("User not found");
 
   const user = users[userIndex];
   if (user.documents && user.documents[docType]) {
     delete user.documents[docType];
-
-    await saveUserToUpstash(user);
-
-    // Sync Local
-    const localUsers = getLocal<User>(USERS_KEY);
-    const localIdx = localUsers.findIndex(u => u.id === userId);
-    if (localIdx !== -1) {
-      localUsers[localIdx] = user;
-      localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
-    }
+    await updateUser(user);
     return user;
   }
   return user;
@@ -276,19 +215,12 @@ export const updateUserEligibility = async (userId: string, data: EligibilityDat
   user.eligibilityData = data;
   user.eligibilityResult = result;
 
-  users[userIndex] = user;
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  await updateUser(user);
 
-  const currentUser = JSON.parse(localStorage.getItem('mr_active_user') || '{}');
-  if (currentUser.id === userId) {
-    localStorage.setItem('mr_active_user', JSON.stringify(user));
-  }
-
-  await saveUserToUpstash(user);
   return user;
 };
 
-export const toggleShortlist = (userId: string, uniName: string): string[] => {
+export const toggleShortlist = async (userId: string, uniName: string): Promise<string[]> => {
   const users = getLocal<User>(USERS_KEY);
   const userIdx = users.findIndex(u => u.id === userId);
   if (userIdx === -1) return [];
@@ -304,8 +236,7 @@ export const toggleShortlist = (userId: string, uniName: string): string[] => {
   }
 
   user.shortlistedUniversities = list;
-  users[userIdx] = user;
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  await updateUser(user);
   return list;
 };
 

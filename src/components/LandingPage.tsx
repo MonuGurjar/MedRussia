@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FeedbackForm } from './FeedbackForm';
 import { PlatformFeedbackModal } from './PlatformFeedbackModal';
-import { AppSettings } from '../types';
+import { AppSettings, User } from '../types';
 import { TeamMember } from '../data/teamData';
 import { getTeamMembers } from '../services/db';
 
@@ -14,10 +14,18 @@ interface LandingPageProps {
   handleSpecificNavigation: (v: string) => void;
   refreshData: () => void;
   FAQ_DATA: { q: string; a: string }[];
+  currentUser?: User | null;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScore, setHeroNeetScore, handleEligibilityCheck, handleSpecificNavigation, refreshData, FAQ_DATA }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScore, setHeroNeetScore, handleEligibilityCheck, handleSpecificNavigation, refreshData, FAQ_DATA, currentUser }) => {
   const navigate = useNavigate();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate(currentUser.role === 'admin' ? '/admin' : '/user');
+    }
+  }, [currentUser, navigate]);
 
   return (
     <div className="bg-white min-h-screen font-sans text-slate-800">
@@ -26,7 +34,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
             <span className="material-symbols-outlined text-slate-900 text-[28px]">medical_services</span>
-            <span className="text-xl font-bold text-slate-900 tracking-tight">MedGuide Russia</span>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">MBBS Russia</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-[13px] font-bold text-slate-600">
             <a href="#universities" className="hover:text-slate-900 transition-colors">Universities</a>
@@ -34,9 +42,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
             <a href="#process" className="hover:text-slate-900 transition-colors">Process</a>
             <a href="#experts" className="hover:text-slate-900 transition-colors">About Us</a>
           </nav>
-          <button onClick={() => navigate('/auth')} className="bg-[#fbbf24] text-amber-950 px-6 py-2.5 rounded-xl font-bold text-[13px] hover:bg-[#f59e0b] transition-colors shadow-sm">
-            Apply Now
-          </button>
+          {!currentUser && (
+            <button onClick={() => navigate('/auth')} className="bg-[#fbbf24] text-amber-950 px-6 py-2.5 rounded-xl font-bold text-[13px] hover:bg-[#f59e0b] transition-colors shadow-sm">
+              Sign In/Sign Up
+            </button>
+          )}
         </div>
       </header>
 
@@ -59,10 +69,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
               Empowering Indian students to pursue world-class MBBS degrees in Russia with full admission support, expert guidance, and uncompromising transparency.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button onClick={() => { document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#f59e0b] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#d97706] transition-colors shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2">
+              <button onClick={() => setIsFeedbackOpen(true)} className="bg-[#f59e0b] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#d97706] transition-colors shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2">
                 Apply for Consultation <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </button>
-              <button onClick={() => navigate('/compare')} className="bg-transparent border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-white/10 transition-colors flex items-center justify-center">
+              <button onClick={() => navigate('/universities')} className="bg-transparent border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-white/10 transition-colors flex items-center justify-center">
                 View Universities
               </button>
             </div>
@@ -114,17 +124,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Top Russian Medical Universities</h2>
               <p className="text-slate-500 text-lg">We partner with prestigious institutions offering English-medium MBBS programs.</p>
             </div>
-            <button onClick={() => navigate('/compare')} className="text-sm font-bold text-slate-900 flex items-center gap-1 hover:text-[#f59e0b] transition-colors shrink-0">
+            <button onClick={() => navigate('/universities')} className="text-sm font-bold text-slate-900 flex items-center gap-1 hover:text-[#f59e0b] transition-colors shrink-0">
               View All Universities <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: "Kazan Federal University", loc: "Kazan, Russia", img: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.8" },
-              { name: "First Moscow State Med", loc: "Moscow, Russia", img: "https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.9" },
-              { name: "Crimea Federal University", loc: "Simferopol, Russia", img: "https://images.unsplash.com/photo-1595133649692-a17f22a57374?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.7" },
-              { name: "Bashkir State Med Uni", loc: "Ufa, Russia", img: "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.6" }
+              { id: 3, name: "Kazan Federal University", loc: "Kazan, Russia", img: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.8" },
+              { id: 1, name: "First Moscow State Med", loc: "Moscow, Russia", img: "https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.9" },
+              { id: 5, name: "Crimea Federal University", loc: "Simferopol, Russia", img: "https://images.unsplash.com/photo-1595133649692-a17f22a57374?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.7" },
+              { id: 4, name: "Bashkir State Med Uni", loc: "Ufa, Russia", img: "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.6" }
             ].map((uni, i) => (
               <div key={i} className="bg-white rounded-[24px] border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all group">
                 <div className="h-40 relative overflow-hidden">
@@ -148,7 +158,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
                       <div className="text-xs font-semibold text-slate-800">English</div>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/compare')} className="w-full py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                  <button onClick={() => navigate('/university/' + uni.id)} className="w-full py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                     View Details
                   </button>
                 </div>
@@ -173,7 +183,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
                 <h3 className="text-xl font-bold text-slate-900">Amit Gurjar</h3>
                 <p className="text-[#d97706] text-xs font-bold uppercase tracking-wider mb-4">Co-Founder & Director</p>
                 <p className="text-slate-600 text-sm italic leading-relaxed">
-                  "We built MedGuide Russia to be the honest, transparent bridge between Indian students and their medical dreams. Your success is our mission."
+                  "We built MBBS Russia to be the honest, transparent bridge between Indian students and their medical dreams. Your success is our mission."
                 </p>
               </div>
             </div>
@@ -221,51 +231,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
         </div>
       </section>
 
-      {/* Footer */}
-      <footer id="contact" className="bg-[#1e293b] pt-20 pb-10 text-slate-300">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-white text-[28px]">medical_services</span>
-                <span className="text-xl font-bold text-white tracking-tight">MedGuide Russia</span>
-              </div>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Your trusted partner for pursuing MBBS abroad. Expert guidance for a brighter medical career.
-              </p>
+      {isFeedbackOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 fade-in-up">
+          <div className="bg-white w-[90%] md:w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 shadow-xl relative">
+            <button onClick={() => setIsFeedbackOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
+              <span className="material-symbols-outlined text-slate-500" style={{fontSize:'18px'}}>close</span>
+            </button>
+            <div className="mb-6">
+              <h3 className="text-2xl font-bold text-slate-900">Apply for Consultation</h3>
+              <p className="text-slate-500 mt-2">Submit your query and our experts will get back to you shortly.</p>
             </div>
-            
-            <div>
-              <h4 className="text-white font-bold mb-6 tracking-wide text-sm">COMPANY</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Office Locations</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-bold mb-6 tracking-wide text-sm">LEGAL</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-bold mb-6 tracking-wide text-sm">CONTACT US</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Contact Support</a></li>
-                <li className="flex items-center gap-2 mt-4"><span className="material-symbols-outlined text-[18px]">mail</span> info@medguiderussia.com</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-slate-700/50 pt-8 text-center text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} MedGuide Russia. Founded by Amit Gurjar & Monu Gurjar.</p>
+            <FeedbackForm onSuccess={() => setTimeout(() => setIsFeedbackOpen(false), 2000)} />
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 };
