@@ -1,6 +1,10 @@
+
 import crypto from 'crypto';
 import { UploadPayloadSchema, assertAllowedUpload } from './security/validation';
 import { checkRateLimit } from './security/rateLimit';
+import { createAuditLog } from './models/auditLog';
+import { requireAuth } from './security/auth';
+import { getClientIp, getUserAgent } from './lib/request';
 
 type CloudinaryCreds = {
   cloudName: string;
@@ -8,11 +12,6 @@ type CloudinaryCreds = {
   apiSecret: string | null;
   uploadPreset?: string;
 };
-
-const getClientIp = (request: any) =>
-  (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-  request.socket?.remoteAddress ||
-  'unknown';
 
 const getCreds = (): CloudinaryCreds | null => {
   if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -41,12 +40,16 @@ const getCreds = (): CloudinaryCreds | null => {
 };
 
 export default async function handler(request, response) {
+  const auth = await requireAuth(request, response);
+  if (!auth) return;
+
   const creds = getCreds();
   if (!creds) {
     return response.status(500).json({ error: 'Storage configuration missing on server' });
   }
 
   const ip = getClientIp(request);
+  const userAgent = getUserAgent(request);
 
   if (request.method === 'DELETE') {
     if (!creds.apiKey || !creds.apiSecret) {
@@ -76,14 +79,39 @@ export default async function handler(request, response) {
       if (data.result !== 'ok' && data.result !== 'not found') {
         throw new Error(data.error?.message || 'Cloudinary delete failed');
       }
+
+      await createAuditLog({
+        userId: auth.userId,
+        userRole: auth.role,
+        action: 'DELETE_DOCUMENT',
+        entityType: 'document',
+        entityId: public_id,
+        description: 'User deleted a document from Cloudinary',
+        ip,
+        userAgent,
+        status: 'success',
+      });
+
       return response.status(200).json({ success: true, result: data });
     } catch (error) {
+      await createAuditLog({
+        userId: auth.userId,
+        userRole: auth.role,
+        action: 'DELETE_DOCUMENT',
+        entityType: 'document',
+        entityId: public_id,
+        description: 'Failed to delete document from Cloudinary',
+        ip,
+        userAgent,
+        status: 'failed',
+      });
+
       return response.status(500).json({ error: error.message });
     }
   }
 
   if (request.method === 'POST') {
-    const rl = await checkRateLimit(`upload:${ip}`, 'upload');
+    const rl = await checkRateLimit(auth.userId || ip, 'upload');
     if (!rl.allowed) {
       return response
         .status(429)
@@ -109,6 +137,18 @@ export default async function handler(request, response) {
         throw new Error(data?.error?.message || 'Upload failed');
       }
 
+      await createAuditLog({
+        userId: auth.userId,
+        userRole: auth.role,
+        action: 'UPLOAD_DOCUMENT',
+        entityType: 'document',
+        entityId: data.public_id,
+        description: 'User uploaded a document to Cloudinary',
+        ip,
+        userAgent,
+        status: 'success',
+      });
+
       return response.status(200).json({
         secure_url: data.secure_url,
         public_id: data.public_id,
@@ -116,6 +156,18 @@ export default async function handler(request, response) {
         resource_type: data.resource_type,
       });
     } catch (error) {
+      await createAuditLog({
+        userId: auth.userId,
+        userRole: auth.role,
+        action: 'UPLOAD_DOCUMENT',
+        entityType: 'document',
+        entityId: 'unknown',
+        description: `Upload failed: ${error.message || 'Unknown error'}`,
+        ip,
+        userAgent,
+        status: 'failed',
+      });
+
       return response.status(400).json({ error: error.message || 'Invalid upload request' });
     }
   }
