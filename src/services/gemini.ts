@@ -54,7 +54,11 @@ const callGroq = async (messages: any[], jsonMode = false, temperature = 0.7) =>
         }
 
         const data = await response.json();
-        return data.choices?.[0]?.message?.content || "";
+        let content = data.choices?.[0]?.message?.content || "";
+        if (jsonMode) {
+            content = content.replace(/```json\n?|```/gi, '').trim();
+        }
+        return content;
     } catch (e: any) {
         console.error("AI Call Failed:", e);
         throw e;
@@ -137,9 +141,9 @@ export const analyzeFeedback = async (entries: FeedbackEntry[]): Promise<AIAnaly
     ], true);
     
     return JSON.parse(jsonStr);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Analysis Error:", error);
-    throw new Error("Failed to generate analysis.");
+    throw new Error(error.message || "Failed to generate analysis.");
   }
 };
 
@@ -185,9 +189,9 @@ export const analyzeChatHistory = async (sessions: ChatSession[]): Promise<AIAna
       ], true);
       
       return JSON.parse(jsonStr);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat Analysis Error:", error);
-      throw new Error("Failed to analyze chats.");
+      throw new Error(error.message || "Failed to analyze chats.");
     }
   };
 

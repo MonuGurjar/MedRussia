@@ -110,7 +110,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
 
   const handleFabClick = () => { if (!dragMoved.current) setIsOpen(!isOpen); };
 
-  if (!settings?.chatBot?.enabled) return null;
+  if (!settings) return null;
 
   const chatWindowStyle: React.CSSProperties = { position: 'fixed', zIndex: 61 };
   const chatHeight = 460; const chatWidth = 380;

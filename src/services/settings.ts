@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   emailJs: { enabled: true, serviceId: '', templateId: '', publicKey: '' },
   cloudinary: { cloudName: '', uploadPreset: '' },
   chatBot: { 
-    enabled: false, 
+    enabled: true, 
     botName: 'Dr. MedRussia', 
     welcomeMessage: 'Hello! I can help you with questions about MBBS fees, universities, and admission. Ask me anything!' 
   },

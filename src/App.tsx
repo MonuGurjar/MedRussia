@@ -18,7 +18,61 @@ import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
 import { supabase } from './lib/supabase';
 
-const ProtectedRoute = ({ children, role, user }: { children?: React.ReactNode, role?: 'admin' | 'student', user: User | null }) => {
+const ProtectedRoute = ({ children, role, user, isLoading }: { children?: React.ReactNode, role?: 'admin' | 'student', user: User | null, isLoading?: boolean }) => {
+  if (isLoading) return (
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
+      <div className="hidden md:block w-64 bg-white border-r border-slate-200 shrink-0 p-6 space-y-6">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-slate-200 rounded animate-pulse"></div>
+          <div className="space-y-1.5">
+            <div className="h-4 w-24 bg-slate-200 rounded animate-pulse"></div>
+            <div className="h-2 w-16 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+        </div>
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+            <div className="w-5 h-5 bg-slate-200 rounded animate-pulse"></div>
+            <div className={`h-3 bg-slate-200 rounded animate-pulse`} style={{width: `${60 + Math.random() * 40}%`}}></div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 flex flex-col">
+        <div className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+          <div className="space-y-2">
+            <div className="h-5 w-48 bg-slate-200 rounded animate-pulse"></div>
+            <div className="h-3 w-32 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse"></div>
+            <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <div className="flex-1 p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+                <div className="h-3 w-20 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-8 w-32 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-2 w-full bg-slate-100 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-slate-200 rounded animate-pulse" style={{width: `${40 + Math.random() * 30}%`}}></div>
+                  <div className="h-2 bg-slate-100 rounded animate-pulse" style={{width: `${60 + Math.random() * 30}%`}}></div>
+                </div>
+                <div className="w-16 h-6 bg-slate-100 rounded-full animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   if (!user) return <Navigate to="/auth" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
   return <>{children}</>;
@@ -204,13 +258,13 @@ const App: React.FC = () => {
           <Route path="/disclaimer" element={<LegalPage page="disclaimer" />} />
 
           <Route path="/admin" element={
-            <ProtectedRoute role="admin" user={currentUser}>
+            <ProtectedRoute role="admin" user={currentUser} isLoading={isAuthLoading}>
               <AdminDashboard feedbackList={feedbackList} onRefresh={refreshData} onLogout={handleLogout} isLoading={isLoading} currentUser={currentUser!} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           } />
 
           <Route path="/user" element={
-            <ProtectedRoute role="student" user={currentUser}>
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
               <UserDashboard user={currentUser!} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
             </ProtectedRoute>
           } />

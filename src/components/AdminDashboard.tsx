@@ -77,6 +77,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [isFetchingDirectChats, setIsFetchingDirectChats] = useState(false);
   const [studentSort, setStudentSort] = useState<'name' | 'email'>('name');
+  const [isFetchingStudents, setIsFetchingStudents] = useState(false);
+  const [isFetchingAdmins, setIsFetchingAdmins] = useState(false);
+  const [inquiryFilter, setInquiryFilter] = useState<'all' | 'pending' | 'resolved'>('all');
+  const [inquirySort, setInquirySort] = useState<'newest' | 'oldest'>('newest');
+  const [directChatSearch, setDirectChatSearch] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { feedback: liveFeedback, students: liveStudents } = useLiveSync(true);
 
@@ -85,8 +91,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
 
   useEffect(() => {
     const fetchData = async () => {
-      if (activeTab === 'students' && students.length === 0) { try { const s = await getAllStudents(); if (Array.isArray(s)) setStudents(s); } catch (e) { console.error(e); } }
-      if (allowedTabs.includes('admins') && activeTab === 'admins') getAllAdmins().then(setAdmins);
+      if (activeTab === 'students' && students.length === 0) { setIsFetchingStudents(true); try { const s = await getAllStudents(); if (Array.isArray(s)) setStudents(s); } catch (e) { console.error(e); } finally { setIsFetchingStudents(false); } }
+      if (allowedTabs.includes('admins') && activeTab === 'admins') { setIsFetchingAdmins(true); getAllAdmins().then(setAdmins).finally(() => setIsFetchingAdmins(false)); }
       if (['chats', 'chat_insights'].includes(activeTab)) { setIsFetchingChats(true); getChatHistory().then(d => setChatSessions(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setIsFetchingChats(false)); }
       if (activeTab === 'feedback_hub') { setIsFetchingFeedback(true); getAllPlatformFeedback().then(d => setPlatformFeedback(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setIsFetchingFeedback(false)); }
       if (activeTab === 'direct_chats') { setIsFetchingDirectChats(true); getAllDirectChats().then(d => { setDirectChats(d); if (d.length > 0 && !activeDirectChat) setActiveDirectChat(d[0]); }).catch(console.error).finally(() => setIsFetchingDirectChats(false)); }
@@ -130,6 +136,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
   const inputCls = "w-full p-3 bg-white border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800 text-sm";
   const labelCls = "text-xs font-semibold text-slate-500 mb-1.5 block tracking-wide";
   const cardCls = "bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-200";
+
+  const SkeletonRow = () => (
+    <div className="flex items-center gap-4 p-4">
+      <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse shrink-0"></div>
+      <div className="flex-1 space-y-2">
+        <div className="h-3 bg-slate-200 rounded animate-pulse" style={{width: `${40 + Math.random() * 30}%`}}></div>
+        <div className="h-2 bg-slate-100 rounded animate-pulse" style={{width: `${60 + Math.random() * 30}%`}}></div>
+      </div>
+      <div className="w-16 h-6 bg-slate-100 rounded-full animate-pulse"></div>
+    </div>
+  );
+  const SkeletonCard = () => (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-16 h-5 bg-slate-200 rounded animate-pulse"></div>
+        <div className="w-12 h-4 bg-slate-100 rounded animate-pulse"></div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>
+          <div className="h-2.5 w-48 bg-slate-100 rounded animate-pulse"></div>
+        </div>
+      </div>
+      <div className="h-16 bg-slate-50 rounded-xl animate-pulse mt-3 border border-slate-100"></div>
+    </div>
+  );
+  const SkeletonTable = ({ rows = 5 }: { rows?: number }) => (
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex gap-8">
+        {[...Array(4)].map((_, i) => <div key={i} className="h-3 bg-slate-200 rounded animate-pulse" style={{width: `${60 + Math.random() * 40}px`}}></div>)}
+      </div>
+      {[...Array(rows)].map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4 border-b border-slate-100 last:border-0">
+          <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse shrink-0"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-3 bg-slate-200 rounded animate-pulse" style={{width: `${30 + Math.random() * 40}%`}}></div>
+            <div className="h-2 bg-slate-100 rounded animate-pulse" style={{width: `${50 + Math.random() * 30}%`}}></div>
+          </div>
+          <div className="w-20 h-6 bg-slate-100 rounded-full animate-pulse"></div>
+        </div>
+      ))}
+    </div>
+  );
+  const SkeletonSidebar = ({ count = 6 }: { count?: number }) => (
+    <div className="space-y-1 p-2">
+      {[...Array(count)].map((_, i) => (
+        <div key={i} className="flex items-center gap-3 p-3 rounded-lg">
+          <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse shrink-0"></div>
+          <div className="flex-1 space-y-1.5">
+            <div className="h-3 bg-slate-200 rounded animate-pulse" style={{width: `${50 + Math.random() * 40}%`}}></div>
+            <div className="h-2 bg-slate-100 rounded animate-pulse w-2/3"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const filteredInquiries = localFeedback
+    .filter(e => inquiryFilter === 'all' ? true : e.status === inquiryFilter)
+    .sort((a, b) => inquirySort === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+
+  const filteredDirectChats = directChats.filter(c => !directChatSearch || c.studentName.toLowerCase().includes(directChatSearch.toLowerCase()));
 
   const filteredNavItems = [
     { id: 'inquiries', label: 'Inquiries', icon: 'dashboard' },
@@ -194,10 +263,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-             <button className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-[22px]">notifications</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+             <div className="relative">
+              <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <span className="material-symbols-outlined text-[22px]">notifications</span>
+                {(currentUser.notifications?.filter(n => !n.isRead).length || 0) > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
+                  <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h4 className="font-bold text-slate-900 text-sm">Notifications</h4>
+                    <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600"><span className="material-symbols-outlined text-[18px]">close</span></button>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {(!currentUser.notifications || currentUser.notifications.length === 0) ? (
+                      <p className="p-6 text-center text-sm text-slate-500">No notifications</p>
+                    ) : (
+                      currentUser.notifications.slice(0, 10).map(n => (
+                        <div key={n.id} className={`p-3 border-b border-slate-50 hover:bg-slate-50 transition-colors ${!n.isRead ? 'bg-indigo-50/50' : ''}`}>
+                          <p className="text-sm font-semibold text-slate-800">{n.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
+                          <p className="text-[10px] text-slate-400 mt-1">{new Date(n.timestamp).toLocaleString()}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-bold text-slate-900">{currentUser.name}</p>
@@ -222,31 +314,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                    <div className="space-y-4">
                      <div>
                        <label className={labelCls}>Status</label>
-                       <select className={inputCls}>
-                         <option>All Inquiries</option>
-                         <option>Pending</option>
-                         <option>Resolved</option>
-                       </select>
+                        <select className={inputCls} value={inquiryFilter} onChange={e => setInquiryFilter(e.target.value as any)}>
+                          <option value="all">All Inquiries</option>
+                          <option value="pending">Pending</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
                      </div>
                      <div>
                        <label className={labelCls}>Sort By</label>
-                       <select className={inputCls}>
-                         <option>Newest First</option>
-                         <option>Oldest First</option>
-                       </select>
+                        <select className={inputCls} value={inquirySort} onChange={e => setInquirySort(e.target.value as any)}>
+                          <option value="newest">Newest First</option>
+                          <option value="oldest">Oldest First</option>
+                        </select>
                      </div>
-                     <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-lg font-semibold text-sm transition-colors">
-                       Reset Filters
-                     </button>
+                      <button onClick={() => { setInquiryFilter('all'); setInquirySort('newest'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-lg font-semibold text-sm transition-colors">
+                        Reset Filters
+                      </button>
                    </div>
                  </div>
                </div>
 
                <div className="flex-1 space-y-6">
-                 {localFeedback.length === 0 && !isFetchingFeedback && (
-                   <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-500">No inquiries yet.</div>
-                 )}
-                 {localFeedback.map(entry => (
+                  {isLoading && <>{[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}</>}
+                  {filteredInquiries.length === 0 && !isLoading && (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-500">No inquiries yet.</div>
+                  )}
+                  {filteredInquiries.map(entry => (
                    <div key={entry.id} className={`${cardCls} overflow-hidden border-l-4 ${entry.status === 'pending' ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
                      <div className="p-6">
                        <div className="flex items-center gap-3 mb-4">
@@ -305,19 +398,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                     <h3 className="font-bold text-slate-900 mb-3">Active Conversations</h3>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-3 top-2 text-slate-400 text-[18px]">search</span>
-                      <input type="text" placeholder="Search student name..." className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-slate-300" />
+                      <input type="text" placeholder="Search student name..." value={directChatSearch} onChange={e => setDirectChatSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-slate-300" />
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {directChats.map(chat => (
-                      <div key={chat.id} onClick={() => setActiveDirectChat(chat)} className={`p-4 border-b border-slate-100 cursor-pointer transition-colors hover:bg-slate-50 border-l-2 ${activeDirectChat?.id === chat.id ? 'bg-slate-50 border-[#0f172a]' : 'border-transparent'}`}>
-                         <div className="flex justify-between items-baseline mb-1">
-                           <h4 className="text-sm font-semibold text-slate-900 truncate pr-2">{chat.studentName}</h4>
-                           <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded tracking-wider ${chat.status === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{chat.status}</span>
-                         </div>
-                         <p className="text-xs text-slate-500 truncate">{chat.messages[chat.messages.length - 1]?.text || 'No messages yet'}</p>
-                      </div>
-                    ))}
+                    {isFetchingDirectChats ? <SkeletonSidebar /> : filteredDirectChats.length === 0 ? (
+                      <p className="p-4 text-center text-sm text-slate-500">No conversations found.</p>
+                    ) : (
+                      filteredDirectChats.map(chat => (
+                        <div key={chat.id} onClick={() => setActiveDirectChat(chat)} className={`p-4 border-b border-slate-100 cursor-pointer transition-colors hover:bg-slate-50 border-l-2 ${activeDirectChat?.id === chat.id ? 'bg-slate-50 border-[#0f172a]' : 'border-transparent'}`}>
+                          <div className="flex justify-between items-baseline mb-1">
+                            <h4 className="text-sm font-semibold text-slate-900 truncate pr-2">{chat.studentName}</h4>
+                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded tracking-wider ${chat.status === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{chat.status}</span>
+                          </div>
+                          <p className="text-xs text-slate-500 truncate">{chat.messages[chat.messages.length - 1]?.text || 'No messages yet'}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                </div>
                
@@ -403,6 +500,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                     </div>
                   </div>
                   
+                  {isFetchingStudents ? <SkeletonTable rows={6} /> : (
                   <div className={`${cardCls} overflow-hidden`}>
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
@@ -447,6 +545,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                       </tbody>
                     </table>
                   </div>
+                  )}
                 </>
               ) : (
                 <div className="space-y-6">
@@ -661,6 +760,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
               </div>
 
               {/* Admin Accounts */}
+              {isFetchingAdmins ? <SkeletonTable rows={4} /> : (
               <div className={`${cardCls} overflow-hidden mb-8`}>
                 <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
                   <span className="material-symbols-outlined text-slate-400">admin_panel_settings</span>
@@ -699,6 +799,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                   </tbody>
                 </table>
               </div>
+              )}
 
               {/* Public Team Cards */}
               <div className={`${cardCls} overflow-hidden`}>
@@ -869,6 +970,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
 
             </div>
           )}
+
           {/* AI CHATS TAB */}
           {activeTab === 'chats' && (
             <div className="max-w-7xl mx-auto h-[calc(100vh-160px)] flex gap-6">
@@ -942,7 +1044,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                   <h2 className="text-2xl font-bold text-slate-900">AI Chat Insights</h2>
                   <p className="text-slate-500 mt-1">Analyze all recorded AI chat sessions to discover common questions and concerns.</p>
                 </div>
-                <button onClick={handleChatAnalysis} disabled={loadingAI || chatSessions.length === 0} className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
+                <button onClick={handleChatAnalysis} disabled={loadingAI} className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
                   <span className={`material-symbols-outlined ${loadingAI ? 'animate-spin' : ''}`}>magic_button</span> 
                   {loadingAI ? 'Analyzing Transcripts...' : 'Generate AI Insights'}
                 </button>
@@ -972,32 +1074,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                    </div>
                    <div className="space-y-6">
                      <div className={`${cardCls} p-6`}>
-                        <h3 className="font-bold text-slate-900 mb-4">Sentiment Analysis</h3>
-                        <div className="space-y-4">
-                           <div>
-                             <div className="flex justify-between text-sm mb-1"><span className="text-emerald-600 font-semibold">Positive</span><span>{chatAnalysis.sentiment.positive}%</span></div>
-                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-emerald-500 h-full" style={{width: `${chatAnalysis.sentiment.positive}%`}}></div></div>
-                           </div>
-                           <div>
-                             <div className="flex justify-between text-sm mb-1"><span className="text-slate-600 font-semibold">Neutral</span><span>{chatAnalysis.sentiment.neutral}%</span></div>
-                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-slate-400 h-full" style={{width: `${chatAnalysis.sentiment.neutral}%`}}></div></div>
-                           </div>
-                           <div>
-                             <div className="flex justify-between text-sm mb-1"><span className="text-red-600 font-semibold">Negative</span><span>{chatAnalysis.sentiment.negative}%</span></div>
-                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-red-500 h-full" style={{width: `${chatAnalysis.sentiment.negative}%`}}></div></div>
-                           </div>
-                        </div>
+                        <h3 className="font-bold text-slate-900 mb-4">Sentiment Breakdown</h3>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <PieChart>
+                            <Pie data={[{name:'Positive',value:chatAnalysis.sentiment.positive},{name:'Neutral',value:chatAnalysis.sentiment.neutral},{name:'Negative',value:chatAnalysis.sentiment.negative}]} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({name,value})=>`${name}: ${value}%`} labelLine={false}>
+                              <Cell fill="#10b981" />
+                              <Cell fill="#94a3b8" />
+                              <Cell fill="#ef4444" />
+                            </Pie>
+                            <RechartsTooltip />
+                            <Legend verticalAlign="bottom" height={36} />
+                          </PieChart>
+                        </ResponsiveContainer>
                      </div>
                      <div className={`${cardCls} p-6`}>
-                        <h3 className="font-bold text-slate-900 mb-4">Key Themes</h3>
-                        <div className="space-y-3">
-                          {chatAnalysis.themes.map((t, i) => (
-                             <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                               <span className="font-medium text-slate-700">{t.topic}</span>
-                               <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{t.count} mentions</span>
-                             </div>
-                          ))}
-                        </div>
+                        <h3 className="font-bold text-slate-900 mb-4">Top Themes</h3>
+                        <ResponsiveContainer width="100%" height={Math.max(200, chatAnalysis.themes.length * 45)}>
+                          <BarChart data={chatAnalysis.themes} layout="vertical" margin={{left:20,right:20,top:5,bottom:5}}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis type="number" tick={{fontSize:12}} />
+                            <YAxis type="category" dataKey="topic" tick={{fontSize:11}} width={100} />
+                            <RechartsTooltip />
+                            <Bar dataKey="count" radius={[0,6,6,0]}>
+                              {chatAnalysis.themes.map((_:any,i:number)=>(<Cell key={i} fill={['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe','#ede9fe'][i%6]} />))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
                      </div>
                    </div>
                  </div>
@@ -1021,7 +1123,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                   <h2 className="text-2xl font-bold text-slate-900">Inquiry Insights</h2>
                   <p className="text-slate-500 mt-1">Analyze all admission inquiries to discover trends and user needs.</p>
                 </div>
-                <button onClick={handleAIAnalysis} disabled={loadingAI || localFeedback.length === 0} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
+                <button onClick={handleAIAnalysis} disabled={loadingAI} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all flex items-center gap-2">
                   <span className={`material-symbols-outlined ${loadingAI ? 'animate-spin' : ''}`}>magic_button</span> 
                   {loadingAI ? 'Analyzing Inquiries...' : 'Generate Form Insights'}
                 </button>
@@ -1053,15 +1155,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                    </div>
                    <div className="space-y-6">
                      <div className={`${cardCls} p-6`}>
-                        <h3 className="font-bold text-slate-900 mb-4">Key Themes</h3>
-                        <div className="space-y-3">
-                          {analysis.themes.map((t, i) => (
-                             <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                               <span className="font-medium text-slate-700">{t.topic}</span>
-                               <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{t.count} mentions</span>
-                             </div>
-                          ))}
-                        </div>
+                        <h3 className="font-bold text-slate-900 mb-4">Sentiment Breakdown</h3>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <PieChart>
+                            <Pie data={[{name:'Positive',value:analysis.sentiment.positive},{name:'Neutral',value:analysis.sentiment.neutral},{name:'Negative',value:analysis.sentiment.negative}]} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({name,value})=>`${name}: ${value}%`} labelLine={false}>
+                              <Cell fill="#10b981" />
+                              <Cell fill="#94a3b8" />
+                              <Cell fill="#ef4444" />
+                            </Pie>
+                            <RechartsTooltip />
+                            <Legend verticalAlign="bottom" height={36} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                     </div>
+                     <div className={`${cardCls} p-6`}>
+                        <h3 className="font-bold text-slate-900 mb-4">Top Themes</h3>
+                        <ResponsiveContainer width="100%" height={Math.max(200, analysis.themes.length * 45)}>
+                          <BarChart data={analysis.themes} layout="vertical" margin={{left:20,right:20,top:5,bottom:5}}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis type="number" tick={{fontSize:12}} />
+                            <YAxis type="category" dataKey="topic" tick={{fontSize:11}} width={100} />
+                            <RechartsTooltip />
+                            <Bar dataKey="count" radius={[0,6,6,0]}>
+                              {analysis.themes.map((_:any,i:number)=>(<Cell key={i} fill={['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe','#ede9fe'][i%6]} />))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
                      </div>
                    </div>
                  </div>
@@ -1084,6 +1203,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                 <h2 className="text-2xl font-bold text-slate-900">Platform Feedback Hub</h2>
                 <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-bold text-xs">{platformFeedback.length} entries</span>
               </div>
+              {isFetchingFeedback ? <SkeletonTable rows={5} /> : (
               <div className={`${cardCls} overflow-hidden`}>
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-xs">
@@ -1115,6 +1235,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           )}
 
