@@ -131,6 +131,26 @@ const App: React.FC = () => {
         const profile = await res.json();
         // The frontend relies purely on the Supabase JWT for the role
         setCurrentUser({ ...profile, role });
+      } else if (res.status === 404) {
+        // Auto-create MongoDB profile for users signing up via Google OAuth
+        const newUser: User = {
+          id: session.user.id,
+          email: session.user.email || '',
+          role,
+          name: session.user.user_metadata?.full_name || 'New User',
+          shortlistedUniversities: [],
+          documents: {},
+          notifications: [],
+        };
+        await fetch('/api/users', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify(newUser)
+        });
+        setCurrentUser(newUser);
       } else {
         console.error('Profile not found in database');
       }
