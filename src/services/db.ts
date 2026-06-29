@@ -39,34 +39,35 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, { ...options, headers });
 };
 
-export const registerUser = async (user: Omit<User, 'id'>): Promise<User> => {
+// --- REGISTRATION ---
+export const registerUser = async (userData: Partial<User> & { password?: string }): Promise<User | null> => {
+  if (!userData.email || !userData.password) throw new Error('Email and password are required');
+
   const { data, error } = await supabase.auth.signUp({
-    email: user.email,
-    password: user.password!,
+    email: userData.email,
+    password: userData.password,
+    options: {
+      data: { full_name: userData.name, phone: userData.phone, role: 'student' }
+    }
   });
 
-  if (error || !data.user) {
-    throw new Error(error?.message || 'Registration failed');
-  }
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error('Failed to create account');
 
   const newUser: User = {
-    ...user,
     id: data.user.id,
+    name: userData.name || '',
+    email: userData.email,
+    phone: userData.phone,
+    role: 'student',
     shortlistedUniversities: [],
-    role: user.role || 'student',
     documents: {},
     notifications: [],
-    password: undefined // Don't store password in MongoDB
   };
 
-  const res = await authFetch('/api/users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newUser)
-  });
-
-  if (!res.ok) throw new Error('Failed to create profile');
-
+  // We rely on App.tsx's onAuthStateChange or loginUser to auto-create the MongoDB profile
+  // upon their first successful login. This avoids 401 errors if email confirmations are enabled
+  // and data.session is null here.
   return newUser;
 };
 
@@ -150,11 +151,15 @@ export const loginUser = async (email: string, password?: string): Promise<User 
       body: JSON.stringify(newUser)
     });
     
-    if (!createRes.ok) throw new Error('Failed to create missing profile');
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      throw new Error(`Failed to create missing profile: ${createRes.status} ${errText}`);
+    }
     return newUser;
   }
   
-  throw new Error('Profile not found or server error');
+  const errText = await res.text();
+  throw new Error(`Server error: ${res.status} ${res.statusText} - ${errText}`);
 };
 
 // --- PASSWORD RECOVERY ---
