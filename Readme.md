@@ -274,12 +274,22 @@ Please read the contribution guidelines before making major changes.
 
 ---
 
-# License
+## 📄 License
 
-This repository is licensed under the MIT License.
+Copyright © 2026 MedRussia.
 
-See the LICENSE file for more information.
+This repository contains proprietary software.
 
+The source code is provided for portfolio and demonstration purposes only.
+
+You may not:
+
+- Copy or redistribute the source code
+- Modify or create derivative works
+- Use the software commercially
+- Deploy or host this application without written permission
+
+All rights reserved.
 ---
 
 # Acknowledgements
