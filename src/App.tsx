@@ -13,7 +13,7 @@ import { UniversitiesList } from './components/UniversitiesList';
 import { UniversityDetails } from './components/UniversityDetails';
 import { LandingPage } from './components/LandingPage';
 import { TeamPage } from './components/TeamPage';
-import { getAllFeedback, syncUsers } from './services/db';
+import { getAllFeedback, syncUsers, getAllAdmins } from './services/db';
 import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
 import { supabase } from './lib/supabase';
@@ -125,15 +125,35 @@ const App: React.FC = () => {
             headers: { 'Authorization': `Bearer ${session.access_token}` }
           });
           if (res.ok) {
-            const profile = await res.json();
+            let profile = await res.json();
+            
+            const admins = await getAllAdmins();
+            const isAdminInUpstash = admins.some(a => a.email === profile.email);
+            
+            // Auto-elevate to admin if email matches VITE_ADMIN_EMAIL or is in Upstash
+            const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+            if ((isAdminInUpstash || (adminEmail && profile.email === adminEmail)) && profile.role !== 'admin') {
+              profile = { ...profile, role: 'admin' };
+              await fetch('/api/users', { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }, 
+                body: JSON.stringify(profile) 
+              });
+            }
+
             setCurrentUser(profile);
             localStorage.setItem('mr_active_user', JSON.stringify(profile));
           } else if (event === 'SIGNED_IN') {
             // New user from OAuth
+            const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+            const admins = await getAllAdmins();
+            const isAdminInUpstash = admins.some(a => a.email === session.user.email);
+            const isAutoAdmin = isAdminInUpstash || (adminEmail && session.user.email === adminEmail);
+            
             const newUser: User = {
               id: session.user.id,
               email: session.user.email || '',
-              role: 'student',
+              role: isAutoAdmin ? 'admin' : 'student',
               name: session.user.user_metadata?.full_name || 'New User',
               shortlistedUniversities: [],
               documents: {},

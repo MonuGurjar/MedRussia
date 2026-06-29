@@ -15,6 +15,15 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/auth", "destination": "/index.html" },
+    { "source": "/admin(.*)", "destination": "/index.html" },
+    { "source": "/user(.*)", "destination": "/index.html" },
+    { "source": "/universities", "destination": "/index.html" },
+    { "source": "/university/(.*)", "destination": "/index.html" },
+    { "source": "/compare", "destination": "/index.html" },
+    { "source": "/team", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/index.html" },
+    { "source": "/terms", "destination": "/index.html" },
+    { "source": "/disclaimer", "destination": "/index.html" }
   ]
 }

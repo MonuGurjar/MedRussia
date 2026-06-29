@@ -136,7 +136,21 @@ export const loginUser = async (email: string, password?: string): Promise<User 
   const res = await authFetch(`/api/users?id=${data.user.id}`);
   if (!res.ok) throw new Error('Profile not found');
   
-  return await res.json();
+  const profile = await res.json();
+  
+  // Check if they are in the Upstash admin list
+  const admins = await getAdminsSafe();
+  if (admins.some(a => a.email === email) && profile.role !== 'admin') {
+    profile.role = 'admin';
+    // Update the DB to reflect this elevation
+    await authFetch('/api/users', { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(profile) 
+    });
+  }
+
+  return profile;
 };
 
 // --- PASSWORD RECOVERY ---
