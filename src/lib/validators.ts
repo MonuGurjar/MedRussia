@@ -6,7 +6,7 @@ export const UserSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters").optional(), // Not required for updates
-  role: z.enum(["student", "admin"]).default("student"),
+  role: z.enum(["student", "admin", "super_admin", "manager", "staff"]).default("student"),
 });
 
 export const FeedbackSchema = z.object({
