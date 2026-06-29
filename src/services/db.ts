@@ -131,7 +131,8 @@ export const loginUser = async (email: string, password?: string): Promise<User 
   
   if (res.ok) {
     const profile = await res.json();
-    return profile;
+    const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
+    return { ...profile, role };
   } else if (res.status === 404) {
     // Auto-create missing MongoDB profile
     const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
