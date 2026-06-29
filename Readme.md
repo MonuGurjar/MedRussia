@@ -207,30 +207,6 @@ Authentication and authorization are built around production-grade practices.
 
 ---
 
-# Getting Started
-
-Clone the repository.
-
-```bash
-git clone https://github.com/yourusername/mbbs-russia.git
-
-cd mbbs-russia
-```
-
-Install dependencies.
-
-```bash
-npm install
-```
-
-Run the development server.
-
-```bash
-npm run dev
-```
-
----
-
 # Environment Variables
 
 ```env
