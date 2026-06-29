@@ -264,16 +264,6 @@ GROQ_API_KEY=
 
 ---
 
-# Contributing
-
-Contributions are welcome.
-
-If you have ideas for improving the project, feel free to open an issue or submit a pull request.
-
-Please read the contribution guidelines before making major changes.
-
----
-
 ## 📄 License
 
 Copyright © 2026 MedRussia.
