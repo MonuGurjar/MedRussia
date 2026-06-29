@@ -1,6 +1,5 @@
 
-export type UserRole = 'student' | 'admin';
-export type AdminRole = 'super_admin' | 'manager' | 'chat_officer' | 'editor' | 'support';
+export type UserRole = 'student' | 'staff' | 'manager' | 'admin' | 'super_admin';
 
 export interface EligibilityData {
   pcbPercentage: string;
@@ -37,7 +36,6 @@ export interface User {
   email: string;
   password?: string;
   role: UserRole;
-  adminRole?: AdminRole; // Specific role for admins
   university?: string;
   phone?: string;
   shortlistedUniversities?: string[];

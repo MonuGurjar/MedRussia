@@ -3,11 +3,7 @@ import { apiLimiter, checkRateLimit } from './ratelimit';
 import { logAuditEvent } from './audit';
 import { UserSchema, validateRequest } from '../src/lib/validators';
 import { withAuth, AuthUser } from '../src/lib/apiAuth';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Supabase admin not needed here anymore
 
 async function usersHandler(request: any, response: any, userAuth: AuthUser) {
   const rateLimitResult = await checkRateLimit(request, apiLimiter);
@@ -42,20 +38,6 @@ async function usersHandler(request: any, response: any, userAuth: AuthUser) {
       }
       
       const users = await usersCollection.find({}).toArray();
-      
-      // Fetch roles from Supabase Auth
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-      if (!authError && authData?.users) {
-        // Merge roles
-        const roleMap = new Map();
-        authData.users.forEach(u => {
-          roleMap.set(u.id, u.app_metadata?.role || u.user_metadata?.role || 'student');
-        });
-        
-        users.forEach(u => {
-          u.role = roleMap.get(u.id) || 'student';
-        });
-      }
       
       return response.status(200).json(users);
 

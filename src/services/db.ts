@@ -65,9 +65,17 @@ export const registerUser = async (userData: Partial<User> & { password?: string
     notifications: [],
   };
 
-  // We rely on App.tsx's onAuthStateChange or loginUser to auto-create the MongoDB profile
-  // upon their first successful login. This avoids 401 errors if email confirmations are enabled
-  // and data.session is null here.
+  const res = await authFetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newUser)
+  });
+
+  if (!res.ok) {
+     const errText = await res.text();
+     throw new Error(`Failed to create profile: ${res.status} ${errText}`);
+  }
+
   return newUser;
 };
 
@@ -131,32 +139,7 @@ export const loginUser = async (email: string, password?: string): Promise<User 
   
   if (res.ok) {
     const profile = await res.json();
-    const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
-    return { ...profile, role };
-  } else if (res.status === 404) {
-    // Auto-create missing MongoDB profile
-    const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
-    const newUser: User = {
-      id: data.user.id,
-      email: data.user.email || '',
-      role,
-      name: data.user.user_metadata?.full_name || 'New User',
-      shortlistedUniversities: [],
-      documents: {},
-      notifications: [],
-    };
-    
-    const createRes = await authFetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newUser)
-    });
-    
-    if (!createRes.ok) {
-      const errText = await createRes.text();
-      throw new Error(`Failed to create missing profile: ${createRes.status} ${errText}`);
-    }
-    return newUser;
+    return profile;
   }
   
   const errText = await res.text();

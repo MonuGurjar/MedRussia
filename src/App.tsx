@@ -128,29 +128,11 @@ const App: React.FC = () => {
       const role = session.user.app_metadata?.role || session.user.user_metadata?.role || 'student';
 
       if (res.ok) {
-        let profile = await res.json();
-        profile = { ...profile, role }; // Enforce Supabase role
-        setCurrentUser(profile);
-      } else if (res.status === 404) {
-        // New user from OAuth or missing profile
-        const newUser: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role,
-          name: session.user.user_metadata?.full_name || 'New User',
-          shortlistedUniversities: [],
-          documents: {},
-          notifications: [],
-        };
-        await fetch('/api/users', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify(newUser)
-        });
-        setCurrentUser(newUser);
+        const profile = await res.json();
+        // The frontend relies purely on the Supabase JWT for the role
+        setCurrentUser({ ...profile, role });
+      } else {
+        console.error('Profile not found in database');
       }
     } catch (e) {
       console.error('Error fetching user profile', e);

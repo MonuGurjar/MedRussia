@@ -15,17 +15,16 @@ import { AuditLogsPage } from './AuditLogsPage';
 interface AdminDashboardProps { feedbackList: FeedbackEntry[]; onRefresh: () => void; onLogout: () => void; isLoading?: boolean; currentUser: User; theme: 'light' | 'dark'; toggleTheme: () => void; }
 type Tab = 'inquiries' | 'students' | 'admins' | 'insights' | 'settings' | 'chats' | 'chat_insights' | 'feedback_hub' | 'direct_chats' | 'audit_logs';
 
-const PERMISSIONS: Record<AdminRole, Tab[]> = {
+const PERMISSIONS: Record<string, Tab[]> = {
   'super_admin': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'audit_logs', 'settings'],
-  'manager': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'settings'],
-  'chat_officer': ['inquiries', 'admins', 'direct_chats'],
-  'editor': ['admins', 'settings'],
-  'support': ['inquiries', 'students', 'admins', 'chats', 'direct_chats']
+  'admin': ['inquiries', 'students', 'admins', 'insights', 'chats', 'chat_insights', 'direct_chats', 'feedback_hub', 'settings'],
+  'manager': ['inquiries', 'students', 'chats', 'direct_chats'],
+  'staff': ['inquiries', 'direct_chats']
 };
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: initialFeedbackList, onRefresh, onLogout, isLoading, currentUser, theme, toggleTheme }) => {
   const navigate = useNavigate();
-  const allowedTabs = PERMISSIONS[currentUser.adminRole || 'super_admin'] || PERMISSIONS['super_admin'];
+  const allowedTabs = PERMISSIONS[currentUser.role] || PERMISSIONS['staff'];
   const [activeTab, setActiveTab] = useState<Tab>(allowedTabs[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [viewingStudent, setViewingStudent] = useState<User | null>(null);
@@ -63,7 +62,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminPass, setNewAdminPass] = useState('');
-  const [newAdminRole, setNewAdminRole] = useState<AdminRole>('support');
+  const [newAdminRole, setNewAdminRole] = useState('staff');
   const [editingAdmin, setEditingAdmin] = useState<User | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [editingTeamCard, setEditingTeamCard] = useState<TeamMember | null>(null);
@@ -113,7 +112,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
   const handleVerifyDoc = async (t: any, s: any, r?: string) => { if (!viewingStudent) return; try { await verifyUserDocument(viewingStudent.id, t, s, r); alert("Updated"); setRejectingDoc(null); } catch (e: any) { alert(e.message); } };
   const handleDeleteDoc = async (t: any, p?: string) => { if (!viewingStudent) return; if (window.confirm("Delete?")) { if (p) await deleteFileFromCloudinary(p); await deleteUserDocument(viewingStudent.id, t); alert("Deleted"); } };
   const handleDeleteUser = async (email: string) => { if (window.confirm("Delete User?")) { await deleteUser(email); setViewingStudent(null); setStudents(await getAllStudents()); } };
-  const handleCreateAdmin = async () => { setIsCreatingAdmin(true); try { await registerUser({ name: newAdminName, email: newAdminEmail, password: newAdminPass, role: 'admin', adminRole: newAdminRole }); alert("Created"); setAdmins(await getAllAdmins()); } catch (e: any) { alert(e.message); } finally { setIsCreatingAdmin(false); } };
+  const handleCreateAdmin = async () => { setIsCreatingAdmin(true); try { await registerUser({ name: newAdminName, email: newAdminEmail, password: newAdminPass, role: newAdminRole as UserRole }); alert("Created. Roles must be updated in Supabase."); setAdmins(await getAllAdmins()); } catch (e: any) { alert(e.message); } finally { setIsCreatingAdmin(false); } };
   const handleUpdateAdmin = async () => { if (editingAdmin) { await updateUser(editingAdmin); alert("Updated"); setAdmins(await getAllAdmins()); setEditingAdmin(null); } };
   const handleSaveTeamCard = async (card: TeamMember) => { setIsSavingTeamCard(true); try { const u = [...teamMembers]; const i = u.findIndex(m => m.id === card.id); if (i !== -1) u[i] = card; else u.push(card); await saveTeamMembers(u); setTeamMembers(u); setEditingTeamCard(null); alert('Team card saved!'); } catch (e) { alert('Failed to save'); } finally { setIsSavingTeamCard(false); } };
   const handleDeleteTeamCard = async (id: string) => { if (!window.confirm('Remove this team member?')) return; const u = teamMembers.filter(m => m.id !== id); await saveTeamMembers(u); setTeamMembers(u); };
@@ -293,7 +292,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ feedbackList: in
             <div className="flex items-center gap-3">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-bold text-slate-900">{currentUser.name}</p>
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{currentUser.adminRole?.replace('_', ' ')}</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{currentUser.role.replace('_', ' ')}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 text-sm border-2 border-white shadow-sm">
                  {currentUser.name.charAt(0)}
