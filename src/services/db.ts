@@ -127,11 +127,34 @@ export const loginUser = async (email: string, password?: string): Promise<User 
   }
 
   const res = await authFetch(`/api/users?id=${data.user.id}`);
-  if (!res.ok) throw new Error('Profile not found');
   
-  const profile = await res.json();
+  if (res.ok) {
+    const profile = await res.json();
+    return profile;
+  } else if (res.status === 404) {
+    // Auto-create missing MongoDB profile
+    const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
+    const newUser: User = {
+      id: data.user.id,
+      email: data.user.email || '',
+      role,
+      name: data.user.user_metadata?.full_name || 'New User',
+      shortlistedUniversities: [],
+      documents: {},
+      notifications: [],
+    };
+    
+    const createRes = await authFetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser)
+    });
+    
+    if (!createRes.ok) throw new Error('Failed to create missing profile');
+    return newUser;
+  }
   
-  return profile;
+  throw new Error('Profile not found or server error');
 };
 
 // --- PASSWORD RECOVERY ---

@@ -22,7 +22,7 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true); setError('');
-    try { const user = await loginUser(formData.identifier, formData.password); if (user) onAuthSuccess(user); else setError('Invalid credentials'); } catch (err) { setError('Login failed'); } finally { setIsSubmitting(false); }
+    try { const user = await loginUser(formData.identifier, formData.password); if (user) onAuthSuccess(user); else setError('Invalid credentials'); } catch (err: any) { setError(err.message || 'Login failed'); } finally { setIsSubmitting(false); }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
