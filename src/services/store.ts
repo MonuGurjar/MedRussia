@@ -8,13 +8,12 @@ const KEY_FEEDBACK = 'med_russia:feedback';
 const KEY_USERS = 'med_russia:users';
 const KEY_SETTINGS = 'med_russia:settings';
 const KEY_CHAT_LOGS = 'med_russia:chat_logs';
-const KEY_ADMINS = 'admin.json';
 const KEY_PLATFORM_FEEDBACK = 'med_russia:platform_feedback';
 const KEY_TEAM = 'med_russia:team';
 const KEY_DIRECT_CHATS = 'med_russia:direct_chats';
 
 // Helper to interact with Vercel Serverless Function proxy
-const upstashFetch = async (command: string, ...args: any[]) => {
+const storeFetch = async (command: string, ...args: any[]) => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         const headers: HeadersInit = { 'Content-Type': 'application/json' };
@@ -41,7 +40,7 @@ const upstashFetch = async (command: string, ...args: any[]) => {
     }
 };
 
-export const isUpstashConfigured = () => {
+export const isStoreConfigured = () => {
     return true;
 };
 
@@ -49,7 +48,7 @@ export const isUpstashConfigured = () => {
 
 const getJSON = async <T>(key: string, defaultValue: T): Promise<T> => {
     try {
-        const result = await upstashFetch('GET', key);
+        const result = await storeFetch('GET', key);
         if (!result) return defaultValue;
         return typeof result === 'string' ? JSON.parse(result) : result;
     } catch (e) {
@@ -58,12 +57,12 @@ const getJSON = async <T>(key: string, defaultValue: T): Promise<T> => {
 };
 
 const setJSON = async (key: string, value: any) => {
-    return await upstashFetch('SET', key, JSON.stringify(value));
+    return await storeFetch('SET', key, JSON.stringify(value));
 };
 
 // --- FEEDBACK ---
 
-export const fetchFeedbackFromUpstash = async (): Promise<{ entries: FeedbackEntry[], error?: string }> => {
+export const fetchFeedbackFromStore = async (): Promise<{ entries: FeedbackEntry[], error?: string }> => {
     try {
         const entries = await getJSON<FeedbackEntry[]>(KEY_FEEDBACK, []);
         if (!Array.isArray(entries)) return { entries: [] };
@@ -73,9 +72,9 @@ export const fetchFeedbackFromUpstash = async (): Promise<{ entries: FeedbackEnt
     }
 };
 
-export const saveFeedbackToUpstash = async (newEntry: FeedbackEntry): Promise<boolean> => {
+export const saveFeedbackToStore = async (newEntry: FeedbackEntry): Promise<boolean> => {
     try {
-        const { entries } = await fetchFeedbackFromUpstash();
+        const { entries } = await fetchFeedbackFromStore();
         const index = entries.findIndex(e => e.id === newEntry.id);
         const updatedEntries = [...entries];
 
@@ -92,9 +91,9 @@ export const saveFeedbackToUpstash = async (newEntry: FeedbackEntry): Promise<bo
     }
 };
 
-export const deleteFeedbackFromUpstash = async (id: string): Promise<boolean> => {
+export const deleteFeedbackFromStore = async (id: string): Promise<boolean> => {
     try {
-        const { entries } = await fetchFeedbackFromUpstash();
+        const { entries } = await fetchFeedbackFromStore();
         const updatedEntries = entries.filter(e => e.id !== id);
         await setJSON(KEY_FEEDBACK, updatedEntries);
         return true;
@@ -105,7 +104,7 @@ export const deleteFeedbackFromUpstash = async (id: string): Promise<boolean> =>
 
 // --- PLATFORM FEEDBACK (The Hub) ---
 
-export const fetchPlatformFeedbackFromUpstash = async (): Promise<PlatformFeedback[]> => {
+export const fetchPlatformFeedbackFromStore = async (): Promise<PlatformFeedback[]> => {
     try {
         const items = await getJSON<PlatformFeedback[]>(KEY_PLATFORM_FEEDBACK, []);
         return Array.isArray(items) ? items : [];
@@ -114,9 +113,9 @@ export const fetchPlatformFeedbackFromUpstash = async (): Promise<PlatformFeedba
     }
 };
 
-export const savePlatformFeedbackToUpstash = async (item: PlatformFeedback): Promise<boolean> => {
+export const savePlatformFeedbackToStore = async (item: PlatformFeedback): Promise<boolean> => {
     try {
-        const items = await fetchPlatformFeedbackFromUpstash();
+        const items = await fetchPlatformFeedbackFromStore();
         const index = items.findIndex(i => i.id === item.id);
 
         if (index !== -1) {
@@ -134,14 +133,14 @@ export const savePlatformFeedbackToUpstash = async (item: PlatformFeedback): Pro
 
 // --- USERS ---
 
-export const fetchUsersFromUpstash = async (): Promise<any[]> => {
+export const fetchUsersFromStore = async (): Promise<any[]> => {
     const users = await getJSON<any[]>(KEY_USERS, []);
     return Array.isArray(users) ? users : [];
 };
 
-export const saveUserToUpstash = async (user: any): Promise<boolean> => {
+export const saveUserToStore = async (user: any): Promise<boolean> => {
     try {
-        const users = await fetchUsersFromUpstash();
+        const users = await fetchUsersFromStore();
         const index = users.findIndex((u: any) => u.id === user.id);
 
         if (index !== -1) {
@@ -157,9 +156,9 @@ export const saveUserToUpstash = async (user: any): Promise<boolean> => {
     }
 };
 
-export const deleteUserFromUpstash = async (email: string): Promise<boolean> => {
+export const deleteUserFromStore = async (email: string): Promise<boolean> => {
     try {
-        const users = await fetchUsersFromUpstash();
+        const users = await fetchUsersFromStore();
         const updatedUsers = users.filter((u: any) => u.email !== email);
         await setJSON(KEY_USERS, updatedUsers);
         return true;
@@ -168,25 +167,7 @@ export const deleteUserFromUpstash = async (email: string): Promise<boolean> => 
     }
 };
 
-// --- ADMINS (admin.json) ---
 
-export const fetchAdminsFromUpstash = async (): Promise<User[]> => {
-    try {
-        const admins = await getJSON<User[]>(KEY_ADMINS, []);
-        return Array.isArray(admins) ? admins : [];
-    } catch (e) {
-        return [];
-    }
-};
-
-export const saveAdminsToUpstash = async (admins: User[]): Promise<boolean> => {
-    try {
-        await setJSON(KEY_ADMINS, admins);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
 
 // --- SETTINGS ---
 
@@ -209,7 +190,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     }
 };
 
-export const fetchSettingsFromUpstash = async (): Promise<AppSettings> => {
+export const fetchSettingsFromStore = async (): Promise<AppSettings> => {
     const settings = await getJSON<AppSettings>(KEY_SETTINGS, DEFAULT_SETTINGS);
 
     return {
@@ -219,7 +200,7 @@ export const fetchSettingsFromUpstash = async (): Promise<AppSettings> => {
     };
 };
 
-export const saveSettingsToUpstash = async (settings: AppSettings): Promise<boolean> => {
+export const saveSettingsToStore = async (settings: AppSettings): Promise<boolean> => {
     try {
         await setJSON(KEY_SETTINGS, settings);
         return true;
@@ -230,7 +211,7 @@ export const saveSettingsToUpstash = async (settings: AppSettings): Promise<bool
 
 // --- CHAT LOGS ---
 
-export const fetchChatLogsFromUpstash = async (): Promise<ChatSession[]> => {
+export const fetchChatLogsFromStore = async (): Promise<ChatSession[]> => {
     try {
         const logs = await getJSON<ChatSession[]>(KEY_CHAT_LOGS, []);
         return Array.isArray(logs) ? logs : [];
@@ -239,7 +220,7 @@ export const fetchChatLogsFromUpstash = async (): Promise<ChatSession[]> => {
     }
 };
 
-export const saveChatSessionToUpstash = async (session: ChatSession | ChatSession[]): Promise<boolean> => {
+export const saveChatSessionToStore = async (session: ChatSession | ChatSession[]): Promise<boolean> => {
     try {
         // Overload: if array passed, replace whole log (for deletion)
         if (Array.isArray(session)) {
@@ -247,7 +228,7 @@ export const saveChatSessionToUpstash = async (session: ChatSession | ChatSessio
             return true;
         }
 
-        const sessions = await fetchChatLogsFromUpstash();
+        const sessions = await fetchChatLogsFromStore();
         const index = sessions.findIndex(s => s.id === session.id);
 
         if (index !== -1) {
@@ -267,7 +248,7 @@ export const saveChatSessionToUpstash = async (session: ChatSession | ChatSessio
 
 // --- TEAM MEMBERS ---
 
-export const fetchTeamFromUpstash = async (): Promise<TeamMember[]> => {
+export const fetchTeamFromStore = async (): Promise<TeamMember[]> => {
     try {
         const team = await getJSON<TeamMember[]>(KEY_TEAM, []);
         return Array.isArray(team) ? team : [];
@@ -276,7 +257,7 @@ export const fetchTeamFromUpstash = async (): Promise<TeamMember[]> => {
     }
 };
 
-export const saveTeamToUpstash = async (team: TeamMember[]): Promise<boolean> => {
+export const saveTeamToStore = async (team: TeamMember[]): Promise<boolean> => {
     try {
         await setJSON(KEY_TEAM, team);
         return true;
@@ -287,7 +268,7 @@ export const saveTeamToUpstash = async (team: TeamMember[]): Promise<boolean> =>
 
 // --- DIRECT CHATS ---
 
-export const fetchDirectChatsFromUpstash = async (): Promise<DirectChat[]> => {
+export const fetchDirectChatsFromStore = async (): Promise<DirectChat[]> => {
     try {
         const chats = await getJSON<DirectChat[]>(KEY_DIRECT_CHATS, []);
         return Array.isArray(chats) ? chats : [];
@@ -296,7 +277,7 @@ export const fetchDirectChatsFromUpstash = async (): Promise<DirectChat[]> => {
     }
 };
 
-export const saveDirectChatsToUpstash = async (chats: DirectChat[]): Promise<boolean> => {
+export const saveDirectChatsToStore = async (chats: DirectChat[]): Promise<boolean> => {
     try {
         await setJSON(KEY_DIRECT_CHATS, chats);
         return true;

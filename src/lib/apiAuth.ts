@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { connectToDatabase } from '../../api/mongodb';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -9,8 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export interface AuthUser {
   id: string;
   email: string;
-  role?: string;
-  adminRole?: string;
+  role: string;
 }
 
 interface AuthOptions {
@@ -36,11 +34,8 @@ export function withAuth(handler: any, options?: AuthOptions) {
       const userId = data.user.id;
       const email = data.user.email;
 
-      const { db } = await connectToDatabase();
-      const userDoc = await db.collection('users').findOne({ id: userId });
-
-      const role = userDoc?.role || 'student';
-      const adminRole = userDoc?.adminRole;
+      // Read role directly from Supabase JWT app_metadata or user_metadata
+      const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
 
       if (options?.requiredRole && role !== options.requiredRole) {
         return response.status(403).json({ error: 'Forbidden: Insufficient permissions' });
@@ -49,8 +44,7 @@ export function withAuth(handler: any, options?: AuthOptions) {
       const authUser: AuthUser = {
         id: userId,
         email: email || '',
-        role,
-        adminRole
+        role
       };
 
       return handler(request, response, authUser);
@@ -78,15 +72,13 @@ export function withOptionalAuth(handler: any) {
 
       const userId = data.user.id;
       const email = data.user.email;
-
-      const { db } = await connectToDatabase();
-      const userDoc = await db.collection('users').findOne({ id: userId });
+      
+      const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
 
       const authUser: AuthUser = {
         id: userId,
         email: email || '',
-        role: userDoc?.role || 'student',
-        adminRole: userDoc?.adminRole
+        role
       };
 
       return handler(request, response, authUser);

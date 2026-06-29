@@ -7,13 +7,12 @@ const ALLOWED_KEYS = [
   'med_russia:users',
   'med_russia:settings',
   'med_russia:chat_logs',
-  'admin.json',
   'med_russia:platform_feedback',
   'med_russia:team',
   'med_russia:direct_chats'
 ];
 
-async function dbHandler(request: any, response: any, user: AuthUser) {
+async function storeHandler(request: any, response: any, user: AuthUser) {
   if (request.method !== 'POST') {
     return response.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -39,8 +38,10 @@ async function dbHandler(request: any, response: any, user: AuthUser) {
     const kvCollection = db.collection('kv_store');
 
     if (command === 'GET') {
-      if (key === 'med_russia:users' || key === 'admin.json' || key === 'med_russia:chat_logs') {
-        if (user.role !== 'admin') return response.status(403).json({ error: 'Admin access required' });
+      if (key === 'med_russia:users' || key === 'med_russia:chat_logs') {
+        if (user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'manager' && user.role !== 'staff') {
+           return response.status(403).json({ error: 'Admin access required' });
+        }
       }
 
       // Special routing for users collection
@@ -55,8 +56,10 @@ async function dbHandler(request: any, response: any, user: AuthUser) {
     } else if (command === 'SET') {
       const value = args[1];
 
-      if (key === 'med_russia:settings' || key === 'admin.json' || key === 'med_russia:users' || key === 'med_russia:team') {
-        if (user.role !== 'admin') return response.status(403).json({ error: 'Admin access required' });
+      if (key === 'med_russia:settings' || key === 'med_russia:users' || key === 'med_russia:team') {
+        if (user.role !== 'admin' && user.role !== 'super_admin') {
+           return response.status(403).json({ error: 'Admin access required' });
+        }
       }
 
       // Special routing for users collection
@@ -85,7 +88,9 @@ async function dbHandler(request: any, response: any, user: AuthUser) {
       return response.status(200).json({ result: 'OK' });
 
     } else if (command === 'DEL') {
-      if (user.role !== 'admin') return response.status(403).json({ error: 'Admin access required for delete' });
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+         return response.status(403).json({ error: 'Admin access required for delete' });
+      }
       await kvCollection.deleteOne({ _id: key });
       return response.status(200).json({ result: 1 });
       
@@ -94,10 +99,10 @@ async function dbHandler(request: any, response: any, user: AuthUser) {
     }
 
   } catch (error: any) {
-    console.error('DB Proxy Error:', error);
+    console.error('Store Proxy Error:', error);
     return response.status(500).json({ error: error.message });
   }
 }
 
-export default withAuth(dbHandler);
+export default withAuth(storeHandler);
 

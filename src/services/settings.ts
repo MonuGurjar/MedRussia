@@ -1,6 +1,6 @@
 
 import { AppSettings } from '../types';
-import { fetchSettingsFromUpstash, saveSettingsToUpstash } from './kv';
+import { fetchSettingsFromStore, saveSettingsToStore } from './store';
 
 const LOCAL_SETTINGS_KEY = 'med_russia_local_settings';
 
@@ -29,10 +29,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const getSettings = async (): Promise<AppSettings> => {
-  // 1. Try Cloud (Upstash) - Primary Source for Admin Overrides
+  // 1. Try Cloud (Store) - Primary Source for Admin Overrides
   let cloudSettings = DEFAULT_SETTINGS;
   try {
-    const fetched = await fetchSettingsFromUpstash();
+    const fetched = await fetchSettingsFromStore();
     cloudSettings = {
         ...DEFAULT_SETTINGS,
         ...fetched,
@@ -52,7 +52,7 @@ export const getSettings = async (): Promise<AppSettings> => {
 
   // 2. Return Settings
   // Note: We no longer fetch or merge sensitive API keys from the server to the client.
-  // The client simply flags features as enabled/disabled based on Upstash, 
+  // The client simply flags features as enabled/disabled based on Store, 
   // but the actual keys reside in process.env on the server.
   
   const finalSettings: AppSettings = {
@@ -79,7 +79,7 @@ export const saveSettings = async (settings: AppSettings): Promise<boolean> => {
     localStorage.setItem(LOCAL_SETTINGS_KEY, JSON.stringify(settings));
 
     // 2. Save Cloud (Sync)
-    await saveSettingsToUpstash(settings);
+    await saveSettingsToStore(settings);
     return true;
   } catch (error) {
     console.warn("Failed to save settings to cloud (local only):", error);

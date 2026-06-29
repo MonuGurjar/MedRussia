@@ -1,28 +1,28 @@
 
 import { DirectChat, DirectMessage, DirectMessageAttachment } from '../types';
-import { fetchDirectChatsFromUpstash, saveDirectChatsToUpstash } from './kv';
+import { fetchDirectChatsFromStore, saveDirectChatsToStore } from './store';
 
 // Get all direct chats
 export const getAllDirectChats = async (): Promise<DirectChat[]> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     return chats.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
 };
 
 // Get chats for a specific student
 export const getStudentChats = async (studentId: string): Promise<DirectChat[]> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     return chats.filter(c => c.studentId === studentId).sort((a, b) => b.lastMessageAt - a.lastMessageAt);
 };
 
 // Get a single chat by ID
 export const getDirectChat = async (chatId: string): Promise<DirectChat | null> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     return chats.find(c => c.id === chatId) || null;
 };
 
 // Create a new chat (initiated by student)
 export const createDirectChat = async (studentId: string, studentName: string, studentEmail: string, initialMessage: string, attachment?: DirectMessageAttachment): Promise<DirectChat> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
 
     const msg: DirectMessage = {
         id: Math.random().toString(36).substr(2, 9),
@@ -46,7 +46,7 @@ export const createDirectChat = async (studentId: string, studentName: string, s
     };
 
     chats.push(newChat);
-    await saveDirectChatsToUpstash(chats);
+    await saveDirectChatsToStore(chats);
     return newChat;
 };
 
@@ -59,7 +59,7 @@ export const sendDirectMessage = async (
     text: string,
     attachment?: DirectMessageAttachment
 ): Promise<DirectChat | null> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     const index = chats.findIndex(c => c.id === chatId);
     if (index === -1) return null;
 
@@ -81,13 +81,13 @@ export const sendDirectMessage = async (
         chats[index].status = 'open';
     }
 
-    await saveDirectChatsToUpstash(chats);
+    await saveDirectChatsToStore(chats);
     return chats[index];
 };
 
 // Escalate a chat to a higher role
 export const escalateChat = async (chatId: string, escalatedBy: string, escalatedByName: string, targetRole: string, reason: string): Promise<DirectChat | null> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     const index = chats.findIndex(c => c.id === chatId);
     if (index === -1) return null;
 
@@ -110,17 +110,17 @@ export const escalateChat = async (chatId: string, escalatedBy: string, escalate
     chats[index].messages.push(escalationMsg);
     chats[index].lastMessageAt = Date.now();
 
-    await saveDirectChatsToUpstash(chats);
+    await saveDirectChatsToStore(chats);
     return chats[index];
 };
 
 // Close a chat
 export const closeDirectChat = async (chatId: string): Promise<boolean> => {
-    const chats = await fetchDirectChatsFromUpstash();
+    const chats = await fetchDirectChatsFromStore();
     const index = chats.findIndex(c => c.id === chatId);
     if (index === -1) return false;
 
     chats[index].status = 'closed';
-    await saveDirectChatsToUpstash(chats);
+    await saveDirectChatsToStore(chats);
     return true;
 };

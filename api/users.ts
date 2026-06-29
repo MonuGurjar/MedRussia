@@ -3,6 +3,11 @@ import { apiLimiter, checkRateLimit } from './ratelimit';
 import { logAuditEvent } from './audit';
 import { UserSchema, validateRequest } from '../src/lib/validators';
 import { withAuth, AuthUser } from '../src/lib/apiAuth';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 async function usersHandler(request: any, response: any, userAuth: AuthUser) {
   const rateLimitResult = await checkRateLimit(request, apiLimiter);
@@ -16,60 +21,95 @@ async function usersHandler(request: any, response: any, userAuth: AuthUser) {
   try {
     if (request.method === 'GET') {
       const { id, email } = request.query;
-      if (id) {
-        if (userAuth.role !== 'admin' && userAuth.id !== id) return response.status(403).json({ error: 'Forbidden' });
-        const user = await usersCollection.findOne({ id });
+      
+      // If fetching single user
+      if (id || email) {
+        if (userAuth.role !== 'admin' && userAuth.role !== 'super_admin' && userAuth.id !== id && userAuth.email !== email) {
+          return response.status(403).json({ error: 'Forbidden' });
+        }
+        
+        const filter = id ? { id } : { email };
+        const user = await usersCollection.findOne(filter);
         if (!user) return response.status(404).json({ error: 'User not found' });
+        
+        // Return without merging role for single user fetch, client has it in session
         return response.status(200).json(user);
-      } else if (email) {
-        if (userAuth.role !== 'admin' && userAuth.email !== email) return response.status(403).json({ error: 'Forbidden' });
-        const user = await usersCollection.findOne({ email });
-        if (!user) return response.status(404).json({ error: 'User not found' });
-        return response.status(200).json(user);
-      } else {
-        if (userAuth.role !== 'admin') return response.status(403).json({ error: 'Admin access required' });
-        const users = await usersCollection.find({}).toArray();
-        return response.status(200).json(users);
+      } 
+      
+      // If fetching all users (admin only)
+      if (userAuth.role !== 'admin' && userAuth.role !== 'super_admin' && userAuth.role !== 'manager' && userAuth.role !== 'staff') {
+         return response.status(403).json({ error: 'Admin access required' });
       }
+      
+      const users = await usersCollection.find({}).toArray();
+      
+      // Fetch roles from Supabase Auth
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+      if (!authError && authData?.users) {
+        // Merge roles
+        const roleMap = new Map();
+        authData.users.forEach(u => {
+          roleMap.set(u.id, u.app_metadata?.role || u.user_metadata?.role || 'student');
+        });
+        
+        users.forEach(u => {
+          u.role = roleMap.get(u.id) || 'student';
+        });
+      }
+      
+      return response.status(200).json(users);
+
     } else if (request.method === 'POST') {
       const validation = validateRequest(UserSchema, request.body);
       if (!validation.success) {
         return response.status(400).json({ error: validation.error });
       }
-      const user = request.body;
-      if (userAuth.role !== 'admin' && userAuth.email !== user.email) {
+      
+      const user = { ...request.body };
+      // Prevent storing role in MongoDB
+      delete user.role;
+      
+      if (userAuth.role !== 'admin' && userAuth.role !== 'super_admin' && userAuth.email !== user.email) {
         return response.status(403).json({ error: 'Forbidden' });
       }
+      
       await usersCollection.insertOne(user);
       
       const ipAddress = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown_ip';
       await logAuditEvent(user.id, 'PROFILE_CREATED', { email: user.email }, ipAddress);
       
       return response.status(201).json(user);
+
     } else if (request.method === 'PUT') {
-      // For PUT, we might not validate everything strictly since it could be partial, 
-      // but let's assume we do strict validation or partial
       const validation = validateRequest(UserSchema.partial(), request.body);
       if (!validation.success) {
         return response.status(400).json({ error: validation.error });
       }
       const user = { ...request.body };
       delete user._id;
+      delete user.role; // Prevent storing role in MongoDB
 
-      if (userAuth.role !== 'admin' && userAuth.id !== user.id) {
+      if (userAuth.role !== 'admin' && userAuth.role !== 'super_admin' && userAuth.id !== user.id) {
         return response.status(403).json({ error: 'Forbidden' });
       }
+      
       await usersCollection.updateOne({ id: user.id }, { $set: user }, { upsert: true });
       
       const ipAddress = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown_ip';
       await logAuditEvent(user.id, 'PROFILE_UPDATED', { email: user.email }, ipAddress);
       
       return response.status(200).json(user);
+
     } else if (request.method === 'DELETE') {
-      if (userAuth.role !== 'admin') return response.status(403).json({ error: 'Admin access required' });
+      if (userAuth.role !== 'admin' && userAuth.role !== 'super_admin') return response.status(403).json({ error: 'Admin access required' });
       const { email } = request.query;
+      
+      // Delete from MongoDB
       await usersCollection.deleteOne({ email });
+      
+      // We don't delete from Supabase Auth here unless required, assuming we just delete profile
       return response.status(200).json({ success: true });
+      
     } else {
       return response.status(405).json({ error: 'Method Not Allowed' });
     }

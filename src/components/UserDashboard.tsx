@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, FeedbackEntry, AppSettings, EligibilityData, DocumentMetadata } from '../types';
-import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromUpstash, updateUser } from '../services/db';
+import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromStore, updateUser } from '../services/db';
 import { getSettings } from '../services/settings';
 import { uploadFileToCloudinary } from '../services/storage';
 import { checkEligibility } from '../services/gemini';
@@ -110,7 +110,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
     const data = await getUserFeedback(user.id);
     setEntries(data); setLoading(false);
     const newNotifs: typeof notifications = [];
-    try { const users = await fetchUsersFromUpstash(); const freshUser = users.find((u: any) => u.id === user.id); if (freshUser?.notifications) freshUser.notifications.forEach((n: any) => newNotifs.push({ id: n.id, text: n.message, type: n.type, time: new Date(n.timestamp).toLocaleDateString() })); } catch (e) { console.error(e); }
+    try { const users = await fetchUsersFromStore(); const freshUser = users.find((u: any) => u.id === user.id); if (freshUser?.notifications) freshUser.notifications.forEach((n: any) => newNotifs.push({ id: n.id, text: n.message, type: n.type, time: new Date(n.timestamp).toLocaleDateString() })); } catch (e) { console.error(e); }
     const repliedEntries = data.filter(e => e.status === 'replied');
     if (repliedEntries.length > 0) newNotifs.push({ id: 'reply-' + repliedEntries[0].id, text: `Admin replied to your inquiry about ${repliedEntries[0].targetUniversity}`, type: 'success', time: 'Recent' });
     setNotifications(newNotifs);

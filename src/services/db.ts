@@ -2,25 +2,23 @@
 import { FeedbackEntry, User, FeedbackReply, EligibilityData, ChatSession, PlatformFeedback, UserNotification, DocumentMetadata } from '../types';
 import { supabase } from '../lib/supabase';
 import {
-  saveFeedbackToUpstash,
-  fetchFeedbackFromUpstash,
-  saveUserToUpstash,
-  fetchUsersFromUpstash,
-  deleteFeedbackFromUpstash,
-  deleteUserFromUpstash,
-  fetchChatLogsFromUpstash,
-  saveChatSessionToUpstash,
-  fetchAdminsFromUpstash,
-  saveAdminsToUpstash,
-  savePlatformFeedbackToUpstash,
-  fetchPlatformFeedbackFromUpstash,
-  fetchTeamFromUpstash,
-  saveTeamToUpstash
-} from './kv';
+  saveFeedbackToStore,
+  fetchFeedbackFromStore,
+  saveUserToStore,
+  fetchUsersFromStore,
+  deleteFeedbackFromStore,
+  deleteUserFromStore,
+  fetchChatLogsFromStore,
+  saveChatSessionToStore,
+  savePlatformFeedbackToStore,
+  fetchPlatformFeedbackFromStore,
+  fetchTeamFromStore,
+  saveTeamToStore
+} from './store';
 import { TeamMember, TEAM_MEMBERS } from '../data/teamData';
 
 // Re-export for components that need direct access to fresh data
-export { fetchUsersFromUpstash, saveChatSessionToUpstash };
+export { fetchUsersFromStore, saveChatSessionToStore };
 
 const FEEDBACK_KEY = 'med_russia_feedback_data';
 const USERS_KEY = 'med_russia_users_data';
@@ -31,11 +29,6 @@ const getLocal = <T>(key: string): T[] => {
   try { return JSON.parse(data); } catch { return []; }
 };
 
-// --- HELPER: Get Admins (KV only) ---
-const getAdminsSafe = async (): Promise<User[]> => {
-  const admins = await fetchAdminsFromUpstash();
-  return admins || [];
-};
 
 const authFetch = async (url: string, options: RequestInit = {}) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -93,7 +86,7 @@ export const updateUser = async (user: User): Promise<void> => {
 };
 
 export const sendNotificationToUser = async (userId: string, notification: Omit<UserNotification, 'id' | 'timestamp' | 'isRead'>): Promise<void> => {
-  const users = await fetchUsersFromUpstash();
+  const users = await fetchUsersFromStore();
   const index = users.findIndex((u: any) => u.id === userId);
 
   if (index === -1) throw new Error("User not found");
@@ -112,7 +105,7 @@ export const sendNotificationToUser = async (userId: string, notification: Omit<
   user.notifications.unshift(newNotification);
 
   // Save Cloud
-  await saveUserToUpstash(user);
+  await saveUserToStore(user);
 
   // Save Local (if current session matches)
   const localUsers = getLocal<User>(USERS_KEY);
@@ -138,18 +131,6 @@ export const loginUser = async (email: string, password?: string): Promise<User 
   
   const profile = await res.json();
   
-  // Check if they are in the Upstash admin list
-  const admins = await getAdminsSafe();
-  if (admins.some(a => a.email === email) && profile.role !== 'admin') {
-    profile.role = 'admin';
-    // Update the DB to reflect this elevation
-    await authFetch('/api/users', { 
-      method: 'PUT', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify(profile) 
-    });
-  }
-
   return profile;
 };
 
@@ -194,7 +175,7 @@ export const deleteUserDocument = async (userId: string, docType: 'marksheet' | 
 
 // New Function for Admin Verification
 export const verifyUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard', status: 'verified' | 'rejected', remarks?: string): Promise<User> => {
-  const users = await fetchUsersFromUpstash();
+  const users = await fetchUsersFromStore();
   const userIndex = users.findIndex((u: any) => u.id === userId);
 
   if (userIndex === -1) throw new Error("User not found in cloud");
@@ -204,7 +185,7 @@ export const verifyUserDocument = async (userId: string, docType: 'marksheet' | 
     user.documents[docType].status = status;
     if (remarks) user.documents[docType].remarks = remarks;
 
-    await saveUserToUpstash(user);
+    await saveUserToStore(user);
 
     // Update Local if it's the current user (edge case, but good to handle)
     const localUsers = getLocal<User>(USERS_KEY);
@@ -254,20 +235,26 @@ export const toggleShortlist = async (userId: string, uniName: string): Promise<
   return list;
 };
 
-// Changed to ASYNC to support fetching from KV
-export const getAllAdmins = async (): Promise<User[]> => {
-  return await getAdminsSafe();
-};
 
 // Changed to ASYNC to fetch ALL students from Cloud, not just local
+export const getAllAdmins = async (): Promise<User[]> => {
+  try {
+    const list = await fetchUsersFromCloud();
+    return list.filter(u => ['admin', 'super_admin', 'manager', 'staff'].includes(u.role || ''));
+  } catch (e) {
+    console.error("Failed to fetch admins:", e);
+    return [];
+  }
+};
+
 export const getAllStudents = async (): Promise<User[]> => {
-  const users = await fetchUsersFromUpstash();
+  const users = await fetchUsersFromStore();
   return users.filter((u: any) => u.role === 'student');
 };
 
 export const syncUsers = async (): Promise<void> => {
   try {
-    const cloudUsers = await fetchUsersFromUpstash();
+    const cloudUsers = await fetchUsersFromStore();
     if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
       localStorage.setItem(USERS_KEY, JSON.stringify(cloudUsers));
     }
@@ -303,7 +290,7 @@ export const saveFeedback = async (entry: Omit<FeedbackEntry, 'id' | 'timestamp'
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(localEntries));
 
   // Sync to Cloud
-  await saveFeedbackToUpstash(newEntry);
+  await saveFeedbackToStore(newEntry);
   return newEntry;
 };
 
@@ -321,7 +308,7 @@ export const addReply = async (feedbackId: string, reply: Omit<FeedbackReply, 'i
     entries[index].status = 'replied';
 
     localStorage.setItem(FEEDBACK_KEY, JSON.stringify(entries));
-    await saveFeedbackToUpstash(entries[index]);
+    await saveFeedbackToStore(entries[index]);
   }
 };
 
@@ -331,7 +318,7 @@ export const getUserFeedback = async (userId: string): Promise<FeedbackEntry[]> 
 };
 
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
-  const { entries: remoteEntries } = await fetchFeedbackFromUpstash();
+  const { entries: remoteEntries } = await fetchFeedbackFromStore();
   const localEntries = getLocal<FeedbackEntry>(FEEDBACK_KEY);
 
   if (remoteEntries.length === 0) return localEntries;
@@ -353,45 +340,35 @@ export const deleteFeedback = async (id: string): Promise<void> => {
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(newEntries));
 
   // 2. Delete from Cloud
-  await deleteFeedbackFromUpstash(id);
+  await deleteFeedbackFromStore(id);
 };
 
 export const deleteUser = async (email: string): Promise<void> => {
-  // Check if it's an admin first
-  const admins = await getAdminsSafe();
-  const adminIndex = admins.findIndex(a => a.email === email);
-
-  if (adminIndex !== -1) {
-    const updatedAdmins = admins.filter(a => a.email !== email);
-    await saveAdminsToUpstash(updatedAdmins);
-    return;
-  }
-
   // 1. Delete from Local Storage
   const users = getLocal<User>(USERS_KEY);
   const newUsers = users.filter(u => u.email !== email);
   localStorage.setItem(USERS_KEY, JSON.stringify(newUsers));
 
   // 2. Delete from Cloud
-  await deleteUserFromUpstash(email);
+  await deleteUserFromStore(email);
 };
 
 // --- CHAT LOGGING ---
 
 export const logChatSession = async (session: ChatSession): Promise<void> => {
   // Only save to Cloud to save local storage space, as these are logs
-  await saveChatSessionToUpstash(session);
+  await saveChatSessionToStore(session);
 };
 
 export const getChatHistory = async (): Promise<ChatSession[]> => {
-  return await fetchChatLogsFromUpstash();
+  return await fetchChatLogsFromStore();
 };
 
 export const deleteChatSession = async (id: string): Promise<void> => {
-  const sessions = await fetchChatLogsFromUpstash();
+  const sessions = await fetchChatLogsFromStore();
   const newSessions = sessions.filter(s => s.id !== id);
   // Use the KV helper to save the filtered array (implemented as overload in KV)
-  await saveChatSessionToUpstash(newSessions);
+  await saveChatSessionToStore(newSessions);
 };
 
 // --- PLATFORM FEEDBACK (HUB) ---
@@ -403,33 +380,33 @@ export const savePlatformFeedback = async (feedback: Omit<PlatformFeedback, 'id'
     timestamp: Date.now(),
     status: 'new'
   };
-  await savePlatformFeedbackToUpstash(newFeedback);
+  await savePlatformFeedbackToStore(newFeedback);
   return newFeedback;
 };
 
 export const getAllPlatformFeedback = async (): Promise<PlatformFeedback[]> => {
-  const feedback = await fetchPlatformFeedbackFromUpstash();
+  const feedback = await fetchPlatformFeedbackFromStore();
   return feedback.sort((a, b) => b.timestamp - a.timestamp);
 };
 
 export const updatePlatformFeedbackStatus = async (id: string, status: 'new' | 'reviewed'): Promise<void> => {
-  const all = await fetchPlatformFeedbackFromUpstash();
+  const all = await fetchPlatformFeedbackFromStore();
   const item = all.find(f => f.id === id);
   if (item) {
     item.status = status;
-    await savePlatformFeedbackToUpstash(item);
+    await savePlatformFeedbackToStore(item);
   }
 };
 
 // --- TEAM MEMBERS ---
 
 export const getTeamMembers = async (): Promise<TeamMember[]> => {
-  const cloudTeam = await fetchTeamFromUpstash();
+  const cloudTeam = await fetchTeamFromStore();
   if (cloudTeam && cloudTeam.length > 0) return cloudTeam;
   // Fallback to static defaults if KV is empty (first-time setup)
   return TEAM_MEMBERS;
 };
 
 export const saveTeamMembers = async (team: TeamMember[]): Promise<void> => {
-  await saveTeamToUpstash(team);
+  await saveTeamToStore(team);
 };

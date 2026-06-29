@@ -13,10 +13,12 @@ import { UniversitiesList } from './components/UniversitiesList';
 import { UniversityDetails } from './components/UniversityDetails';
 import { LandingPage } from './components/LandingPage';
 import { TeamPage } from './components/TeamPage';
-import { getAllFeedback, syncUsers, getAllAdmins } from './services/db';
+import { getAllFeedback, syncUsers } from './services/db';
 import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
 import { supabase } from './lib/supabase';
+
+const isAdminRole = (role?: string) => ['admin', 'super_admin', 'manager', 'staff'].includes(role || '');
 
 const ProtectedRoute = ({ children, role, user, isLoading }: { children?: React.ReactNode, role?: 'admin' | 'student', user: User | null, isLoading?: boolean }) => {
   if (isLoading) return (
@@ -74,7 +76,10 @@ const ProtectedRoute = ({ children, role, user, isLoading }: { children?: React.
     </div>
   );
   if (!user) return <Navigate to="/auth" replace />;
-  if (role && user.role !== role) return <Navigate to="/" replace />;
+  
+  if (role === 'admin' && !isAdminRole(user.role)) return <Navigate to="/user" replace />;
+  if (role === 'student' && isAdminRole(user.role)) return <Navigate to="/admin" replace />;
+  
   return <>{children}</>;
 };
 
@@ -124,36 +129,19 @@ const App: React.FC = () => {
           const res = await fetch(`/api/users?id=${session.user.id}`, {
             headers: { 'Authorization': `Bearer ${session.access_token}` }
           });
+          
+          const role = session.user.app_metadata?.role || session.user.user_metadata?.role || 'student';
+
           if (res.ok) {
             let profile = await res.json();
-            
-            const admins = await getAllAdmins();
-            const isAdminInUpstash = admins.some(a => a.email === profile.email);
-            
-            // Auto-elevate to admin if email matches VITE_ADMIN_EMAIL or is in Upstash
-            const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-            if ((isAdminInUpstash || (adminEmail && profile.email === adminEmail)) && profile.role !== 'admin') {
-              profile = { ...profile, role: 'admin' };
-              await fetch('/api/users', { 
-                method: 'PUT', 
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }, 
-                body: JSON.stringify(profile) 
-              });
-            }
-
+            profile = { ...profile, role }; // Enforce Supabase role
             setCurrentUser(profile);
-            localStorage.setItem('mr_active_user', JSON.stringify(profile));
-          } else if (event === 'SIGNED_IN') {
-            // New user from OAuth
-            const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-            const admins = await getAllAdmins();
-            const isAdminInUpstash = admins.some(a => a.email === session.user.email);
-            const isAutoAdmin = isAdminInUpstash || (adminEmail && session.user.email === adminEmail);
-            
+          } else if (event === 'SIGNED_IN' || res.status === 404) {
+            // New user from OAuth or missing profile
             const newUser: User = {
               id: session.user.id,
               email: session.user.email || '',
-              role: isAutoAdmin ? 'admin' : 'student',
+              role,
               name: session.user.user_metadata?.full_name || 'New User',
               shortlistedUniversities: [],
               documents: {},
@@ -185,7 +173,7 @@ const App: React.FC = () => {
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
-    if (user.role === 'admin') navigate('/admin', { replace: true });
+    if (isAdminRole(user.role)) navigate('/admin', { replace: true });
     else navigate('/user', { replace: true });
   };
 
@@ -196,7 +184,7 @@ const App: React.FC = () => {
   };
 
   const handleHeaderAction = () => {
-    if (currentUser) navigate(currentUser.role === 'admin' ? '/admin' : '/user');
+    if (currentUser) navigate(isAdminRole(currentUser.role) ? '/admin' : '/user');
     else navigate('/auth');
   };
 
@@ -233,7 +221,7 @@ const App: React.FC = () => {
           onLogout={handleLogout}
           onNavigate={(view) => { if (view === 'compare') navigate('/compare'); else navigate('/'); }}
           onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined}
-          isAdmin={currentUser?.role === 'admin'}
+          isAdmin={isAdminRole(currentUser?.role)}
           isAuthenticated={!!currentUser}
           userName={currentUser?.name}
           userAvatar={currentUser?.avatar}
@@ -268,7 +256,7 @@ const App: React.FC = () => {
               </div>
             ) : !currentUser ? (
               <Login onAuthSuccess={handleLoginSuccess} onCancel={() => navigate('/')} onShowLegal={(page) => setActiveLegalPage(page)} />
-            ) : <Navigate to={currentUser.role === 'admin' ? '/admin' : '/user'} replace />
+            ) : <Navigate to={isAdminRole(currentUser.role) ? '/admin' : '/user'} replace />
           } />
 
           <Route path="/compare" element={<UniversityCompare />} />

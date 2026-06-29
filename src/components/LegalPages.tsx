@@ -9,7 +9,7 @@ const LEGAL_CONTENT: Record<LegalPageType, { title: string; content: string[] }>
       'MBBS Russia ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our platform.',
       'Information We Collect: We may collect personal information that you voluntarily provide, including but not limited to: name, email address, phone number, academic records, and any queries you submit through our forms.',
       'How We Use Your Information: To facilitate your MBBS admission inquiries, to respond to your questions, to improve our platform, and to send you relevant updates about admissions (only with your consent).',
-      'Data Storage: Your data is securely stored using industry-standard encryption. We use Upstash (Redis) for cloud data storage and Cloudinary for document uploads.',
+      'Data Storage: Your data is securely stored using industry-standard encryption in our cloud databases and Cloudinary for document uploads.',
       'Third-Party Services: We may use third-party services like EmailJS for email notifications and Groq AI for chatbot functionality. These services have their own privacy policies.',
       'Your Rights: You may request access to, correction of, or deletion of your personal data at any time by contacting us.',
       'Contact: For any privacy-related questions, contact us at support@medrussia.in'
