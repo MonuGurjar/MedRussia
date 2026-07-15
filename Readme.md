@@ -17,7 +17,7 @@ An end-to-end admission platform that helps students discover universities, esti
 
 </p>
 
-[Website](https://medrussia.vercel.app) •
+[Website](https://med-russia.vercel.app) •
 [Documentation](docs/) •
 [Report Bug](../../issues) •
 [Request Feature](../../issues)
@@ -26,7 +26,7 @@ An end-to-end admission platform that helps students discover universities, esti
 
 ---
 
-# 🚧 Currently Working On
+#  Currently Working On
 
 The platform is under active development with a major upgrade in progress.
 
@@ -43,7 +43,7 @@ The platform is under active development with a major upgrade in progress.
 
 ---
 
-# 🎨 UI Evolution
+#  UI Evolution
 
 MBBS Russia is currently undergoing a complete design transformation.
 
