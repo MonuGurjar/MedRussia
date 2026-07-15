@@ -17,7 +17,7 @@ An end-to-end admission platform that helps students discover universities, esti
 
 </p>
 
-[Website](https://medrussia.in) •
+[Website](https://medrussia.vercel.app) •
 [Documentation](docs/) •
 [Report Bug](../../issues) •
 [Request Feature](../../issues)
@@ -25,6 +25,53 @@ An end-to-end admission platform that helps students discover universities, esti
 </div>
 
 ---
+
+# 🚧 Currently Working On
+
+The platform is under active development with a major upgrade in progress.
+
+### In Progress
+
+- 🎨 Complete UI/UX redesign with a modern, responsive interface
+- ✨ Improved user experience and navigation across the platform
+- 🔐 OAuth authentication (Google and additional providers)
+- 🛡️ Enhanced authentication flow with secure session management
+- ⚡ Performance optimizations and accessibility improvements
+- 📱 Better mobile responsiveness and polished dashboard experience
+
+> **Status:** Active Development
+
+---
+
+# 🎨 UI Evolution
+
+MBBS Russia is currently undergoing a complete design transformation.
+
+The previous interface focused primarily on delivering functionality and validating the platform's core workflows. While it successfully served its purpose, the experience leaned more toward a traditional consultancy website.
+
+The upcoming redesign introduces a modern product-first experience with a cleaner visual language, improved navigation, richer interactions, and a responsive dashboard built around students rather than consultancy workflows.
+
+### Design Goals
+
+- Modern SaaS-inspired interface
+- Better information architecture
+- Improved accessibility and usability
+- Mobile-first responsive layouts
+- Enhanced dashboard experience
+- Glassmorphism-inspired design system
+- Consistent design components
+- Faster, smoother user interactions
+
+### Previous Design
+
+The previous UI is still available as an archived preview:
+
+🔗 **Old UI Preview:** https://medrussia-trial6.vercel.app
+
+> **Note:** This version represents an earlier design iteration and is no longer under active development. It remains available for showcasing the project's evolution.
+
+---
+
 
 ## Overview
 
