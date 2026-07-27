@@ -12,6 +12,7 @@ import { UniversitiesList } from './components/UniversitiesList';
 import { UniversityDetails } from './components/UniversityDetails';
 import { LandingPage } from './components/LandingPage';
 import { TeamPage } from './components/TeamPage';
+import { EligibilityModal } from './components/EligibilityModal';
 import { getAllFeedback, syncUsers } from './services/db';
 import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
@@ -204,11 +205,10 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const [isEligibilityModalOpen, setIsEligibilityModalOpen] = useState(false);
+
   const handleEligibilityCheck = () => {
-    if (!heroNeetScore) { alert("Please enter your NEET Score."); return; }
-    localStorage.setItem('mr_neet_score', heroNeetScore);
-    navigate('/auth');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsEligibilityModalOpen(true);
   };
 
   const FAQ_DATA = [
@@ -427,6 +427,17 @@ const App: React.FC = () => {
 
       {settings?.features?.chatWidget && <ChatWidget isLifted={isFabOpen} />}
       {activeLegalPage && <LegalModal page={activeLegalPage} onClose={() => setActiveLegalPage(null)} />}
+      
+      <EligibilityModal
+        isOpen={isEligibilityModalOpen}
+        onClose={() => setIsEligibilityModalOpen(false)}
+        isAuthenticated={!!currentUser}
+        onLoginRedirect={(score, category, pcb) => {
+          setIsEligibilityModalOpen(false);
+          navigate('/auth');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
     </div>
   );
 };

@@ -85,11 +85,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
               <span className="material-symbols-outlined text-[16px]">currency_exchange</span> Currency Calculator
             </button>
             <button
-              onClick={() => {
-                const el = document.getElementById('services');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                handleEligibilityCheck();
-              }}
+              onClick={() => handleEligibilityCheck()}
               className="px-3.5 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             >
               <span className="material-symbols-outlined text-[16px]">verified</span> Eligibility Checker

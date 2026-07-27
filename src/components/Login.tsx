@@ -18,8 +18,17 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
   const [successMsg, setSuccessMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingScore, setPendingScore] = useState<string | null>(null);
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
 
-  useEffect(() => { const score = localStorage.getItem('mr_neet_score'); if (score) { setPendingScore(score); setMode('register'); } }, []);
+  useEffect(() => { 
+    const score = localStorage.getItem('mr_neet_score'); 
+    const category = localStorage.getItem('mr_category');
+    if (score) { 
+      setPendingScore(score); 
+      if (category) setPendingCategory(category);
+      setMode('register'); 
+    } 
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true); setError('');
@@ -101,12 +110,14 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
       <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-12 lg:p-20 relative overflow-y-auto">
         <div className="w-full max-w-[440px] mx-auto fade-in-up pt-4 md:pt-0">
 
-          {pendingScore && mode === 'register' && (
-            <div className="bg-blue-50 text-blue-800 px-5 py-4 rounded-xl mb-8 border border-blue-100 flex items-start gap-3">
-              <span className="material-symbols-outlined text-blue-500">celebration</span>
+          {pendingScore && (
+            <div className="bg-[#1a365d]/5 text-[#1a365d] px-5 py-4 rounded-xl mb-8 border border-slate-200 flex items-start gap-3 shadow-xs">
+              <span className="material-symbols-outlined text-amber-500 text-[22px] shrink-0">verified</span>
               <div>
-                <p className="font-bold text-sm">Almost there!</p>
-                <p className="text-[13px] mt-0.5 opacity-90">Create a free account to see the analysis for <span className="font-bold">NEET Score: {pendingScore}</span></p>
+                <p className="font-bold text-sm text-slate-900">NEET Eligibility Details Recorded!</p>
+                <p className="text-xs mt-0.5 text-slate-600 leading-relaxed">
+                  Sign in or create a free account to unlock full analysis for <span className="font-extrabold text-slate-900">NEET: {pendingScore}</span> {pendingCategory && <span>| Category: <span className="font-extrabold text-slate-900">{pendingCategory}</span></span>}.
+                </p>
               </div>
             </div>
           )}
