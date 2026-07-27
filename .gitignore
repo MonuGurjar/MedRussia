@@ -1,3 +1,5 @@
 .vercel
 .env*
 node_modules
+supabase
+admin-portal

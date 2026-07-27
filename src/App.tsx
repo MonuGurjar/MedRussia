@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { AdminDashboard } from './components/AdminDashboard';
 import { UserDashboard } from './components/UserDashboard';
 import { UniversityCompare } from './components/UniversityCompare';
 import { Header } from './components/Header';
@@ -76,10 +75,6 @@ const ProtectedRoute = ({ children, role, user, isLoading }: { children?: React.
     </div>
   );
   if (!user) return <Navigate to="/auth" replace />;
-  
-  if (role === 'admin' && !isAdminRole(user.role)) return <Navigate to="/user" replace />;
-  if (role === 'student' && isAdminRole(user.role)) return <Navigate to="/admin" replace />;
-  
   return <>{children}</>;
 };
 
@@ -190,8 +185,7 @@ const App: React.FC = () => {
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
-    if (isAdminRole(user.role)) navigate('/admin', { replace: true });
-    else navigate('/user', { replace: true });
+    navigate('/user', { replace: true });
   };
 
   const handleLogout = async () => {
@@ -201,7 +195,7 @@ const App: React.FC = () => {
   };
 
   const handleHeaderAction = () => {
-    if (currentUser) navigate(isAdminRole(currentUser.role) ? '/admin' : '/user');
+    if (currentUser) navigate('/user');
     else navigate('/auth');
   };
 
@@ -226,19 +220,17 @@ const App: React.FC = () => {
     { q: "Can I work while studying?", a: "Students can work part-time, but it is recommended to focus on studies due to the rigorous medical curriculum." }
   ];
 
-  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/user');
-  const isDashboardView = hideHeader;
+  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/user') || location.pathname === '/auth';
+  const isDashboardView = location.pathname.startsWith('/admin') || location.pathname.startsWith('/user');
 
   return (
     <div className="min-h-screen bg-background text-on-background relative overflow-x-hidden">
       {!hideHeader && (
         <Header
-          onToggleAdmin={handleHeaderAction}
           onLogoClick={handleLogoClick}
           onLogout={handleLogout}
           onNavigate={(view) => { if (view === 'compare') navigate('/compare'); else navigate('/'); }}
           onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined}
-          isAdmin={isAdminRole(currentUser?.role)}
           isAuthenticated={!!currentUser}
           userName={currentUser?.name}
           userAvatar={currentUser?.avatar}
@@ -259,6 +251,7 @@ const App: React.FC = () => {
               refreshData={refreshData}
               FAQ_DATA={FAQ_DATA}
               currentUser={currentUser}
+              onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined}
             />
           } />
 
@@ -273,7 +266,7 @@ const App: React.FC = () => {
               </div>
             ) : !currentUser ? (
               <Login onAuthSuccess={handleLoginSuccess} onCancel={() => navigate('/')} onShowLegal={(page) => setActiveLegalPage(page)} />
-            ) : <Navigate to={isAdminRole(currentUser.role) ? '/admin' : '/user'} replace />
+            ) : <Navigate to="/user" replace />
           } />
 
           <Route path="/compare" element={<UniversityCompare />} />
@@ -282,15 +275,13 @@ const App: React.FC = () => {
           <Route path="/terms" element={<LegalPage page="terms" />} />
           <Route path="/disclaimer" element={<LegalPage page="disclaimer" />} />
 
-          <Route path="/admin" element={
-            <ProtectedRoute role="admin" user={currentUser} isLoading={isAuthLoading}>
-              <AdminDashboard feedbackList={feedbackList} onRefresh={refreshData} onLogout={handleLogout} isLoading={isLoading} currentUser={currentUser!} theme={theme} toggleTheme={toggleTheme} />
-            </ProtectedRoute>
-          } />
+          <Route path="/admin" element={<Navigate to="/user" replace />} />
 
           <Route path="/user" element={
             <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
-              <UserDashboard user={currentUser!} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
             </ProtectedRoute>
           } />
 
@@ -300,50 +291,123 @@ const App: React.FC = () => {
 
       {/* Footer */}
       {!hideHeader && location.pathname !== '/auth' && (
-        <footer className="mt-20 bg-tertiary text-on-tertiary relative overflow-hidden">
-          <div className="h-1 footer-accent" />
-          <div className="max-w-container-max mx-auto px-6 pt-16 pb-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14">
-              <div className="sm:col-span-2 lg:col-span-1 space-y-5">
+        <footer className="mt-12 md:mt-16 bg-slate-950 text-slate-200 relative overflow-hidden border-t border-slate-800/80">
+          <div className="h-1 bg-gradient-to-r from-amber-500 via-primary to-amber-500" />
+          
+          <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 pt-8 md:pt-12 pb-20 md:pb-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
+              
+              {/* Column 1: About (col-span-1 md:col-span-4) */}
+              <div className="md:col-span-4 space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-on-primary font-bold text-lg">MG</div>
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1a365d] rounded-xl flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md border border-white/10">M</div>
                   <div>
-                    <span className="text-lg font-bold tracking-tight block text-white">MBBS Russia</span>
-                    <span className="text-on-primary-container text-xs font-semibold">Medical Admissions</span>
+                    <span className="text-lg sm:text-xl font-extrabold tracking-tight block text-white">MedRussia</span>
+                    <span className="text-amber-400 text-[11px] sm:text-xs font-semibold tracking-wide">Medical Admissions</span>
                   </div>
                 </div>
-                <p className="text-on-tertiary-container text-sm leading-relaxed max-w-xs">Trusted by 600+ Indian students for honest, transparent guidance on MBBS admissions in Russia.</p>
+                <p className="text-slate-300/85 text-xs sm:text-sm leading-relaxed max-w-sm font-medium">
+                  Trusted by 600+ Indian students for honest, transparent guidance on MBBS admissions in Russia.
+                </p>
               </div>
-              <div className="space-y-5">
-                <h4 className="text-label-sm text-on-tertiary-container uppercase tracking-widest">Quick Links</h4>
-                <ul className="space-y-3">
-                  {[{ label: 'Home', action: () => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); } }, { label: 'Compare Universities', action: () => navigate('/compare') }, { label: 'Sign In / Register', action: () => navigate('/auth') }, { label: 'Our Team', action: () => navigate('/team') }].map(i => (
-                    <li key={i.label}><button onClick={i.action} className="text-on-tertiary-container hover:text-white text-sm font-medium transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-fixed-dim" />{i.label}</button></li>
-                  ))}
-                </ul>
+
+              {/* Column 2 & 3: Quick Links (Left) & Resources (Right) side-by-side on mobile */}
+              <div className="md:col-span-5 grid grid-cols-2 gap-3.5 sm:gap-6">
+                {/* Quick Links */}
+                <div className="space-y-2.5 sm:space-y-3.5">
+                  <h4 className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">QUICK LINKS</h4>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {[
+                      { label: 'Home', action: () => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
+                      { label: 'Compare Unis', action: () => navigate('/compare') },
+                      { label: 'Sign In / Register', action: () => navigate('/auth') },
+                      { label: 'Our Team', action: () => navigate('/team') }
+                    ].map(i => (
+                      <button
+                        key={i.label}
+                        onClick={i.action}
+                        className="w-full h-9 sm:h-11 px-2.5 sm:px-3.5 rounded-lg sm:rounded-[10px] bg-slate-900/90 hover:bg-slate-800/90 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold flex items-center justify-between border border-slate-800 hover:border-slate-700/80 transition-all duration-200 hover:-translate-y-[2px] focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      >
+                        <span className="truncate">{i.label}</span>
+                        <span className="material-symbols-outlined text-[14px] text-slate-500 hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5">chevron_right</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resources */}
+                <div className="space-y-2.5 sm:space-y-3.5">
+                  <h4 className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">RESOURCES</h4>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {[
+                      { label: 'Privacy Policy', action: () => { navigate('/privacy'); window.scrollTo(0,0); } },
+                      { label: 'Terms of Service', action: () => { navigate('/terms'); window.scrollTo(0,0); } },
+                      { label: 'Disclaimer', action: () => { navigate('/disclaimer'); window.scrollTo(0,0); } }
+                    ].map(i => (
+                      <button
+                        key={i.label}
+                        onClick={i.action}
+                        className="w-full h-9 sm:h-11 px-2.5 sm:px-3.5 rounded-lg sm:rounded-[10px] bg-slate-900/90 hover:bg-slate-800/90 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold flex items-center justify-between border border-slate-800 hover:border-slate-700/80 transition-all duration-200 hover:-translate-y-[2px] focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      >
+                        <span className="truncate">{i.label}</span>
+                        <span className="material-symbols-outlined text-[14px] text-slate-500 hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5">chevron_right</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-5">
-                <h4 className="text-label-sm text-on-tertiary-container uppercase tracking-widest">Resources</h4>
-                <ul className="space-y-3">
-                  {[{ label: 'Privacy Policy', action: () => { navigate('/privacy'); window.scrollTo(0,0); } }, { label: 'Terms of Service', action: () => { navigate('/terms'); window.scrollTo(0,0); } }, { label: 'Disclaimer', action: () => { navigate('/disclaimer'); window.scrollTo(0,0); } }].map(i => (
-                    <li key={i.label}><button onClick={i.action} className="text-on-tertiary-container hover:text-white text-sm font-medium transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-fixed-dim" />{i.label}</button></li>
-                  ))}
-                </ul>
+
+              {/* Column 4: Contact / Connect (col-span-1 md:col-span-3) */}
+              <div className="md:col-span-3 space-y-2.5 sm:space-y-3.5">
+                <h4 className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">CONNECT</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+                  <a
+                    href="https://wa.me/917375017401"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Contact on WhatsApp"
+                    className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40 transition-all duration-200 hover:-translate-y-[2px] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  >
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                      <span className="material-symbols-outlined text-[16px] sm:text-[20px]">chat</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] sm:text-[10px] text-emerald-400 font-bold uppercase tracking-wider">WhatsApp</p>
+                      <p className="text-[11px] sm:text-xs font-bold text-white truncate">+91 73750 17401</p>
+                    </div>
+                  </a>
+
+                  <a
+                    href="mailto:support@medrussia.in"
+                    aria-label="Send email to support"
+                    className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:bg-slate-800/90 transition-all duration-200 hover:-translate-y-[2px] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  >
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                      <span className="material-symbols-outlined text-[16px] sm:text-[20px]">mail</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</p>
+                      <p className="text-[11px] sm:text-xs font-bold text-white truncate">support@medrussia.in</p>
+                    </div>
+                  </a>
+                </div>
               </div>
-              <div className="space-y-5">
-                <h4 className="text-label-sm text-on-tertiary-container uppercase tracking-widest">Connect</h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2.5"><span className="material-symbols-outlined text-primary-fixed-dim" style={{fontSize:'20px'}}>phone_iphone</span><div><p className="text-label-sm text-on-tertiary-container">WhatsApp</p><a href="https://wa.me/917375017401" target="_blank" rel="noopener noreferrer" className="text-sm text-white hover:text-primary-fixed-dim font-medium transition-colors">+91 73750 17401</a></div></li>
-                  <li className="flex items-start gap-2.5"><span className="material-symbols-outlined text-primary-fixed-dim" style={{fontSize:'20px'}}>mail</span><div><p className="text-label-sm text-on-tertiary-container">Email</p><a href="mailto:support@medrussia.in" className="text-sm text-white hover:text-primary-fixed-dim font-medium transition-colors">support@medrussia.in</a></div></li>
-                </ul>
-              </div>
+
             </div>
           </div>
-          <div className="border-t border-white/5">
-            <div className="max-w-container-max mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-on-tertiary-container text-xs font-medium">© {new Date().getFullYear()} MBBS Russia. Made with ❤ in Russia & India</p>
-              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 border border-white/10 flex items-center justify-center text-on-tertiary-container hover:text-white transition-all">
-                <span className="material-symbols-outlined" style={{fontSize:'18px'}}>keyboard_arrow_up</span>
+
+          {/* Copyright & Back to Top */}
+          <div className="border-t border-slate-800/80 bg-slate-950/80">
+            <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 py-4 flex flex-row justify-between items-center gap-4">
+              <p className="text-slate-400 text-xs font-medium">
+                © {new Date().getFullYear()} MedRussia. Made with ❤ in Russia & India
+              </p>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Back to top"
+                className="w-10 h-10 rounded-full bg-slate-900 hover:bg-amber-500 text-slate-300 hover:text-slate-950 border border-slate-800 hover:border-amber-400 flex items-center justify-center transition-all duration-200 hover:-translate-y-1 shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500/50 shrink-0"
+              >
+                <span className="material-symbols-outlined text-[20px]">keyboard_arrow_up</span>
               </button>
             </div>
           </div>

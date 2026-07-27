@@ -35,8 +35,8 @@ export const getSettings = async (): Promise<AppSettings> => {
     const fetched = await fetchSettingsFromStore();
     cloudSettings = {
         ...DEFAULT_SETTINGS,
-        ...fetched,
-        features: { ...DEFAULT_SETTINGS.features, ...(fetched.features || {}) }
+        ...(fetched || {}),
+        features: { ...DEFAULT_SETTINGS.features, ...(fetched?.features || {}) }
     };
   } catch (error) {
     console.warn("Failed to fetch cloud settings, using defaults:", error);

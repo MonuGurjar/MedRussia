@@ -3,6 +3,7 @@ import { registerUser, loginUser } from '../services/db';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { LegalPageType } from './LegalPages';
+import campusImg from '../assets/med_university_campus.png';
 
 interface LoginProps { onAuthSuccess: (user: User) => void; onCancel: () => void; onShowLegal?: (page: LegalPageType) => void; }
 type Mode = 'login' | 'register' | 'forgot';
@@ -65,28 +66,40 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8fafc] font-sans">
       {/* Left side: Hero image and message */}
-      <div className="w-full md:w-5/12 lg:w-1/2 flex flex-col relative overflow-hidden bg-slate-900">
-        <div className="flex-1 relative">
-           {/* Placeholder for the top gradient / image */}
-           <div className="absolute inset-0 bg-gradient-to-b from-slate-300 via-slate-400 to-slate-900/0"></div>
+      <div className="w-full md:w-5/12 lg:w-1/2 flex flex-col justify-between relative overflow-hidden bg-slate-900 min-h-[280px] md:min-h-[550px]">
+        <img 
+          src={campusImg} 
+          alt="Russian Medical University Campus" 
+          className="absolute inset-0 w-full h-full object-cover z-0 transition-transform duration-700 hover:scale-105" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#031835] via-[#031835]/60 to-[#031835]/10 z-10"></div>
+
+        {/* Floating Back to Home Button */}
+        <div className="relative z-30 p-4 sm:p-6 md:p-8">
+          <button 
+            onClick={onCancel} 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900/70 hover:bg-slate-900/90 text-white font-bold text-xs sm:text-sm rounded-full backdrop-blur-md border border-white/20 transition-all hover:scale-105 shadow-md"
+          >
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">arrow_back</span> Back to home
+          </button>
         </div>
-        <div className="bg-[#031835] p-10 md:p-14 lg:p-20 relative z-10 shrink-0">
-           <h3 className="text-white/90 font-bold mb-6">Academic Excellence</h3>
-           <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-8">
+
+        <div className="relative z-20 p-6 sm:p-10 md:p-14 lg:p-20 mt-auto">
+           <div className="inline-block bg-[#f59e0b] text-amber-950 text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full mb-2 sm:mb-4 tracking-wide uppercase shadow-md">
+             Academic Excellence
+           </div>
+           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-2 sm:mb-6 drop-shadow-sm">
              Start Your Global Medical Career Here.
            </h1>
-           <p className="text-slate-300 leading-relaxed max-w-md">
+           <p className="text-slate-200 leading-relaxed max-w-md font-medium text-xs sm:text-base drop-shadow-sm hidden sm:block">
              Join thousands of students who have trusted us to guide their journey to top medical universities in Russia. Your future in medicine begins with a single step.
            </p>
         </div>
       </div>
 
       {/* Right side: Auth Form */}
-      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-20 relative overflow-y-auto">
-        <div className="w-full max-w-[440px] mx-auto fade-in-up">
-          <button onClick={onCancel} className="flex items-center gap-2 text-slate-500 font-semibold text-[13px] hover:text-slate-800 transition-colors mb-10">
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back to home
-          </button>
+      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-12 lg:p-20 relative overflow-y-auto">
+        <div className="w-full max-w-[440px] mx-auto fade-in-up pt-4 md:pt-0">
 
           {pendingScore && mode === 'register' && (
             <div className="bg-blue-50 text-blue-800 px-5 py-4 rounded-xl mb-8 border border-blue-100 flex items-start gap-3">

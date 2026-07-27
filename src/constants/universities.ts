@@ -701,6 +701,22 @@ export const DETAILED_UNIVERSITIES: UniversityData[] = [
 // Generate simple list of names for dropdowns
 export const RUSSIAN_UNIVERSITIES = DETAILED_UNIVERSITIES.map(u => u.name).sort();
 
+const UNIVERSITY_IMAGES = [
+  'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1519452635265-7b1fbfd1e4e0?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1200&q=80',
+];
+
+export const getUniversityImage = (id: number | string): string => {
+  const num = Math.abs(typeof id === 'number' ? id : String(id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+  return UNIVERSITY_IMAGES[num % UNIVERSITY_IMAGES.length];
+};
+
 export const getUniversityData = (name: string): UniversityData => {
   const found = DETAILED_UNIVERSITIES.find(u => u.name === name);
   if (found) return found;

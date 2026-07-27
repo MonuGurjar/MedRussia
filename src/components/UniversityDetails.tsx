@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DETAILED_UNIVERSITIES } from '../constants/universities';
+import { DETAILED_UNIVERSITIES, getUniversityImage } from '../constants/universities';
 
 export const UniversityDetails: React.FC = () => {
   const { id } = useParams();
@@ -29,7 +29,7 @@ export const UniversityDetails: React.FC = () => {
         
         <div className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-slate-200">
           <div className="h-64 md:h-80 relative">
-            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt={uni.name} className="w-full h-full object-cover" />
+            <img src={getUniversityImage(uni.id)} alt={uni.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
             <div className="absolute bottom-6 left-6 right-6 text-white">
               <div className="inline-block bg-[#f59e0b] text-amber-950 text-xs font-bold px-3 py-1 rounded-full mb-3 tracking-wide uppercase">

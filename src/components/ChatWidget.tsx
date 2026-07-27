@@ -30,11 +30,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
     try { const saved = localStorage.getItem(FAB_POSITION_KEY); if (saved) return JSON.parse(saved); } catch (e) {}
     return { x: window.innerWidth - 80, y: window.innerHeight - 100 };
   });
+  const [isDraggingActive, setIsDraggingActive] = useState(false);
   const isDragging = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const fabStartPos = useRef({ x: 0, y: 0 });
   const dragMoved = useRef(false);
   const fabRef = useRef<HTMLButtonElement>(null);
+  
+  const velocityRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastPosRef = useRef<{ x: number; y: number; t: number }>({ x: 0, y: 0, t: 0 });
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,22 +58,90 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
   useEffect(() => { try { localStorage.setItem(FAB_POSITION_KEY, JSON.stringify(fabPosition)); } catch (e) {} }, [fabPosition]);
 
   const constrainPosition = useCallback((x: number, y: number) => {
-    const fabSize = 56;
-    return { x: Math.max(8, Math.min(x, window.innerWidth - fabSize - 8)), y: Math.max(8, Math.min(y, window.innerHeight - fabSize - 8)) };
+    const fabSize = 64;
+    return { x: Math.max(12, Math.min(x, window.innerWidth - fabSize - 12)), y: Math.max(12, Math.min(y, window.innerHeight - fabSize - 12)) };
   }, []);
 
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
-    isDragging.current = true; dragMoved.current = false; dragStartPos.current = { x: clientX, y: clientY }; fabStartPos.current = { ...fabPosition };
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    isDragging.current = true;
+    dragMoved.current = false;
+    setIsDraggingActive(true);
+    dragStartPos.current = { x: clientX, y: clientY };
+    fabStartPos.current = { ...fabPosition };
+    lastPosRef.current = { x: clientX, y: clientY, t: performance.now() };
+    velocityRef.current = { x: 0, y: 0 };
   }, [fabPosition]);
 
   const handleDragMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging.current) return;
-    const dx = clientX - dragStartPos.current.x; const dy = clientY - dragStartPos.current.y;
+    const now = performance.now();
+    const dt = Math.max(1, now - lastPosRef.current.t);
+    const dx = clientX - dragStartPos.current.x;
+    const dy = clientY - dragStartPos.current.y;
+    
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
+
+    // Calculate instantaneous velocity (pixels per 16.6ms frame)
+    const instVx = ((clientX - lastPosRef.current.x) / dt) * 16.6;
+    const instVy = ((clientY - lastPosRef.current.y) / dt) * 16.6;
+
+    velocityRef.current = {
+      x: velocityRef.current.x * 0.3 + instVx * 0.7,
+      y: velocityRef.current.y * 0.3 + instVy * 0.7
+    };
+    lastPosRef.current = { x: clientX, y: clientY, t: now };
+
     setFabPosition(constrainPosition(fabStartPos.current.x + dx, fabStartPos.current.y + dy));
   }, [constrainPosition]);
 
-  const handleDragEnd = useCallback(() => { isDragging.current = false; }, []);
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    setIsDraggingActive(false);
+
+    if (!dragMoved.current) return;
+
+    const fabSize = 64;
+    let vx = velocityRef.current.x;
+    let vy = velocityRef.current.y;
+    let currentX = fabPosition.x;
+    let currentY = fabPosition.y;
+
+    const minX = 12;
+    const maxX = window.innerWidth - fabSize - 12;
+    const minY = 12;
+    const maxY = window.innerHeight - fabSize - 12;
+
+    const animateFreeformInertia = () => {
+      vx *= 0.91; // Smooth friction damping
+      vy *= 0.91;
+
+      currentX += vx;
+      currentY += vy;
+
+      // Soft boundary collision
+      if (currentX < minX) { currentX = minX; vx = -vx * 0.4; }
+      if (currentX > maxX) { currentX = maxX; vx = -vx * 0.4; }
+      if (currentY < minY) { currentY = minY; vy = -vy * 0.4; }
+      if (currentY > maxY) { currentY = maxY; vy = -vy * 0.4; }
+
+      const constrained = {
+        x: Math.max(minX, Math.min(currentX, maxX)),
+        y: Math.max(minY, Math.min(currentY, maxY))
+      };
+
+      setFabPosition(constrained);
+
+      if (Math.abs(vx) > 0.15 || Math.abs(vy) > 0.15) {
+        animFrameRef.current = requestAnimationFrame(animateFreeformInertia);
+      }
+    };
+
+    if (Math.abs(vx) > 0.2 || Math.abs(vy) > 0.2) {
+      animFrameRef.current = requestAnimationFrame(animateFreeformInertia);
+    }
+  }, [fabPosition]);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); }, [handleDragStart]);
   useEffect(() => { const m = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY); const u = () => handleDragEnd(); window.addEventListener('mousemove', m); window.addEventListener('mouseup', u); return () => { window.removeEventListener('mousemove', m); window.removeEventListener('mouseup', u); }; }, [handleDragMove, handleDragEnd]);
@@ -112,16 +185,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
 
   if (!settings) return null;
 
-  const chatWindowStyle: React.CSSProperties = { position: 'fixed', zIndex: 61 };
-  const chatHeight = 460; const chatWidth = 380;
-  if (fabPosition.y > chatHeight + 40) { chatWindowStyle.bottom = window.innerHeight - fabPosition.y + 16; } else { chatWindowStyle.top = fabPosition.y + 72; }
-  if (fabPosition.x + 28 > chatWidth) { chatWindowStyle.right = window.innerWidth - fabPosition.x - 56; } else { chatWindowStyle.left = fabPosition.x; }
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const chatWindowStyle: React.CSSProperties = isMobile 
+    ? { position: 'fixed', bottom: '80px', left: '16px', right: '16px', zIndex: 61 } 
+    : { position: 'fixed', zIndex: 61, ...(fabPosition.y > 500 ? { bottom: window.innerHeight - fabPosition.y + 16 } : { top: fabPosition.y + 72 }), ...(fabPosition.x + 28 > 380 ? { right: Math.max(16, window.innerWidth - fabPosition.x - 56) } : { left: Math.max(16, fabPosition.x) }) };
 
   return (
     <>
       {isOpen && (
-        <div style={chatWindowStyle} className="w-[340px] md:w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden fade-in-up flex flex-col">
-          <div className="relative bg-[#0f172a] p-4 flex justify-between items-center">
+        <div style={chatWindowStyle} className="w-auto sm:w-[380px] h-[440px] sm:h-[480px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden fade-in-up flex flex-col z-[61]">
+          <div className="relative bg-[#0f172a] p-4 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-3 z-10">
               <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/20">
                 <span className="material-symbols-outlined">auto_awesome</span>
@@ -183,9 +256,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
         </div>
       )}
 
-      <button ref={fabRef} onMouseDown={onMouseDown} onTouchStart={onTouchStart} onClick={handleFabClick} style={{ position: 'fixed', left: fabPosition.x, top: fabPosition.y, zIndex: 60 }} className={`fab-draggable w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300 group ${isOpen ? 'bg-slate-900 rotate-0 scale-95' : 'bg-[#0f172a] hover:scale-105'}`}>
+      <button 
+        ref={fabRef} 
+        onMouseDown={onMouseDown} 
+        onTouchStart={onTouchStart} 
+        onClick={handleFabClick} 
+        style={{ position: 'fixed', left: fabPosition.x, top: fabPosition.y, zIndex: 60, touchAction: 'none' }} 
+        className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white shadow-2xl select-none group cursor-grab active:cursor-grabbing ${isDraggingActive ? 'scale-110 shadow-slate-900/50 ring-4 ring-amber-400/50 transition-none' : 'transition-transform duration-300'} ${isOpen ? 'bg-slate-900 rotate-0 scale-95' : 'bg-[#0f172a] hover:scale-105'}`}
+      >
         <span className="material-symbols-outlined text-[24px] md:text-[28px]">{isOpen ? 'close' : 'chat'}</span>
-        {!isOpen && <span className="absolute 0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm"><span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" /></span>}
+        {!isOpen && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm"><span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" /></span>}
       </button>
     </>
   );

@@ -4,25 +4,31 @@ import { TeamMember } from '../data/teamData';
 import { getTeamMembers } from '../services/db';
 
 const TeamMemberCard: React.FC<{ member: TeamMember; index: number }> = ({ member, index }) => (
-  <div className="group bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-500 hover:-translate-y-1 relative overflow-hidden" style={{ animationDelay: `${index * 80}ms` }}>
-    <div className="relative z-10">
-      <div className="w-16 h-16 md:w-20 md:h-20 mx-auto bg-primary-container rounded-xl flex items-center justify-center text-3xl md:text-4xl mb-4 md:mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm overflow-hidden">
-        {member.profileImage ? <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" /> : member.emoji}
-      </div>
-      <h3 className="text-base md:text-xl font-bold text-on-surface text-center mb-1">{member.name}</h3>
-      <p className="text-primary text-label-md font-semibold text-center mb-3 md:mb-4">{member.role}</p>
-      <div className="flex justify-center mb-3 md:mb-4">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 bg-primary-container text-on-primary-container rounded-lg text-label-sm font-semibold uppercase tracking-wider border border-outline-variant">{member.specialization}</span>
-      </div>
-      <p className="text-body-md text-on-surface-variant text-center leading-relaxed line-clamp-3 md:line-clamp-none">{member.bio}</p>
-      {member.socials && (
-        <div className="flex justify-center gap-2 mt-4 md:mt-5 pt-4 border-t border-outline-variant">
-          {member.socials.whatsapp && <a href={member.socials.whatsapp} target="_blank" rel="noopener noreferrer" className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#d1fae5] text-[#059669] flex items-center justify-center hover:scale-110 transition-all border border-[#a7f3d0]" title="WhatsApp"><span className="material-symbols-outlined" style={{fontSize:'18px'}}>chat</span></a>}
-          {member.socials.instagram && <a href={member.socials.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#fce7f3] text-[#db2777] flex items-center justify-center hover:scale-110 transition-all border border-[#fbcfe8]" title="Instagram"><span className="material-symbols-outlined" style={{fontSize:'18px'}}>photo_camera</span></a>}
-          {member.socials.youtube && <a href={member.socials.youtube} target="_blank" rel="noopener noreferrer" className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#fee2e2] text-[#dc2626] flex items-center justify-center hover:scale-110 transition-all border border-[#fecaca]" title="YouTube"><span className="material-symbols-outlined" style={{fontSize:'18px'}}>play_circle</span></a>}
+  <div className="group bg-surface-container-lowest rounded-2xl border border-outline-variant p-3.5 sm:p-5 md:p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden" style={{ animationDelay: `${index * 60}ms` }}>
+    <div>
+      <div className="flex flex-col sm:block items-center text-center sm:text-left">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto sm:mx-0 bg-primary-container rounded-xl flex items-center justify-center text-xl sm:text-3xl md:text-4xl mb-2 sm:mb-4 group-hover:scale-105 transition-transform duration-300 shadow-xs overflow-hidden shrink-0">
+          {member.profileImage ? <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" /> : member.emoji}
         </div>
-      )}
+        <h3 className="text-xs sm:text-base md:text-xl font-bold text-on-surface text-center sm:text-left leading-tight mb-0.5">{member.name}</h3>
+        <p className="text-primary text-[10px] sm:text-label-md font-semibold text-center sm:text-left mb-2 line-clamp-1">{member.role}</p>
+      </div>
+
+      <div className="flex justify-center sm:justify-start mb-2 sm:mb-3">
+        <span className="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 bg-primary-container/80 text-on-primary-container rounded-md text-[9px] sm:text-label-sm font-bold uppercase tracking-wider border border-outline-variant/60 truncate max-w-full">
+          {member.specialization}
+        </span>
+      </div>
+      <p className="text-[11px] sm:text-body-md text-on-surface-variant text-center sm:text-left leading-snug sm:leading-relaxed line-clamp-2 sm:line-clamp-none mb-3">{member.bio}</p>
     </div>
+
+    {member.socials && (
+      <div className="flex justify-center sm:justify-start gap-1.5 sm:gap-2 pt-2 border-t border-outline-variant/60 mt-auto">
+        {member.socials.whatsapp && <a href={member.socials.whatsapp} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#d1fae5] text-[#059669] flex items-center justify-center hover:scale-110 transition-all border border-[#a7f3d0]" title="WhatsApp"><span className="material-symbols-outlined text-[15px] sm:text-[18px]">chat</span></a>}
+        {member.socials.instagram && <a href={member.socials.instagram} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#fce7f3] text-[#db2777] flex items-center justify-center hover:scale-110 transition-all border border-[#fbcfe8]" title="Instagram"><span className="material-symbols-outlined text-[15px] sm:text-[18px]">photo_camera</span></a>}
+        {member.socials.youtube && <a href={member.socials.youtube} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#fee2e2] text-[#dc2626] flex items-center justify-center hover:scale-110 transition-all border border-[#fecaca]" title="YouTube"><span className="material-symbols-outlined text-[15px] sm:text-[18px]">play_circle</span></a>}
+      </div>
+    )}
   </div>
 );
 
@@ -42,7 +48,7 @@ export const TeamPage: React.FC = () => {
       </div>
 
       <div className="text-center mt-4 md:mt-10 mb-10 md:mb-16 max-w-4xl mx-auto px-margin-mobile">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-sm font-semibold uppercase tracking-wider mb-5 border border-outline-variant"><span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>The People Behind MBBS Russia</div>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-sm font-semibold uppercase tracking-wider mb-5 border border-outline-variant"><span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>The People Behind MedRussia</div>
         <h1 className="text-3xl md:text-6xl font-bold text-on-surface tracking-tight leading-tight mb-3 md:mb-5">Meet Our <span className="text-primary">Team</span></h1>
         <p className="text-sm md:text-xl text-on-surface-variant font-medium max-w-2xl mx-auto leading-relaxed">Real students and mentors who've been through the journey. We don't just guide — we've walked the same path.</p>
       </div>
@@ -57,7 +63,7 @@ export const TeamPage: React.FC = () => {
       </div>
 
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-16 md:mb-24">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
           {loading ? <div className="col-span-full text-center py-20 text-on-surface-variant">Loading team...</div> : teamMembers.map((member, index) => <TeamMemberCard key={member.id} member={member} index={index} />)}
         </div>
       </div>

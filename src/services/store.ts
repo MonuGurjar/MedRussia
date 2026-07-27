@@ -195,8 +195,8 @@ export const fetchSettingsFromStore = async (): Promise<AppSettings> => {
 
     return {
         ...DEFAULT_SETTINGS,
-        ...settings,
-        features: { ...DEFAULT_SETTINGS.features, ...(settings.features || {}) }
+        ...(settings || {}),
+        features: { ...DEFAULT_SETTINGS.features, ...(settings?.features || {}) }
     };
 };
 

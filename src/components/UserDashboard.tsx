@@ -77,15 +77,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
   const [savingSettings, setSavingSettings] = useState(false);
-  const [profileData, setProfileData] = useState({ name: user.name, phone: user.phone || '', university: user.university || '' });
-  const [avatar, setAvatar] = useState<string | null>(user.avatar || null);
+  const [profileData, setProfileData] = useState({ name: user?.name || 'Student', phone: user?.phone || '', university: user?.university || '' });
+  const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<'marksheet' | 'passport' | 'neetScoreCard' | null>(null);
-  const [eligibilityForm, setEligibilityForm] = useState<EligibilityData>(user.eligibilityData || { pcbPercentage: '', category: 'General', isPwd: false, neetScore: '', dob: '', medium: 'English', knowsRussian: false, passportStatus: 'Have', medicalHistory: '' });
-  const [eligibilityResult, setEligibilityResult] = useState<string | null>(user.eligibilityResult || null);
+  const [eligibilityForm, setEligibilityForm] = useState<EligibilityData>(user?.eligibilityData || { pcbPercentage: '', category: 'General', isPwd: false, neetScore: '', dob: '', medium: 'English', knowsRussian: false, passportStatus: 'Have', medicalHistory: '' });
+  const [eligibilityResult, setEligibilityResult] = useState<string | null>(user?.eligibilityResult || null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [uniSearch, setUniSearch] = useState('');
-  const [shortlist, setShortlist] = useState<string[]>(user.shortlistedUniversities || []);
+  const [shortlist, setShortlist] = useState<string[]>(user?.shortlistedUniversities || []);
   const [budgetFilter, setBudgetFilter] = useState<string>('all');
   const [cityFilter, setCityFilter] = useState<string[]>([]);
   const [citySearch, setCitySearch] = useState('');
@@ -211,38 +211,78 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
         </div>
       </aside>
 
+      {/* Mobile Drawer Backdrop */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 md:hidden backdrop-blur-xs" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="w-72 bg-white h-full p-4 flex flex-col shadow-2xl fade-in-left" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2" onClick={() => navigate('/')}>
+                <div className="w-8 h-8 bg-[#0B1A30] rounded flex items-center justify-center text-white font-bold text-sm">M</div>
+                <span className="font-bold text-[#0B1A30] text-base">MedRussia Hub</span>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 text-slate-500 hover:bg-slate-100 rounded-lg">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-4 space-y-1">
+              {ALL_TABS.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveView(tab.id as any); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    activeView === tab.id ? 'bg-slate-100 text-[#0f172a] font-bold' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>{tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <button onClick={() => { setIsMobileMenuOpen(false); onLogout(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                <span className="material-symbols-outlined text-[20px]">logout</span>Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top Header */}
-        <header className="h-20 bg-white flex items-center justify-between px-6 shrink-0 md:px-10 z-20">
-          <div className="hidden md:block">
-            <h2 className="text-xl font-bold text-[#0f172a]">
-              {activeView === 'inquiries' && `Welcome, ${user.name.split(' ')[0]}`}
-              {activeView === 'explorer' && 'University Explorer'}
-              {activeView === 'budget' && 'Budget Calc'}
-              {activeView === 'chats' && 'Communications'}
-              {activeView === 'eligibility' && 'Eligibility Checker'}
-              {activeView === 'documents' && 'Application Checklist'}
-              {activeView === 'profile' && 'Profile'}
-              {activeView === 'settings' && 'Settings'}
-              {activeView === 'help' && 'Help Center'}
-            </h2>
-            {activeView === 'inquiries' && <p className="text-sm text-slate-500">Manage your university inquiries and applications.</p>}
+        <header className="h-16 md:h-20 bg-white flex items-center justify-between px-4 md:px-10 shrink-0 z-20 border-b md:border-b-0 border-slate-100">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg" title="Open Menu">
+              <span className="material-symbols-outlined text-[24px]">menu</span>
+            </button>
+            <div>
+              <h2 className="text-base sm:text-xl font-bold text-[#0f172a] leading-tight">
+                {activeView === 'inquiries' && `Welcome, ${(user?.name || 'Student').split(' ')[0]}`}
+                {activeView === 'explorer' && 'University Explorer'}
+                {activeView === 'budget' && 'Budget Calc'}
+                {activeView === 'chats' && 'Communications'}
+                {activeView === 'eligibility' && 'Eligibility Checker'}
+                {activeView === 'documents' && 'Application Checklist'}
+                {activeView === 'profile' && 'Profile'}
+                {activeView === 'settings' && 'Settings'}
+                {activeView === 'help' && 'Help Center'}
+              </h2>
+              {activeView === 'inquiries' && <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">Manage your university inquiries and applications.</p>}
+            </div>
           </div>
           
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-4 ml-auto">
              <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-[24px]">notifications_none</span>
+              <span className="material-symbols-outlined text-[22px] sm:text-[24px]">notifications_none</span>
               {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>}
             </button>
-            <button onClick={() => setActiveView('profile' as any)} className="w-10 h-10 rounded-full overflow-hidden bg-[#0f172a] text-white flex items-center justify-center font-bold cursor-pointer hover:ring-2 hover:ring-slate-300 transition-all">
-               {avatar ? <img src={avatar} className="w-full h-full object-cover" alt="Avatar" /> : user.name.charAt(0)}
+            <button onClick={() => setActiveView('profile' as any)} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-[#0f172a] text-white flex items-center justify-center font-bold cursor-pointer hover:ring-2 hover:ring-slate-300 transition-all text-sm">
+               {avatar ? <img src={avatar} className="w-full h-full object-cover" alt="Avatar" /> : (user?.name || 'Student').charAt(0)}
             </button>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">
           
           {/* INQUIRIES TAB */}
           {activeView === 'inquiries' && (
@@ -867,6 +907,30 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
           )}
 
         </main>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 flex items-center justify-around py-2 px-1 shadow-lg">
+          <button onClick={() => setActiveView('inquiries')} className={`flex flex-col items-center gap-0.5 text-[10px] font-semibold ${activeView === 'inquiries' ? 'text-[#0f172a] font-bold' : 'text-slate-400'}`}>
+            <span className="material-symbols-outlined text-[20px]">dashboard</span>
+            <span>Inquiries</span>
+          </button>
+          <button onClick={() => setActiveView('explorer')} className={`flex flex-col items-center gap-0.5 text-[10px] font-semibold ${activeView === 'explorer' ? 'text-[#0f172a] font-bold' : 'text-slate-400'}`}>
+            <span className="material-symbols-outlined text-[20px]">travel_explore</span>
+            <span>Explorer</span>
+          </button>
+          <button onClick={() => setActiveView('eligibility')} className={`flex flex-col items-center gap-0.5 text-[10px] font-semibold ${activeView === 'eligibility' ? 'text-[#0f172a] font-bold' : 'text-slate-400'}`}>
+            <span className="material-symbols-outlined text-[20px]">verified</span>
+            <span>Eligibility</span>
+          </button>
+          <button onClick={() => setActiveView('documents')} className={`flex flex-col items-center gap-0.5 text-[10px] font-semibold ${activeView === 'documents' ? 'text-[#0f172a] font-bold' : 'text-slate-400'}`}>
+            <span className="material-symbols-outlined text-[20px]">folder</span>
+            <span>Vault</span>
+          </button>
+          <button onClick={() => setActiveView('profile')} className={`flex flex-col items-center gap-0.5 text-[10px] font-semibold ${activeView === 'profile' ? 'text-[#0f172a] font-bold' : 'text-slate-400'}`}>
+            <span className="material-symbols-outlined text-[20px]">person</span>
+            <span>Profile</span>
+          </button>
+        </div>
       </div>
     </div>
   );
