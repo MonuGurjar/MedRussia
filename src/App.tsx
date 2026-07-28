@@ -117,38 +117,45 @@ const App: React.FC = () => {
 
   const handleSession = async (session: any) => {
     try {
-      const res = await fetch(`/api/users?id=${session.user.id}`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
-      });
-      
       const role = session.user.app_metadata?.role || session.user.user_metadata?.role || 'student';
+      
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
 
-      if (res.ok) {
-        const profile = await res.json();
-        // The frontend relies purely on the Supabase JWT for the role
-        setCurrentUser({ ...profile, role });
-      } else if (res.status === 404) {
-        // Auto-create MongoDB profile for users signing up via Google OAuth
+      if (profile) {
+        setCurrentUser({
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          phone: profile.phone,
+          neetScore: profile.neet_score,
+          budget: profile.budget,
+          shortlistedUniversities: profile.shortlisted_universities || [],
+          documents: profile.documents || {},
+          notifications: profile.notifications || [],
+          role
+        });
+      } else {
         const newUser: User = {
           id: session.user.id,
           email: session.user.email || '',
           role,
-          name: session.user.user_metadata?.full_name || 'New User',
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+          phone: session.user.user_metadata?.phone || '',
           shortlistedUniversities: [],
           documents: {},
-          notifications: [],
+          notifications: []
         };
-        await fetch('/api/users', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify(newUser)
+        await supabase.from('users').upsert({
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+          phone: newUser.phone
         });
         setCurrentUser(newUser);
-      } else {
-        console.error('Profile not found in database');
       }
     } catch (e) {
       console.error('Error fetching user profile', e);

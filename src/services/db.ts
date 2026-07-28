@@ -40,6 +40,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 };
 
 // --- REGISTRATION ---
+// --- REGISTRATION ---
 export const registerUser = async (userData: Partial<User> & { password?: string }): Promise<User | null> => {
   if (!userData.email || !userData.password) throw new Error('Email and password are required');
 
@@ -65,28 +66,30 @@ export const registerUser = async (userData: Partial<User> & { password?: string
     notifications: [],
   };
 
-  const res = await authFetch('/api/users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newUser)
+  await supabase.from('users').upsert({
+    id: newUser.id,
+    email: newUser.email,
+    name: newUser.name,
+    phone: newUser.phone
   });
-
-  if (!res.ok) {
-     const errText = await res.text();
-     throw new Error(`Failed to create profile: ${res.status} ${errText}`);
-  }
 
   return newUser;
 };
 
 export const updateUser = async (user: User): Promise<void> => {
-  const res = await authFetch('/api/users', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
+  const { error } = await supabase.from('users').upsert({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone,
+    neet_score: user.neetScore,
+    budget: user.budget,
+    shortlisted_universities: user.shortlistedUniversities || [],
+    documents: user.documents || {},
+    notifications: user.notifications || []
   });
-  if (!res.ok) throw new Error('Failed to update profile');
-  
+  if (error) console.error('Failed to update user profile in Supabase:', error);
+
   const localUsers = getLocal<User>(USERS_KEY);
   const index = localUsers.findIndex(u => u.id === user.id);
   if (index !== -1) localUsers[index] = user;
@@ -135,15 +138,48 @@ export const loginUser = async (email: string, password?: string): Promise<User 
     throw new Error(error?.message || 'Login failed');
   }
 
-  const res = await authFetch(`/api/users?id=${data.user.id}`);
-  
-  if (res.ok) {
-    const profile = await res.json();
-    return profile;
+  const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  if (profile) {
+    return {
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      phone: profile.phone,
+      neetScore: profile.neet_score,
+      budget: profile.budget,
+      shortlistedUniversities: profile.shortlisted_universities || [],
+      documents: profile.documents || {},
+      notifications: profile.notifications || [],
+      role
+    };
   }
-  
-  const errText = await res.text();
-  throw new Error(`Server error: ${res.status} ${res.statusText} - ${errText}`);
+
+  const defaultUser: User = {
+    id: data.user.id,
+    email: data.user.email || '',
+    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+    phone: data.user.user_metadata?.phone || '',
+    role,
+    shortlistedUniversities: [],
+    documents: {},
+    notifications: []
+  };
+
+  await supabase.from('users').upsert({
+    id: defaultUser.id,
+    email: defaultUser.email,
+    name: defaultUser.name,
+    phone: defaultUser.phone
+  });
+
+  return defaultUser;
 };
 
 // --- PASSWORD RECOVERY ---
