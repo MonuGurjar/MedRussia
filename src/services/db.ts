@@ -86,7 +86,9 @@ export const updateUser = async (user: User): Promise<void> => {
     budget: user.budget,
     shortlisted_universities: user.shortlistedUniversities || [],
     documents: user.documents || {},
-    notifications: user.notifications || []
+    notifications: user.notifications || [],
+    eligibility_data: user.eligibilityData || {},
+    eligibility_result: user.eligibilityResult || null
   });
   if (error) console.error('Failed to update user profile in Supabase:', error);
 
@@ -157,6 +159,8 @@ export const loginUser = async (email: string, password?: string): Promise<User 
       shortlistedUniversities: profile.shortlisted_universities || [],
       documents: profile.documents || {},
       notifications: profile.notifications || [],
+      eligibilityData: profile.eligibility_data,
+      eligibilityResult: profile.eligibility_result,
       role
     };
   }
@@ -337,7 +341,28 @@ export const saveFeedback = async (entry: Omit<FeedbackEntry, 'id' | 'timestamp'
   localEntries.push(newEntry);
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(localEntries));
 
-  // Sync to Cloud
+  // Sync to Supabase Inquiries table directly for text data storing
+  try {
+    await supabase.from('inquiries').upsert({
+      id: newEntry.id,
+      user_id: newEntry.userId || null,
+      name: newEntry.name,
+      email: newEntry.email,
+      phone: newEntry.phone,
+      university: newEntry.university,
+      target_university: newEntry.targetUniversity,
+      message: newEntry.message,
+      budget: newEntry.budget,
+      current_status: newEntry.currentStatus,
+      status: newEntry.status,
+      replies: newEntry.replies,
+      timestamp: newEntry.timestamp
+    });
+  } catch (e) {
+    console.warn('Direct Supabase inquiry insert warning:', e);
+  }
+
+  // Sync to Cloud Store
   await saveFeedbackToStore(newEntry);
   return newEntry;
 };
@@ -356,6 +381,16 @@ export const addReply = async (feedbackId: string, reply: Omit<FeedbackReply, 'i
     entries[index].status = 'replied';
 
     localStorage.setItem(FEEDBACK_KEY, JSON.stringify(entries));
+    
+    try {
+      await supabase.from('inquiries').update({
+        replies: entries[index].replies,
+        status: 'replied'
+      }).eq('id', feedbackId);
+    } catch (e) {
+      console.warn('Direct Supabase inquiry reply update warning:', e);
+    }
+
     await saveFeedbackToStore(entries[index]);
   }
 };

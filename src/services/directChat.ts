@@ -1,6 +1,7 @@
 
 import { DirectChat, DirectMessage, DirectMessageAttachment } from '../types';
 import { fetchDirectChatsFromStore, saveDirectChatsToStore } from './store';
+import { supabase } from '../lib/supabase';
 
 // Get all direct chats
 export const getAllDirectChats = async (): Promise<DirectChat[]> => {
@@ -46,6 +47,22 @@ export const createDirectChat = async (studentId: string, studentName: string, s
     };
 
     chats.push(newChat);
+
+    try {
+        await supabase.from('direct_chats').upsert({
+            id: newChat.id,
+            student_id: newChat.studentId,
+            student_name: newChat.studentName,
+            student_email: newChat.studentEmail,
+            messages: newChat.messages,
+            created_at: newChat.createdAt,
+            last_message_at: newChat.lastMessageAt,
+            status: newChat.status
+        });
+    } catch (e) {
+        console.warn('Direct Supabase chat insert warning:', e);
+    }
+
     await saveDirectChatsToStore(chats);
     return newChat;
 };
@@ -79,6 +96,16 @@ export const sendDirectMessage = async (
     // Reopen if closed and student sends a message
     if (senderRole === 'student' && chats[index].status === 'closed') {
         chats[index].status = 'open';
+    }
+
+    try {
+        await supabase.from('direct_chats').update({
+            messages: chats[index].messages,
+            last_message_at: chats[index].lastMessageAt,
+            status: chats[index].status
+        }).eq('id', chatId);
+    } catch (e) {
+        console.warn('Direct Supabase chat update warning:', e);
     }
 
     await saveDirectChatsToStore(chats);
