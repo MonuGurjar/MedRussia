@@ -76,7 +76,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
   const [savingSettings, setSavingSettings] = useState(false);
-  const [profileData, setProfileData] = useState({ name: user?.name || 'Student', phone: user?.phone || '', university: user?.university || '' });
+  const [profileData, setProfileData] = useState({ name: user?.name || 'Student', username: user?.username || '', phone: user?.phone || '', university: user?.university || '', targetYear: '2026', preferredMedium: 'English Medium (6 Years)', targetBudget: '300k-500k', passportNumber: '', passportExpiry: '', whatsappAlerts: true, emailAlerts: true });
   const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<'marksheet' | 'passport' | 'neetScoreCard' | null>(null);
@@ -1789,6 +1789,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                   <div className="flex-1 text-center sm:text-left space-y-2">
                     <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                       <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{user.name}</h2>
+                      {profileData.username && (
+                        <span className="bg-white/10 text-slate-200 border border-white/10 text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                          @{profileData.username}
+                        </span>
+                      )}
                       <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                         <span className="material-symbols-outlined text-[13px]">verified</span> Verified Student
                       </span>
@@ -1832,6 +1837,20 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                       onChange={e => setProfileData({...profileData, name: e.target.value})} 
                       className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white text-slate-900 text-sm font-semibold transition-all" 
                     />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 mb-1.5 block">Username</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-3.5 text-slate-400 font-bold text-[14px]">@</span>
+                      <input 
+                        type="text" 
+                        value={profileData.username} 
+                        onChange={e => setProfileData({...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})} 
+                        className="w-full p-3.5 pl-8 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white text-slate-900 text-sm font-semibold transition-all" 
+                        placeholder="username"
+                      />
+                    </div>
                   </div>
 
                   <div>

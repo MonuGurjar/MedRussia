@@ -44,11 +44,15 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 export const registerUser = async (userData: Partial<User> & { password?: string }): Promise<User | null> => {
   if (!userData.email || !userData.password) throw new Error('Email and password are required');
 
+  const formattedUsername = userData.username 
+    ? userData.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+    : userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+
   const { data, error } = await supabase.auth.signUp({
     email: userData.email,
     password: userData.password,
     options: {
-      data: { full_name: userData.name, phone: userData.phone, role: 'student' }
+      data: { full_name: userData.name, username: formattedUsername, phone: userData.phone, role: 'student' }
     }
   });
 
@@ -58,6 +62,7 @@ export const registerUser = async (userData: Partial<User> & { password?: string
   const newUser: User = {
     id: data.user.id,
     name: userData.name || '',
+    username: formattedUsername,
     email: userData.email,
     phone: userData.phone,
     role: 'student',
@@ -70,6 +75,7 @@ export const registerUser = async (userData: Partial<User> & { password?: string
     id: newUser.id,
     email: newUser.email,
     name: newUser.name,
+    username: newUser.username,
     phone: newUser.phone
   });
 
@@ -81,6 +87,7 @@ export const updateUser = async (user: User): Promise<void> => {
     id: user.id,
     email: user.email,
     name: user.name,
+    username: user.username,
     phone: user.phone,
     neet_score: user.neetScore,
     budget: user.budget,
@@ -153,6 +160,7 @@ export const loginUser = async (email: string, password?: string): Promise<User 
       id: profile.id,
       email: profile.email,
       name: profile.name,
+      username: profile.username || data.user.user_metadata?.username,
       phone: profile.phone,
       neetScore: profile.neet_score,
       budget: profile.budget,
@@ -169,6 +177,7 @@ export const loginUser = async (email: string, password?: string): Promise<User 
     id: data.user.id,
     email: data.user.email || '',
     name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+    username: data.user.user_metadata?.username || data.user.email?.split('@')[0],
     phone: data.user.user_metadata?.phone || '',
     role,
     shortlistedUniversities: [],
@@ -180,6 +189,7 @@ export const loginUser = async (email: string, password?: string): Promise<User 
     id: defaultUser.id,
     email: defaultUser.email,
     name: defaultUser.name,
+    username: defaultUser.username,
     phone: defaultUser.phone
   });
 

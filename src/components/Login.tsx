@@ -37,9 +37,10 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true);
+    if (!formData.username.trim()) { setError('Username is required'); setIsSubmitting(false); return; }
     if (formData.password.length < 6) { setError('Password must be at least 6 characters long'); setIsSubmitting(false); return; }
     setError('');
-    try { const user = await registerUser({ name: formData.name, email: formData.email, password: formData.password, phone: formData.phone, role: 'student' }); onAuthSuccess(user); } catch (err: any) { setError(err.message || 'Registration failed'); } finally { setIsSubmitting(false); }
+    try { const user = await registerUser({ name: formData.name, username: formData.username, email: formData.email, password: formData.password, phone: formData.phone, role: 'student' }); onAuthSuccess(user); } catch (err: any) { setError(err.message || 'Registration failed'); } finally { setIsSubmitting(false); }
   };
 
   const handleForgotStep1 = async (e: React.FormEvent) => {
@@ -158,6 +159,13 @@ export const Login: React.FC<LoginProps> = ({ onAuthSuccess, onCancel, onShowLeg
           ) : mode === 'register' ? (
             <form onSubmit={handleRegister} className="space-y-4">
               <div><label className={labelCls}>Full Name</label><input type="text" required className={inputCls} placeholder="Enter your full name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
+              <div>
+                <label className={labelCls}>Username</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-3.5 text-slate-400 font-bold text-[14px]">@</span>
+                  <input type="text" required className={`${inputCls} pl-8`} placeholder="username" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})} />
+                </div>
+              </div>
               <div><label className={labelCls}>Email address</label><input type="email" required className={inputCls} placeholder="Enter your email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
               <div><label className={labelCls}>WhatsApp Number</label><input type="tel" required className={inputCls} placeholder="+91..." value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} /></div>
               <div><label className={labelCls}>Create Password</label><input type="password" required className={inputCls} placeholder="Create a password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} /><p className="text-[11px] text-slate-400 mt-1 font-semibold">Must be at least 6 characters</p></div>
