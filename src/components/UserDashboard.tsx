@@ -73,6 +73,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; text: string; type: 'info' | 'success' | 'alert' | 'recommendation'; time: string }[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
   const [savingSettings, setSavingSettings] = useState(false);
@@ -160,23 +166,23 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
 
   const handleSubmitInquiry = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true);
-    try { await saveFeedback({ userId: user.id, name: user.name, email: user.email, phone: user.phone || 'N/A', university: user.university || 'N/A', ...newInquiry }); setShowInquiryForm(false); setNewInquiry({ targetUniversity: '', message: '', budget: '', currentStatus: 'NEET Aspirant' }); fetchFeedbackAndNotifications(); if (onInquirySubmitted) onInquirySubmitted(); } catch (err) { alert('Failed to submit inquiry'); } finally { setIsSubmitting(false); }
+    try { await saveFeedback({ userId: user.id, name: user.name, email: user.email, phone: user.phone || 'N/A', university: user.university || 'N/A', ...newInquiry }); setShowInquiryForm(false); setNewInquiry({ targetUniversity: '', message: '', budget: '', currentStatus: 'NEET Aspirant' }); fetchFeedbackAndNotifications(); if (onInquirySubmitted) onInquirySubmitted(); showToast('Inquiry submitted successfully!'); } catch (err) { showToast('Failed to submit inquiry', 'error'); } finally { setIsSubmitting(false); }
   };
 
   const handleSaveSecurityQuestion = async () => {
     if (!recoveryData.answer.trim()) return;
-    try { const updatedUser = { ...user, recoveryQuestion: recoveryData.question, recoveryAnswer: recoveryData.answer }; await updateUser(updatedUser); setShowSecurityPrompt(false); alert("Recovery question saved!"); } catch (e) { alert("Failed to save security question."); }
+    try { const updatedUser = { ...user, recoveryQuestion: recoveryData.question, recoveryAnswer: recoveryData.answer }; await updateUser(updatedUser); setShowSecurityPrompt(false); showToast("Recovery question saved!"); } catch (e) { showToast("Failed to save security question.", 'error'); }
   };
 
-  const handleCheckEligibility = async () => { setCheckingEligibility(true); try { const result = await checkEligibility(eligibilityForm); setEligibilityResult(result); await updateUserEligibility(user.id, eligibilityForm, result); } catch (e) { alert("Failed check"); } finally { setCheckingEligibility(false); } };
-  const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); setIsUpdatingProfile(false); alert('Profile updated!'); } catch (e) { setIsUpdatingProfile(false); } };
-  const handleSettingsSave = async () => { setSavingSettings(true); await new Promise(r => setTimeout(r, 800)); if (passData.new && passData.new !== passData.confirm) { alert("Passwords do not match!"); setSavingSettings(false); return; } setPassData({ current: '', new: '', confirm: '' }); setSavingSettings(false); alert("Settings updated!"); };
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { if (file.size > 2 * 1024 * 1024) { alert("Image too large"); return; } const reader = new FileReader(); reader.onloadend = () => setAvatar(reader.result as string); reader.readAsDataURL(file); } };
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert("Max 5MB"); return; } setUploadingDoc(type); try { const uploadData = await uploadFileToCloudinary(file); const metaData: DocumentMetadata = { url: uploadData.secure_url, publicId: uploadData.public_id, status: 'uploaded', uploadedAt: Date.now() }; await updateUserDocuments(user.id, type, metaData); if (!user.documents) user.documents = {}; user.documents[type] = metaData; alert(`Uploaded!`); } catch (err: any) { alert(`Failed: ${err.message}`); } finally { setUploadingDoc(null); } };
+  const handleCheckEligibility = async () => { setCheckingEligibility(true); try { const result = await checkEligibility(eligibilityForm); setEligibilityResult(result); await updateUserEligibility(user.id, eligibilityForm, result); showToast('Eligibility report generated!'); } catch (e) { showToast("Eligibility check failed", 'error'); } finally { setCheckingEligibility(false); } };
+  const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); setIsUpdatingProfile(false); showToast('Profile updated successfully!'); } catch (e) { setIsUpdatingProfile(false); showToast('Failed to update profile', 'error'); } };
+  const handleSettingsSave = async () => { setSavingSettings(true); await new Promise(r => setTimeout(r, 800)); if (passData.new && passData.new !== passData.confirm) { showToast("Passwords do not match!", 'error'); setSavingSettings(false); return; } setPassData({ current: '', new: '', confirm: '' }); setSavingSettings(false); showToast("Settings updated successfully!"); };
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { if (file.size > 2 * 1024 * 1024) { showToast("Image size must be under 2MB", 'error'); return; } const reader = new FileReader(); reader.onloadend = () => { setAvatar(reader.result as string); showToast("Avatar updated successfully!"); }; reader.readAsDataURL(file); } };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { showToast("File size exceeds 5MB limit", 'error'); return; } setUploadingDoc(type); try { const uploadData = await uploadFileToCloudinary(file); const metaData: DocumentMetadata = { url: uploadData.secure_url, publicId: uploadData.public_id, fileName: file.name, status: 'uploaded', uploadedAt: Date.now() }; await updateUserDocuments(user.id, type, metaData); if (!user.documents) user.documents = {}; user.documents[type] = metaData; showToast(`${file.name} uploaded successfully!`, 'success'); } catch (err: any) { showToast(`Upload failed: ${err.message}`, 'error'); } finally { setUploadingDoc(null); } };
 
-  const handleStartNewChat = async () => { if (!studentChatMsg.trim() && !studentChatAttachment) return; setIsSendingChat(true); try { const newChat = await createDirectChat(user.id, user.name, user.email, studentChatMsg.trim(), studentChatAttachment || undefined); setStudentChats(prev => [newChat, ...prev]); setActiveStudentChat(newChat); setStudentChatMsg(''); setStudentChatAttachment(null); } catch (e) { alert('Failed to start chat'); } finally { setIsSendingChat(false); } };
-  const handleSendStudentMsg = async () => { if (!activeStudentChat || (!studentChatMsg.trim() && !studentChatAttachment)) return; setIsSendingChat(true); try { const updated = await sendDirectMessage(activeStudentChat.id, user.id, user.name, 'student', studentChatMsg.trim(), studentChatAttachment || undefined); if (updated) { setStudentChats(prev => prev.map(c => c.id === updated.id ? updated : c)); setActiveStudentChat(updated); } setStudentChatMsg(''); setStudentChatAttachment(null); } catch (e) { alert('Failed to send'); } finally { setIsSendingChat(false); } };
-  const handleStudentChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; } const reader = new FileReader(); reader.onloadend = () => { setStudentChatAttachment({ name: file.name, type: file.type, data: reader.result as string }); }; reader.readAsDataURL(file); };
+  const handleStartNewChat = async () => { if (!studentChatMsg.trim() && !studentChatAttachment) return; setIsSendingChat(true); try { const newChat = await createDirectChat(user.id, user.name, user.email, studentChatMsg.trim(), studentChatAttachment || undefined); setStudentChats(prev => [newChat, ...prev]); setActiveStudentChat(newChat); setStudentChatMsg(''); setStudentChatAttachment(null); showToast('New chat started!'); } catch (e) { showToast('Failed to start chat', 'error'); } finally { setIsSendingChat(false); } };
+  const handleSendStudentMsg = async () => { if (!activeStudentChat || (!studentChatMsg.trim() && !studentChatAttachment)) return; setIsSendingChat(true); try { const updated = await sendDirectMessage(activeStudentChat.id, user.id, user.name, 'student', studentChatMsg.trim(), studentChatAttachment || undefined); if (updated) { setStudentChats(prev => prev.map(c => c.id === updated.id ? updated : c)); setActiveStudentChat(updated); } setStudentChatMsg(''); setStudentChatAttachment(null); } catch (e) { showToast('Failed to send message', 'error'); } finally { setIsSendingChat(false); } };
+  const handleStudentChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB file size', 'error'); return; } const reader = new FileReader(); reader.onloadend = () => { setStudentChatAttachment({ name: file.name, type: file.type, data: reader.result as string }); showToast(`Attached ${file.name}`); }; reader.readAsDataURL(file); };
 
   const inputCls = "w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-1 focus:ring-[#0f172a] focus:border-[#0f172a] text-slate-800";
   const labelCls = "text-xs font-bold text-slate-500 mb-1.5 block tracking-wide";
@@ -1714,7 +1720,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                                 <div className="flex items-center gap-2 min-w-0">
                                   <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">description</span>
                                   <div className="min-w-0">
-                                    <p className="font-bold text-xs text-slate-800 truncate">{docData.publicId?.split('/').pop() || 'Document.pdf'}</p>
+                                    <p className="font-bold text-xs text-slate-800 truncate">
+                                      {docData.fileName || (docData.publicId && !docData.publicId.startsWith('local_') ? docData.publicId.split('/').pop() : `${doc.title}.pdf`)}
+                                    </p>
                                     <p className="text-[10px] text-slate-400">Uploaded {new Date(docData.uploadedAt || Date.now()).toLocaleDateString()}</p>
                                   </div>
                                 </div>
@@ -2111,6 +2119,19 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
           </button>
         </div>
       </div>
+
+      {/* Professional Non-Intrusive Toast Notification Banner */}
+      {toast && (
+        <div className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-50 flex items-center gap-3 px-5 py-3.5 bg-slate-900/95 text-white rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md transition-all animate-bounce-in">
+          {toast.type === 'success' && <span className="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>}
+          {toast.type === 'error' && <span className="material-symbols-outlined text-rose-400 text-[20px]">error</span>}
+          {toast.type === 'info' && <span className="material-symbols-outlined text-amber-400 text-[20px]">info</span>}
+          <p className="text-xs sm:text-sm font-bold tracking-tight text-slate-100">{toast.message}</p>
+          <button onClick={() => setToast(null)} className="ml-2 text-slate-400 hover:text-white p-0.5 rounded-lg transition-colors">
+            <span className="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

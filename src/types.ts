@@ -25,6 +25,7 @@ export interface UserNotification {
 export interface DocumentMetadata {
   url: string;
   publicId?: string;
+  fileName?: string;
   status: 'pending' | 'uploaded' | 'verified' | 'rejected';
   uploadedAt: number;
   remarks?: string;
