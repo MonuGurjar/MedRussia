@@ -115,7 +115,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSession = async (session: any) => {
+  const handleSession = async (session: any): Promise<User | null> => {
     try {
       const role = session.user.app_metadata?.role || session.user.user_metadata?.role || 'student';
       
@@ -132,7 +132,7 @@ const App: React.FC = () => {
           ? profile.documents 
           : (localUser?.documents || {});
 
-        setCurrentUser({
+        const mappedUser: User = {
           id: profile.id,
           email: profile.email,
           name: profile.name,
@@ -146,7 +146,10 @@ const App: React.FC = () => {
           eligibilityData: profile.eligibility_data || localUser?.eligibilityData,
           eligibilityResult: profile.eligibility_result || localUser?.eligibilityResult,
           role
-        });
+        };
+        setCurrentUser(mappedUser);
+        localStorage.setItem('mr_current_user', JSON.stringify(mappedUser));
+        return mappedUser;
       } else {
         const localUsers = getLocal<User>('mr_users');
         const localUser = localUsers.find((u: any) => u.id === session.user.id);
@@ -173,9 +176,12 @@ const App: React.FC = () => {
           documents: newUser.documents
         });
         setCurrentUser(newUser);
+        localStorage.setItem('mr_current_user', JSON.stringify(newUser));
+        return newUser;
       }
     } catch (e) {
       console.error('Error fetching user profile', e);
+      return null;
     } finally {
       setIsAuthLoading(false);
     }
@@ -187,10 +193,25 @@ const App: React.FC = () => {
     let isMounted = true;
 
     const processSession = async (session: any) => {
+      let activeUser: User | null = null;
       if (session) {
-        await handleSession(session);
+        activeUser = await handleSession(session);
       }
+
+      if (!activeUser) {
+        const saved = localStorage.getItem('mr_current_user');
+        if (saved) {
+          try {
+            activeUser = JSON.parse(saved);
+          } catch (e) {}
+        }
+      }
+
       if (isMounted) {
+        if (activeUser) {
+          setCurrentUser(activeUser);
+          localStorage.setItem('mr_current_user', JSON.stringify(activeUser));
+        }
         setIsAuthLoading(false);
       }
     };
@@ -206,6 +227,7 @@ const App: React.FC = () => {
         await processSession(session);
       } else if (event === 'SIGNED_OUT') {
         if (isMounted) {
+          localStorage.removeItem('mr_current_user');
           setCurrentUser(null);
           setIsAuthLoading(false);
         }
@@ -220,11 +242,13 @@ const App: React.FC = () => {
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
+    localStorage.setItem('mr_current_user', JSON.stringify(user));
     navigate('/user', { replace: true });
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try { await supabase.auth.signOut(); } catch (e) {}
+    localStorage.removeItem('mr_current_user');
     setCurrentUser(null);
     navigate('/');
   };
