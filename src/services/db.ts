@@ -245,33 +245,67 @@ export const loginUser = async (email: string, password?: string): Promise<User 
 
 export const updateUserDocuments = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard', metadata: DocumentMetadata): Promise<User> => {
   const users = getLocal<User>(USERS_KEY);
-  const userIndex = users.findIndex(u => u.id === userId);
+  let userIndex = users.findIndex(u => u.id === userId);
 
-  if (userIndex === -1) throw new Error("User not found");
+  let user: User;
+  if (userIndex !== -1) {
+    user = users[userIndex];
+  } else {
+    const { data: profile } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    user = {
+      id: userId,
+      email: profile?.email || session?.user?.email || '',
+      name: profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || 'Student',
+      username: profile?.username || session?.user?.user_metadata?.username,
+      phone: profile?.phone || session?.user?.user_metadata?.phone || '',
+      role: (profile?.role as any) || session?.user?.app_metadata?.role || 'student',
+      documents: profile?.documents || {},
+      shortlistedUniversities: profile?.shortlisted_universities || [],
+      notifications: profile?.notifications || []
+    };
+    users.push(user);
+    userIndex = users.length - 1;
+  }
 
-  // 2. Update Document
-  const user = users[userIndex];
   if (!user.documents) user.documents = {};
-
   user.documents[docType] = metadata;
 
-  // Securely update the user via the authenticated API
-  await updateUser(user);
+  users[userIndex] = user;
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 
+  await updateUser(user);
   return user;
 };
 
 export const deleteUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard'): Promise<User> => {
   const users = getLocal<User>(USERS_KEY);
-  const userIndex = users.findIndex(u => u.id === userId);
+  let userIndex = users.findIndex(u => u.id === userId);
 
-  if (userIndex === -1) throw new Error("User not found");
+  let user: User;
+  if (userIndex !== -1) {
+    user = users[userIndex];
+  } else {
+    const { data: profile } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    if (!profile) throw new Error("User profile not found");
+    user = {
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      username: profile.username,
+      role: 'student',
+      documents: profile.documents || {}
+    };
+    users.push(user);
+    userIndex = users.length - 1;
+  }
 
-  const user = users[userIndex];
   if (user.documents && user.documents[docType]) {
     delete user.documents[docType];
+    users[userIndex] = user;
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
     await updateUser(user);
-    return user;
   }
   return user;
 };
@@ -305,16 +339,35 @@ export const verifyUserDocument = async (userId: string, docType: 'marksheet' | 
 
 export const updateUserEligibility = async (userId: string, data: EligibilityData, result: string): Promise<User> => {
   const users = getLocal<User>(USERS_KEY);
-  const userIndex = users.findIndex(u => u.id === userId);
+  let userIndex = users.findIndex(u => u.id === userId);
 
-  if (userIndex === -1) throw new Error("User not found");
+  let user: User;
+  if (userIndex !== -1) {
+    user = users[userIndex];
+  } else {
+    const { data: profile } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    user = {
+      id: userId,
+      email: profile?.email || session?.user?.email || '',
+      name: profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || 'Student',
+      username: profile?.username || session?.user?.user_metadata?.username,
+      phone: profile?.phone || '',
+      role: 'student',
+      documents: profile?.documents || {}
+    };
+    users.push(user);
+    userIndex = users.length - 1;
+  }
 
-  const user = users[userIndex];
   user.eligibilityData = data;
   user.eligibilityResult = result;
 
-  await updateUser(user);
+  users[userIndex] = user;
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 
+  await updateUser(user);
   return user;
 };
 
