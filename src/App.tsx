@@ -126,34 +126,51 @@ const App: React.FC = () => {
         .maybeSingle();
 
       if (profile) {
+        const localUsers = getLocal<User>('mr_users');
+        const localUser = localUsers.find((u: any) => u.id === profile.id);
+        const docs = (profile.documents && Object.keys(profile.documents).length > 0) 
+          ? profile.documents 
+          : (localUser?.documents || {});
+
         setCurrentUser({
           id: profile.id,
           email: profile.email,
           name: profile.name,
-          phone: profile.phone,
-          neetScore: profile.neet_score,
-          budget: profile.budget,
-          shortlistedUniversities: profile.shortlisted_universities || [],
-          documents: profile.documents || {},
-          notifications: profile.notifications || [],
+          username: profile.username || session.user.user_metadata?.username || localUser?.username,
+          phone: profile.phone || localUser?.phone,
+          neetScore: profile.neet_score || localUser?.neetScore,
+          budget: profile.budget || localUser?.budget,
+          shortlistedUniversities: profile.shortlisted_universities || localUser?.shortlistedUniversities || [],
+          documents: docs,
+          notifications: profile.notifications || localUser?.notifications || [],
+          eligibilityData: profile.eligibility_data || localUser?.eligibilityData,
+          eligibilityResult: profile.eligibility_result || localUser?.eligibilityResult,
           role
         });
       } else {
+        const localUsers = getLocal<User>('mr_users');
+        const localUser = localUsers.find((u: any) => u.id === session.user.id);
+
         const newUser: User = {
           id: session.user.id,
           email: session.user.email || '',
           role,
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+          username: session.user.user_metadata?.username || localUser?.username,
           phone: session.user.user_metadata?.phone || '',
-          shortlistedUniversities: [],
-          documents: {},
-          notifications: []
+          shortlistedUniversities: localUser?.shortlistedUniversities || [],
+          documents: localUser?.documents || {},
+          notifications: localUser?.notifications || [],
+          eligibilityData: localUser?.eligibilityData,
+          eligibilityResult: localUser?.eligibilityResult
         };
         await supabase.from('users').upsert({
           id: newUser.id,
           email: newUser.email,
           name: newUser.name,
-          phone: newUser.phone
+          username: newUser.username,
+          phone: newUser.phone,
+          documents: newUser.documents
         });
         setCurrentUser(newUser);
       }
