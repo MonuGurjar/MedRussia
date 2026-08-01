@@ -145,6 +145,7 @@ export const updateUser = async (user: User): Promise<void> => {
   if (index !== -1) localUsers[index] = user;
   else localUsers.push(user);
   localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
+  localStorage.setItem('mr_current_user', JSON.stringify(user));
 };
 
 export const sendNotificationToUser = async (userId: string, notification: Omit<UserNotification, 'id' | 'timestamp' | 'isRead'>): Promise<void> => {
