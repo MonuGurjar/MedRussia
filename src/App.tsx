@@ -184,26 +184,36 @@ const App: React.FC = () => {
   useEffect(() => {
     refreshData();
 
-    // 1. Check initial session on mount (fixes refresh logout issues)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true;
+
+    const processSession = async (session: any) => {
       if (session) {
-        handleSession(session);
-      } else {
+        await handleSession(session);
+      }
+      if (isMounted) {
         setIsAuthLoading(false);
       }
+    };
+
+    // 1. Check initial session on mount (fixes refresh logout issues)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      processSession(session);
     });
 
-    // 2. Listen for future auth changes (login/logout/token refresh)
+    // 2. Listen for future auth changes (login/logout/token refresh/initial session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        handleSession(session);
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+        await processSession(session);
       } else if (event === 'SIGNED_OUT') {
-        setCurrentUser(null);
-        setIsAuthLoading(false);
+        if (isMounted) {
+          setCurrentUser(null);
+          setIsAuthLoading(false);
+        }
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
