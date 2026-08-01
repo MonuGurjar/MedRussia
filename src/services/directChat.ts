@@ -151,3 +151,34 @@ export const closeDirectChat = async (chatId: string): Promise<boolean> => {
     await saveDirectChatsToStore(chats);
     return true;
 };
+
+// Subscribe to Realtime Updates for a specific chat
+export const subscribeToChatUpdates = (chatId: string, onUpdate: (chat: DirectChat) => void) => {
+    const channel = supabase
+        .channel(`chat_${chatId}`)
+        .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'direct_chats', filter: `id=eq.${chatId}` },
+            (payload) => {
+                if (payload.new) {
+                    const row = payload.new;
+                    const updatedChat: DirectChat = {
+                        id: row.id,
+                        studentId: row.student_id,
+                        studentName: row.student_name,
+                        studentEmail: row.student_email,
+                        status: row.status,
+                        messages: row.messages || [],
+                        createdAt: row.created_at,
+                        lastMessageAt: row.last_message_at
+                    };
+                    onUpdate(updatedChat);
+                }
+            }
+        )
+        .subscribe();
+
+    return () => {
+        supabase.removeChannel(channel);
+    };
+};

@@ -39,6 +39,47 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, { ...options, headers });
 };
 
+// --- USERNAME & STORAGE HELPERS ---
+export const checkUsernameAvailable = async (username: string, currentUserId?: string): Promise<boolean> => {
+  if (!username || username.trim().length < 3) return false;
+  const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', cleanUsername);
+
+    if (error || !data) return true;
+    if (data.length === 0) return true;
+    if (currentUserId && data.length === 1 && data[0].id === currentUserId) return true;
+    return false;
+  } catch (e) {
+    return true;
+  }
+};
+
+export const uploadDocumentFile = async (userId: string, docType: string, file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${userId}/${docType}_${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from('medrussia-vault')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.warn('Supabase storage bucket notice:', uploadError.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from('medrussia-vault').getPublicUrl(filePath);
+    return data.publicUrl || null;
+  } catch (e) {
+    console.warn('File upload fallback triggered:', e);
+    return null;
+  }
+};
+
 // --- REGISTRATION ---
 // --- REGISTRATION ---
 export const registerUser = async (userData: Partial<User> & { password?: string }): Promise<User | null> => {
