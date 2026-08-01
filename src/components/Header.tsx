@@ -101,8 +101,8 @@ export const Header: React.FC<HeaderProps> = ({
               <button onClick={() => navigate('/compare')} className="md:hidden flex items-center justify-center w-9 h-9 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-full transition-colors" title="Compare Universities">
                 <span className="material-symbols-outlined text-[20px]">balance</span>
               </button>
-              <button onClick={() => navigate('/auth')} className="px-3.5 py-2 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-label-md font-bold transition-all bg-secondary-container text-on-secondary-container hover:opacity-90 shadow-sm">
-                Apply Now
+              <button onClick={() => navigate('/auth')} className="px-3.5 py-2 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-label-md font-bold transition-all bg-primary text-on-primary hover:opacity-95 shadow-sm flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">login</span> Sign In / Sign Up
               </button>
             </>
           )}
