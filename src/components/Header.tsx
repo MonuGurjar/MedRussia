@@ -37,13 +37,19 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-3 relative">
-          <button onClick={() => navigate('/compare')} className="hidden md:flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-label-md font-medium transition-colors">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>balance</span> Compare
+        {/* Actions Bar */}
+        <div className="flex items-center gap-1 sm:gap-2 relative">
+          <button onClick={() => navigate('/explorer')} className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">travel_explore</span> <span className="hidden sm:inline">Explorer</span>
           </button>
-          <button onClick={() => navigate('/team')} className="hidden md:flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-label-md font-medium transition-colors">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>group</span> Our Team
+          <button onClick={() => navigate('/calculator')} className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">calculate</span> <span className="hidden sm:inline">Calculator</span>
+          </button>
+          <button onClick={() => navigate('/compare')} className="hidden md:flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">balance</span> Compare
+          </button>
+          <button onClick={() => navigate('/counselor')} className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-amber-500">support_agent</span> Desk
           </button>
 
           {onToggleCurrency && (

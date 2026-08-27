@@ -26,9 +26,26 @@ export interface DocumentMetadata {
   url: string;
   publicId?: string;
   fileName?: string;
-  status: 'pending' | 'uploaded' | 'verified' | 'rejected';
+  status: 'pending' | 'uploaded' | 'under_review' | 'verified' | 'rejected' | 'issued';
   uploadedAt: number;
   remarks?: string;
+}
+
+export interface VaultDocument {
+  id: string;
+  user_id: string;
+  doc_type: string; // 'marksheet', 'passport', 'neetScoreCard', 'marksheet_10', 'marksheet_12', 'neet_card', 'medical_fitness'
+  file_name: string;
+  file_url: string; // Private Storage object path: students/{userId}/{docType}_{fileName}
+  file_size?: string;
+  status: 'uploaded' | 'under_review' | 'verified' | 'rejected' | 'issued' | 'available' | 'processing';
+  is_issued_by_admin?: boolean;
+  issued_at?: string;
+  ref_number?: string;
+  issuing_authority?: string;
+  reviewer_remarks?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface User {
@@ -220,3 +237,38 @@ export interface AppSettings {
     chatBot: string;
   };
 }
+
+export interface AdmissionApplication {
+  id: string;
+  userId: string;
+  studentName: string;
+  email: string;
+  phone: string;
+  parentName?: string;
+  parentPhone?: string;
+  address?: string;
+  tenthPercentage?: string;
+  twelfthPercentage?: string;
+  neetRollNo?: string;
+  neetScore?: string;
+  neetYear?: string;
+  selectedUniversityId: string;
+  intakeBatch?: string;
+  needsHostel?: boolean;
+  needsIndianMess?: boolean;
+  applicationStatus: 'APPLIED' | 'LETTER_ISSUED' | 'MINISTRY_INVITATION' | 'VISA_STAMPED' | 'DEPARTURE_READY';
+  currentStep: number;
+  totalSteps: number;
+  createdAt: string;
+}
+
+export interface CallBooking {
+  id: string;
+  userId: string;
+  studentName: string;
+  studentPhone: string;
+  preferredTimeSlot: string;
+  status: 'pending' | 'confirmed' | 'completed';
+  createdAt: string;
+}
+

@@ -73,28 +73,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScor
           
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
             <button
-              onClick={() => navigate('/compare')}
-              className="px-3.5 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              onClick={() => navigate('/explorer')}
+              className="px-3.5 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
             >
-              <span className="material-symbols-outlined text-[16px]">balance</span> Compare Universities
+              <span className="material-symbols-outlined text-[16px]">travel_explore</span> University Explorer
             </button>
             <button
-              onClick={() => { if (typeof onToggleCurrency === 'function') onToggleCurrency(); }}
-              className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              onClick={() => navigate('/calculator')}
+              className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
             >
-              <span className="material-symbols-outlined text-[16px]">currency_exchange</span> Currency Calculator
+              <span className="material-symbols-outlined text-[16px]">calculate</span> 6-Year Calculator
             </button>
             <button
-              onClick={() => handleEligibilityCheck()}
-              className="px-3.5 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              onClick={() => navigate('/eligibility')}
+              className="px-3.5 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
             >
-              <span className="material-symbols-outlined text-[16px]">verified</span> Eligibility Checker
+              <span className="material-symbols-outlined text-[16px]">auto_awesome</span> AI Evaluator
             </button>
             <button
-              onClick={() => navigate('/universities')}
-              className="px-3.5 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              onClick={() => navigate('/counselor')}
+              className="px-3.5 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
             >
-              <span className="material-symbols-outlined text-[16px]">school</span> Find Universities
+              <span className="material-symbols-outlined text-[16px]">support_agent</span> Senior Counselor
             </button>
           </div>
         </div>

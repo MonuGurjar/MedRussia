@@ -1,5 +1,7 @@
 .vercel
 .env*
 node_modules
-supabase
+dist
+dist/*
 admin-portal
+

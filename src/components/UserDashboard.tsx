@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, FeedbackEntry, AppSettings, EligibilityData, DocumentMetadata } from '../types';
-import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromStore, updateUser } from '../services/db';
+import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromStore, updateUser, getVaultDocuments } from '../services/db';
 import { getSettings } from '../services/settings';
-import { uploadFileToCloudinary } from '../services/storage';
+import { uploadFileToCloudinary, getSignedKycUrl } from '../services/storage';
 import { checkEligibility } from '../services/gemini';
 import { BudgetCalculator } from './BudgetCalculator';
+import { MbbsBudgetCalculator } from './MbbsBudgetCalculator';
+import { UniversityExplorer } from './UniversityExplorer';
+import { AiEligibilityChecker } from './AiEligibilityChecker';
+import { HumanCounselorDesk } from './HumanCounselorDesk';
 import { PlatformFeedbackModal } from './PlatformFeedbackModal';
 import { RUSSIAN_UNIVERSITIES, getUniversityData, getUniversityImage } from '../constants/universities';
 import { getStudentChats, createDirectChat, sendDirectMessage } from '../services/directChat';
@@ -178,7 +182,52 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); setIsUpdatingProfile(false); showToast('Profile updated successfully!'); } catch (e) { setIsUpdatingProfile(false); showToast('Failed to update profile', 'error'); } };
   const handleSettingsSave = async () => { setSavingSettings(true); await new Promise(r => setTimeout(r, 800)); if (passData.new && passData.new !== passData.confirm) { showToast("Passwords do not match!", 'error'); setSavingSettings(false); return; } setPassData({ current: '', new: '', confirm: '' }); setSavingSettings(false); showToast("Settings updated successfully!"); };
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { if (file.size > 2 * 1024 * 1024) { showToast("Image size must be under 2MB", 'error'); return; } const reader = new FileReader(); reader.onloadend = () => { setAvatar(reader.result as string); showToast("Avatar updated successfully!"); }; reader.readAsDataURL(file); } };
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { showToast("File size exceeds 5MB limit", 'error'); return; } setUploadingDoc(type); try { const uploadData = await uploadFileToCloudinary(file); const metaData: DocumentMetadata = { url: uploadData.secure_url, publicId: uploadData.public_id, fileName: file.name, status: 'uploaded', uploadedAt: Date.now() }; const updatedUser = await updateUserDocuments(user.id, type, metaData); if (!user.documents) user.documents = {}; user.documents[type] = metaData; localStorage.setItem('mr_current_user', JSON.stringify({ ...user, documents: user.documents })); showToast(`${file.name} uploaded successfully!`, 'success'); } catch (err: any) { showToast(`Upload failed: ${err.message}`, 'error'); } finally { setUploadingDoc(null); } };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("File size exceeds 10MB limit", 'error');
+      return;
+    }
+    setUploadingDoc(type);
+    try {
+      const uploadData = await uploadFileToCloudinary(file, user.id, type);
+      const metaData: DocumentMetadata = {
+        url: uploadData.secure_url,
+        publicId: uploadData.public_id,
+        fileName: file.name,
+        status: 'uploaded',
+        uploadedAt: Date.now()
+      };
+      const updatedUser = await updateUserDocuments(user.id, type, metaData);
+      if (!user.documents) user.documents = {};
+      user.documents[type] = metaData;
+      localStorage.setItem('mr_current_user', JSON.stringify({ ...user, documents: user.documents }));
+      showToast(`${file.name} securely uploaded to KYC vault!`, 'success');
+    } catch (err: any) {
+      showToast(`Upload failed: ${err.message}`, 'error');
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const handleViewDocument = async (docData: DocumentMetadata) => {
+    const storagePath = docData.publicId || docData.url;
+    if (!storagePath) {
+      showToast("Document path not found", 'error');
+      return;
+    }
+    try {
+      const signedUrl = await getSignedKycUrl(storagePath, 900); // 15 mins
+      if (signedUrl) {
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        showToast("Unable to generate secure signed access link.", 'error');
+      }
+    } catch (e) {
+      showToast("Failed to open document securely.", 'error');
+    }
+  };
 
   const handleStartNewChat = async () => { if (!studentChatMsg.trim() && !studentChatAttachment) return; setIsSendingChat(true); try { const newChat = await createDirectChat(user.id, user.name, user.email, studentChatMsg.trim(), studentChatAttachment || undefined); setStudentChats(prev => [newChat, ...prev]); setActiveStudentChat(newChat); setStudentChatMsg(''); setStudentChatAttachment(null); showToast('New chat started!'); } catch (e) { showToast('Failed to start chat', 'error'); } finally { setIsSendingChat(false); } };
   const handleSendStudentMsg = async () => { if (!activeStudentChat || (!studentChatMsg.trim() && !studentChatAttachment)) return; setIsSendingChat(true); try { const updated = await sendDirectMessage(activeStudentChat.id, user.id, user.name, 'student', studentChatMsg.trim(), studentChatAttachment || undefined); if (updated) { setStudentChats(prev => prev.map(c => c.id === updated.id ? updated : c)); setActiveStudentChat(updated); } setStudentChatMsg(''); setStudentChatAttachment(null); } catch (e) { showToast('Failed to send message', 'error'); } finally { setIsSendingChat(false); } };
@@ -1430,11 +1479,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
           {/* BUDGET CALCULATOR TAB */}
           {activeView === 'budget' && (
              <div className="max-w-6xl mx-auto">
-                <div className="mb-8">
-                   <h2 className="text-2xl font-bold text-slate-900">Estimate Your Journey</h2>
-                   <p className="text-slate-500 mt-2 text-sm">Use this calculator to project your 6-year expenses including tuition, accommodation, and daily living in Russia.</p>
-                </div>
-                <BudgetCalculator apiKey={settings?.currencyConverter?.apiKey} />
+                <MbbsBudgetCalculator />
              </div>
           )}
 
@@ -1727,9 +1772,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <a href={docData.url} target="_blank" rel="noreferrer" className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1">
+                                  <button onClick={() => handleViewDocument(docData)} className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1">
                                     <span className="material-symbols-outlined text-[14px]">visibility</span> View
-                                  </a>
+                                  </button>
                                   <label className="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
                                     <span className="material-symbols-outlined text-[14px]">sync</span> Replace
                                     <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />

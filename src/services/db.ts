@@ -1,5 +1,5 @@
 
-import { FeedbackEntry, User, FeedbackReply, EligibilityData, ChatSession, PlatformFeedback, UserNotification, DocumentMetadata } from '../types';
+import { FeedbackEntry, User, FeedbackReply, EligibilityData, ChatSession, PlatformFeedback, UserNotification, DocumentMetadata, VaultDocument } from '../types';
 import { supabase } from '../lib/supabase';
 import {
   saveFeedbackToStore,
@@ -59,21 +59,28 @@ export const checkUsernameAvailable = async (username: string, currentUserId?: s
   }
 };
 
+/**
+ * Uploads a document directly to private 'kyc-vault' storage.
+ * Returns the canonical private storage path (students/{userId}/{docType}_{fileName}).
+ * NEVER returns permanent public URLs.
+ */
 export const uploadDocumentFile = async (userId: string, docType: string, file: File): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${userId}/${docType}_${Date.now()}.${fileExt}`;
+    const fileExt = file.name.split('.').pop() || 'pdf';
+    const cleanDocType = docType.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `students/${userId}/${cleanDocType}_${cleanFileName}`;
+
     const { error: uploadError } = await supabase.storage
-      .from('medrussia-vault')
+      .from('kyc-vault')
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
-      console.warn('Supabase storage bucket notice:', uploadError.message);
+      console.warn('Supabase storage kyc-vault notice:', uploadError.message);
       return null;
     }
 
-    const { data } = supabase.storage.from('medrussia-vault').getPublicUrl(filePath);
-    return data.publicUrl || null;
+    return filePath;
   } catch (e) {
     console.warn('File upload fallback triggered:', e);
     return null;
@@ -242,9 +249,104 @@ export const loginUser = async (email: string, password?: string): Promise<User 
 
 // Password recovery is now handled by Supabase in Login.tsx
 
-// --- DOCUMENTS ---
+// --- CANONICAL VAULT_DOCUMENTS OPERATIONS ---
 
-export const updateUserDocuments = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard', metadata: DocumentMetadata): Promise<User> => {
+/**
+ * Fetches all documents for a student from canonical 'public.vault_documents' table.
+ */
+export const getVaultDocuments = async (userId: string): Promise<VaultDocument[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('vault_documents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.warn('vault_documents query notice:', error.message);
+      return [];
+    }
+    return (data as VaultDocument[]) || [];
+  } catch (e) {
+    console.warn('Failed to fetch vault_documents:', e);
+    return [];
+  }
+};
+
+/**
+ * Inserts or updates document record in canonical 'public.vault_documents' table.
+ */
+export const upsertVaultDocument = async (
+  doc: Partial<VaultDocument> & { user_id: string; doc_type: string; file_name: string; file_url: string }
+): Promise<VaultDocument> => {
+  const docId = doc.id || `${doc.user_id}_${doc.doc_type}`;
+  const payload: VaultDocument = {
+    id: docId,
+    user_id: doc.user_id,
+    doc_type: doc.doc_type,
+    file_name: doc.file_name,
+    file_url: doc.file_url, // Private Storage path: students/{userId}/{docType}_{fileName}
+    file_size: doc.file_size || '1.0 MB',
+    status: doc.status || 'under_review',
+    is_issued_by_admin: doc.is_issued_by_admin || false,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('vault_documents')
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('vault_documents upsert notice:', error.message);
+    }
+    return (data as VaultDocument) || payload;
+  } catch (e) {
+    console.warn('PostgREST vault_documents upsert exception:', e);
+    return payload;
+  }
+};
+
+/**
+ * Deletes document record from canonical 'public.vault_documents' and removes binary from 'kyc-vault'.
+ */
+export const deleteVaultDocument = async (
+  id: string, 
+  userId: string, 
+  storagePath?: string
+): Promise<void> => {
+  try {
+    if (storagePath && storagePath.startsWith('students/')) {
+      await supabase.storage.from('kyc-vault').remove([storagePath]);
+    }
+    await supabase
+      .from('vault_documents')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+  } catch (e) {
+    console.warn('Failed to delete vault document:', e);
+  }
+};
+
+export const updateUserDocuments = async (
+  userId: string, 
+  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string, 
+  metadata: DocumentMetadata
+): Promise<User> => {
+  // 1. Persist directly to canonical 'public.vault_documents' table
+  await upsertVaultDocument({
+    id: `${userId}_${docType}`,
+    user_id: userId,
+    doc_type: docType,
+    file_name: metadata.fileName || `${docType}.pdf`,
+    file_url: metadata.publicId || metadata.url, // Private storage path
+    file_size: '1.2 MB',
+    status: metadata.status === 'verified' ? 'verified' : metadata.status === 'rejected' ? 'rejected' : 'under_review'
+  });
+
   const users = getLocal<User>(USERS_KEY);
   let userIndex = users.findIndex(u => u.id === userId);
 
@@ -271,16 +373,21 @@ export const updateUserDocuments = async (userId: string, docType: 'marksheet' |
   }
 
   if (!user.documents) user.documents = {};
-  user.documents[docType] = metadata;
+  user.documents[docType as keyof typeof user.documents] = metadata;
 
   users[userIndex] = user;
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 
-  await updateUser(user);
   return user;
 };
 
-export const deleteUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard'): Promise<User> => {
+export const deleteUserDocument = async (
+  userId: string, 
+  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string
+): Promise<User> => {
+  // Delete from canonical vault_documents
+  await deleteVaultDocument(`${userId}_${docType}`, userId);
+
   const users = getLocal<User>(USERS_KEY);
   let userIndex = users.findIndex(u => u.id === userId);
 
@@ -302,41 +409,48 @@ export const deleteUserDocument = async (userId: string, docType: 'marksheet' | 
     userIndex = users.length - 1;
   }
 
-  if (user.documents && user.documents[docType]) {
-    delete user.documents[docType];
+  if (user.documents && (user.documents as any)[docType]) {
+    delete (user.documents as any)[docType];
     users[userIndex] = user;
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    await updateUser(user);
   }
   return user;
 };
 
-// New Function for Admin Verification
-export const verifyUserDocument = async (userId: string, docType: 'marksheet' | 'passport' | 'neetScoreCard', status: 'verified' | 'rejected', remarks?: string): Promise<User> => {
+// Admin Verification on canonical table
+export const verifyUserDocument = async (
+  userId: string, 
+  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string, 
+  status: 'verified' | 'rejected', 
+  remarks?: string
+): Promise<User> => {
+  // Update canonical vault_documents table
+  await supabase
+    .from('vault_documents')
+    .update({ 
+      status, 
+      reviewer_remarks: remarks || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', `${userId}_${docType}`);
+
   const users = await fetchUsersFromStore();
   const userIndex = users.findIndex((u: any) => u.id === userId);
 
-  if (userIndex === -1) throw new Error("User not found in cloud");
-
-  const user = users[userIndex];
-  if (user.documents && user.documents[docType]) {
-    user.documents[docType].status = status;
-    if (remarks) user.documents[docType].remarks = remarks;
-
-    await saveUserToStore(user);
-
-    // Update Local if it's the current user (edge case, but good to handle)
-    const localUsers = getLocal<User>(USERS_KEY);
-    const localIdx = localUsers.findIndex(u => u.id === userId);
-    if (localIdx !== -1) {
-      localUsers[localIdx] = user;
-      localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
+  if (userIndex !== -1) {
+    const user = users[userIndex];
+    if (user.documents && (user.documents as any)[docType]) {
+      (user.documents as any)[docType].status = status;
+      if (remarks) (user.documents as any)[docType].remarks = remarks;
+      await saveUserToStore(user);
     }
-
     return user;
   }
-  throw new Error("Document not found");
-}
+  
+  const localUsers = getLocal<User>(USERS_KEY);
+  const localUser = localUsers.find(u => u.id === userId);
+  return localUser || { id: userId, email: '', name: 'Student', role: 'student' };
+};
 
 export const updateUserEligibility = async (userId: string, data: EligibilityData, result: string): Promise<User> => {
   const users = getLocal<User>(USERS_KEY);
