@@ -70,3 +70,6 @@ export async function askAiCounselor(prompt: string, history: { role: 'user' | '
 
   return "MedRussia Senior Counselor Desk is available. Contact Amit Gurjar (+91 73750 17401) for immediate assistance.";
 }
+
+export const askGeminiAI = (prompt: string, customInstruction?: string) => askAiCounselor(prompt, []);
+

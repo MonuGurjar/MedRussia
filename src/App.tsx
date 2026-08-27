@@ -17,6 +17,9 @@ import { UniversityExplorer } from './components/UniversityExplorer';
 import { MbbsBudgetCalculator } from './components/MbbsBudgetCalculator';
 import { AiEligibilityChecker } from './components/AiEligibilityChecker';
 import { HumanCounselorDesk } from './components/HumanCounselorDesk';
+import { AdmissionFormScreen } from './components/AdmissionFormScreen';
+import { AdmissionTrackerScreen } from './components/AdmissionTrackerScreen';
+import { AiCounselorChatScreen } from './components/AiCounselorChatScreen';
 import { getAllFeedback, syncUsers } from './services/db';
 import { getSettings, DEFAULT_SETTINGS } from './services/settings';
 import { FeedbackEntry, User, AppSettings } from './types';
@@ -319,10 +322,13 @@ const App: React.FC = () => {
 
           <Route path="/universities" element={<UniversitiesList />} />
           <Route path="/university/:id" element={<UniversityDetails />} />
-          <Route path="/explorer" element={<UniversityExplorer onApplyClick={() => navigate('/auth')} />} />
-          <Route path="/calculator" element={<MbbsBudgetCalculator onApplyWithBudget={() => navigate('/auth')} />} />
+          <Route path="/explorer" element={<UniversityExplorer onApplyClick={() => navigate('/apply')} />} />
+          <Route path="/calculator" element={<MbbsBudgetCalculator onApplyWithBudget={() => navigate('/apply')} />} />
           <Route path="/eligibility" element={<AiEligibilityChecker />} />
           <Route path="/counselor" element={<HumanCounselorDesk />} />
+          <Route path="/apply" element={<AdmissionFormScreen currentUser={currentUser} />} />
+          <Route path="/tracker" element={<AdmissionTrackerScreen currentUser={currentUser} />} />
+          <Route path="/ai-counselor" element={<AiCounselorChatScreen currentUser={currentUser} />} />
 
           <Route path="/auth" element={
             isAuthLoading ? (

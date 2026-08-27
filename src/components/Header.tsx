@@ -45,8 +45,14 @@ export const Header: React.FC<HeaderProps> = ({
           <button onClick={() => navigate('/calculator')} className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
             <span className="material-symbols-outlined text-[16px] sm:text-[18px]">calculate</span> <span className="hidden sm:inline">Calculator</span>
           </button>
-          <button onClick={() => navigate('/compare')} className="hidden md:flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
-            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">balance</span> Compare
+          <button onClick={() => navigate('/apply')} className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 text-amber-900 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-xs sm:text-label-md font-extrabold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-amber-600">edit_document</span> <span>Apply</span>
+          </button>
+          <button onClick={() => navigate('/tracker')} className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-emerald-600">timeline</span> <span>Tracker</span>
+          </button>
+          <button onClick={() => navigate('/ai-counselor')} className="hidden md:flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-blue-600">smart_toy</span> <span>AI MD</span>
           </button>
           <button onClick={() => navigate('/counselor')} className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg text-xs sm:text-label-md font-bold transition-colors">
             <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-amber-500">support_agent</span> Desk
