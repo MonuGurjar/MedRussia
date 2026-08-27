@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FeedbackForm } from './FeedbackForm';
-import { PlatformFeedbackModal } from './PlatformFeedbackModal';
-import { CurrencyConverter } from './CurrencyConverter';
+import { MbbsBudgetCalculator } from './MbbsBudgetCalculator';
+import { AiEligibilityChecker } from './AiEligibilityChecker';
 import { AppSettings, User } from '../types';
-import { TeamMember } from '../data/teamData';
-import { getTeamMembers } from '../services/db';
+import { DETAILED_UNIVERSITIES } from '../constants/universities';
 import heroImg from '../assets/landing_hero_medical_students.png';
 
 interface LandingPageProps {
@@ -20,257 +19,377 @@ interface LandingPageProps {
   onToggleCurrency?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ settings, heroNeetScore, setHeroNeetScore, handleEligibilityCheck, handleSpecificNavigation, refreshData, FAQ_DATA, currentUser, onToggleCurrency }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ 
+  settings, 
+  heroNeetScore, 
+  setHeroNeetScore, 
+  handleEligibilityCheck, 
+  refreshData, 
+  FAQ_DATA, 
+  currentUser 
+}) => {
   const navigate = useNavigate();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'budget' | 'top' | 'mess'>('all');
 
-  useEffect(() => {
-    if (currentUser) {
-      navigate(currentUser.role === 'admin' ? '/admin' : '/user');
+  const FEATURED_UNIS = DETAILED_UNIVERSITIES.slice(0, 8);
+
+  const filteredUnis = FEATURED_UNIS.filter(u => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      if (!u.name.toLowerCase().includes(q) && !u.location.toLowerCase().includes(q)) return false;
     }
-  }, [currentUser, navigate]);
+    if (selectedFilter === 'budget') return u.tuition_fee_rub < 350000;
+    if (selectedFilter === 'top') return u.ranking.includes('1') || u.ranking.includes('Top');
+    if (selectedFilter === 'mess') return u.indian_mess;
+    return true;
+  });
 
   return (
-    <div className="bg-white min-h-screen font-sans text-slate-800">
+    <div className="bg-slate-50 min-h-screen font-sans text-slate-800">
 
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-48 md:pb-28 overflow-hidden bg-slate-900">
+      {/* 1. TOP HERO & GREETING HEADER (Mirrors Android HomeScreen Top Banner) */}
+      <section className="relative pt-24 pb-20 sm:pt-32 sm:pb-24 md:pt-40 md:pb-28 overflow-hidden bg-[#0f172a] text-white">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Indian MBBS Students in Russia" className="w-full h-full object-cover opacity-55 transition-transform duration-1000 scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/85 to-[#0f172a]/30"></div>
+          <img 
+            src={heroImg} 
+            alt="Indian MBBS Students in Russia" 
+            className="w-full h-full object-cover opacity-35 transition-transform duration-1000 scale-105" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/95 via-[#0f172a]/90 to-[#0f172a]"></div>
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="max-w-2xl">
-            <div className="inline-block bg-[#f59e0b] text-amber-950 text-[11px] sm:text-xs font-bold px-3 py-1 rounded-full mb-4 sm:mb-6 tracking-wide uppercase shadow-sm">
-              Trusted Consultancy
+          <div className="max-w-3xl">
+            {/* Admissions Badge */}
+            <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold px-3.5 py-1.5 rounded-full mb-4 tracking-wide uppercase shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              NMC FMGL Gazette Compliant • Session 2026-27
             </div>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 sm:mb-6 tracking-tight">
-              Your Gateway to Global Medical Excellence
+
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 tracking-tight">
+              Study MBBS in Russia <br className="hidden sm:inline" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500">
+                100% English Medium
+              </span>
             </h1>
-            <p className="text-sm sm:text-lg md:text-xl text-slate-300 mb-8 sm:mb-10 leading-relaxed max-w-xl font-medium">
-              Empowering Indian students to pursue world-class MBBS degrees in Russia with full admission support, expert guidance, and uncompromising transparency.
+            
+            <p className="text-sm sm:text-base md:text-lg text-slate-300 mb-8 leading-relaxed max-w-2xl">
+              Direct seat allotment in top Russian government medical universities. 54-month coursework + 12-month clinical internship, transparent fees, Indian hostel mess & verified NExT/FMGE training.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <button onClick={() => setIsFeedbackOpen(true)} className="bg-[#f59e0b] text-amber-950 px-6 py-3.5 sm:px-8 sm:py-4 rounded-xl font-bold text-sm sm:text-base hover:bg-[#d97706] transition-colors shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2">
-                Apply for Consultation <span className="material-symbols-outlined text-[18px] sm:text-[20px]">arrow_forward</span>
-              </button>
-              <button onClick={() => navigate('/universities')} className="bg-transparent border-2 border-white/30 text-white px-6 py-3.5 sm:px-8 sm:py-4 rounded-xl font-bold text-sm sm:text-base hover:bg-white/10 transition-colors flex items-center justify-center">
-                View Universities
+
+            {/* Quick Search Bar (Android HomeScreen Search Bar Parity) */}
+            <div className="bg-white p-2 rounded-2xl shadow-xl flex items-center gap-2 max-w-xl border border-slate-200">
+              <span className="material-symbols-outlined text-slate-400 ml-2">search</span>
+              <input 
+                type="text" 
+                placeholder="Search 40+ universities, cities, fees..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="flex-1 p-2 text-xs sm:text-sm text-slate-800 outline-none placeholder:text-slate-400"
+              />
+              <button 
+                onClick={() => navigate('/explorer')}
+                className="px-4 py-2.5 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition"
+              >
+                Search
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sleek Premium SaaS Quick Admission Tools Banner */}
-      <div className="bg-slate-950 border-y border-slate-800/80 py-4 sm:py-5 px-4 sm:px-6 md:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 text-slate-200 shrink-0 mb-1.5 md:mb-0">
-            <span className="w-[6px] h-[6px] rounded-full bg-amber-400 animate-pulse shrink-0" />
-            <h3 className="text-sm sm:text-[15px] font-semibold text-slate-200 tracking-tight">Quick Admission Tools</h3>
+      {/* 2. FLOATING HERO ADMISSION APPLICATION CARD (Mirrors Android HomeScreen Floating Hero Card) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-10 relative z-20">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[11px] font-black text-amber-800 uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[14px]">campaign</span>
+              ADMISSIONS OPEN 2026
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Start Your Official MBBS Admission Application
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
+              Direct seat reservation, 100% English medium & fast-track Russian Ministry electronic visa invitation letter.
+            </p>
           </div>
-          
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
-            <button
-              onClick={() => navigate('/explorer')}
-              className="px-3.5 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+            <button 
+              onClick={() => navigate('/apply')}
+              className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition hover:scale-105"
             >
-              <span className="material-symbols-outlined text-[16px]">travel_explore</span> University Explorer
+              <span>Fill Admission Form</span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
-            <button
-              onClick={() => navigate('/calculator')}
-              className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
+            <button 
+              onClick={() => navigate('/tracker')}
+              className="w-full sm:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 transition"
             >
-              <span className="material-symbols-outlined text-[16px]">calculate</span> 6-Year Calculator
-            </button>
-            <button
-              onClick={() => navigate('/eligibility')}
-              className="px-3.5 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
-            >
-              <span className="material-symbols-outlined text-[16px]">auto_awesome</span> AI Evaluator
-            </button>
-            <button
-              onClick={() => navigate('/counselor')}
-              className="px-3.5 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
-            >
-              <span className="material-symbols-outlined text-[16px]">support_agent</span> Senior Counselor
+              <span className="material-symbols-outlined text-[18px] text-emerald-600">timeline</span>
+              <span>Track Admission</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Why Study MBBS in Russia? */}
-      <section id="services" className="py-14 sm:py-20 md:py-28 bg-white">
+      {/* 3. 6 QUICK ACTION GRID (Direct Android HomeScreen Parity) */}
+      <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-8">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">Quick Admission Tools</h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Direct access to Russian MBBS calculators, AI counselor & documentation vault</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          {[
+            { title: 'Universities', sub: '40+ Recognized', icon: 'school', color: 'text-blue-600', bg: 'bg-blue-50', link: '/explorer' },
+            { title: '6-Yr Calculator', sub: 'INR/RUB/USD', icon: 'calculate', color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/calculator' },
+            { title: 'AI MD Advisor', sub: '24/7 Gemini AI', icon: 'smart_toy', color: 'text-purple-600', bg: 'bg-purple-50', link: '/ai-counselor' },
+            { title: 'Apply Online', sub: 'Session 2026', icon: 'edit_document', color: 'text-amber-600', bg: 'bg-amber-50', link: '/apply' },
+            { title: 'Live Tracker', sub: '5 Milestones', icon: 'timeline', color: 'text-teal-600', bg: 'bg-teal-50', link: '/tracker' },
+            { title: 'Counselor Desk', sub: 'Amit Gurjar', icon: 'support_agent', color: 'text-rose-600', bg: 'bg-rose-50', link: '/counselor' }
+          ].map((act, i) => (
+            <div 
+              key={i}
+              onClick={() => navigate(act.link)}
+              className="p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs hover:shadow-md cursor-pointer transition flex flex-col items-center text-center group"
+            >
+              <div className={`w-12 h-12 rounded-2xl ${act.bg} ${act.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <span className="material-symbols-outlined text-[24px]">{act.icon}</span>
+              </div>
+              <h3 className="font-extrabold text-xs text-slate-900">{act.title}</h3>
+              <p className="text-[10px] text-slate-500 mt-0.5">{act.sub}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. FEATURED UNIVERSITIES SHOWCASE */}
+      <section className="py-12 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 sm:mb-4">Why Study MBBS in Russia?</h2>
-            <p className="text-slate-500 text-sm sm:text-lg max-w-2xl mx-auto">A strategic choice for aspiring medical professionals seeking quality education and global recognition.</p>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+            <div>
+              <span className="text-xs font-black text-amber-600 uppercase tracking-wider">Top Medical Institutes</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Recognized Russian Universities</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">WHO, NMC & Ministry of Health of Russian Federation accredited</p>
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+              {[
+                { id: 'all', label: 'All (40+)' },
+                { id: 'budget', label: 'Under ₹3.5L/Yr' },
+                { id: 'top', label: 'Top Ranked' },
+                { id: 'mess', label: 'Indian Mess' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFilter(f.id as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                    selectedFilter === f.id 
+                      ? 'bg-[#0f172a] text-white shadow-sm' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-8">
-            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs hover:shadow-md transition-shadow flex flex-row sm:flex-col items-start gap-4 sm:gap-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-full bg-[#1e3a8a] text-white flex items-center justify-center mb-0 sm:mb-6 shrink-0 shadow-xs">
-                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">payments</span>
-              </div>
-              <div>
-                <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-1 sm:mb-3">Low Tuition Fees</h3>
-                <p className="text-slate-600 leading-snug sm:leading-relaxed text-xs sm:text-sm">Subsidized education by the Russian government makes pursuing an MBBS highly affordable compared to private Indian colleges.</p>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs hover:shadow-md transition-shadow flex flex-row sm:flex-col items-start gap-4 sm:gap-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-full bg-[#1e3a8a] text-white flex items-center justify-center mb-0 sm:mb-6 shrink-0 shadow-xs">
-                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">public</span>
-              </div>
-              <div>
-                <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-1 sm:mb-3">WHO/NMC Recognition</h3>
-                <p className="text-slate-600 leading-snug sm:leading-relaxed text-xs sm:text-sm">Degrees from top Russian medical universities are globally recognized, allowing graduates to practice in India and worldwide.</p>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs hover:shadow-md transition-shadow flex flex-row sm:flex-col items-start gap-4 sm:gap-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-full bg-[#1e3a8a] text-white flex items-center justify-center mb-0 sm:mb-6 shrink-0 shadow-xs">
-                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">verified_user</span>
-              </div>
-              <div>
-                <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-1 sm:mb-3">Direct Admission</h3>
-                <p className="text-slate-600 leading-snug sm:leading-relaxed text-xs sm:text-sm">Secure your seat based on 12th-grade marks and NEET qualification. No hidden donations or entrance exams required.</p>
-              </div>
-            </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {filteredUnis.map(u => {
+              const inrFee = (u.tuition_fee_rub * 0.95 / 100000).toFixed(1);
+              return (
+                <div key={u.id} className="bg-slate-50 border border-slate-200 rounded-3xl p-5 shadow-xs hover:shadow-lg transition flex flex-col justify-between group">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">
+                        NMC Recognized
+                      </span>
+                      <span className="text-xs font-bold text-amber-600">
+                        ⭐ {u.ranking}
+                      </span>
+                    </div>
+
+                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:text-amber-600 transition line-clamp-2">
+                      {u.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">location_on</span>
+                      {u.location}
+                    </p>
+
+                    <div className="mt-4 p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Tuition Fee</span>
+                        <span className="font-bold text-slate-900">₹{inrFee} Lakhs / yr</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Hostel Fee</span>
+                        <span className="font-bold text-slate-900">₹{Math.round(u.hostel_fee_rub * 0.95 / 1000)}k / yr</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                        <span className="text-slate-500">Indian Mess</span>
+                        <span className="font-bold text-emerald-600">{u.indian_mess ? 'Available ✅' : 'Self-Cook'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-5">
+                    <button 
+                      onClick={() => navigate('/explorer')}
+                      className="py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 transition"
+                    >
+                      Details
+                    </button>
+                    <button 
+                      onClick={() => navigate('/apply?uni=' + u.id)}
+                      className="py-2.5 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold transition"
+                    >
+                      Apply Now
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-8">
+            <button 
+              onClick={() => navigate('/explorer')}
+              className="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition inline-flex items-center gap-2"
+            >
+              <span>Explore All 40+ Russian Medical Universities</span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Top Universities */}
-      <section id="universities" className="py-14 sm:py-20 md:py-28 bg-slate-50">
+      {/* 5. 6-YEAR MBBS BUDGET CALCULATOR SECTION */}
+      <section className="py-14 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-8">
+          <span className="text-xs font-black text-emerald-600 uppercase tracking-wider">Accurate Financial Planner</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">6-Year MBBS Cost Estimator</h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Calculates Tuition, Hostel, Indian Mess, Medical Insurance & Visa in INR / RUB / USD</p>
+        </div>
+        <MbbsBudgetCalculator onApplyWithBudget={() => navigate('/apply')} />
+      </section>
+
+      {/* 6. AI ELIGIBILITY EVALUATOR SECTION */}
+      <section className="py-14 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
-            <div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 sm:mb-3">Top Russian Medical Universities</h2>
-              <p className="text-slate-500 text-sm sm:text-lg">We partner with prestigious institutions offering English-medium MBBS programs.</p>
-            </div>
-            <button onClick={() => navigate('/universities')} className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1 hover:text-[#f59e0b] transition-colors shrink-0">
-              View All Universities <span className="material-symbols-outlined text-[16px] sm:text-[18px]">arrow_forward</span>
-            </button>
+          <div className="text-center mb-8">
+            <span className="text-xs font-black text-purple-600 uppercase tracking-wider">Instant NMC Evaluation</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Check Your MBBS Eligibility</h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">Validate your NEET score, PCB marks & category against NMC FMGL 2021 Gazette rules</p>
           </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {[
-              { id: 3, name: "Kazan Federal University", loc: "Kazan, Russia", img: "https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.8" },
-              { id: 1, name: "First Moscow State Med", loc: "Moscow, Russia", img: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.9" },
-              { id: 5, name: "Crimea Federal University", loc: "Simferopol, Russia", img: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.7" },
-              { id: 4, name: "Bashkir State Med Uni", loc: "Ufa, Russia", img: "https://images.unsplash.com/photo-1592280771190-3e2e4d571952?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", rating: "4.6" }
-            ].map((uni, i) => (
-              <div key={i} className="bg-white rounded-2xl sm:rounded-[24px] border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all group flex flex-col">
-                <div className="h-28 sm:h-40 relative overflow-hidden shrink-0">
-                  <img src={uni.img} alt={uni.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs font-bold text-slate-900 flex items-center gap-0.5">
-                    <span className="material-symbols-outlined text-[12px] sm:text-[14px]">star</span> {uni.rating}
+          <AiEligibilityChecker />
+        </div>
+      </section>
+
+      {/* 7. 5-STAGE OFFICIAL ADMISSION PROCESS */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12">
+          <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Hassle-Free Direct Admission</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Our 5-Stage Admission Process</h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">From online application to landing in Russia and getting your hostel keys</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { step: '01', title: 'Application Form', desc: 'Fill candidate details & academic marks online.', icon: 'edit_note' },
+            { step: '02', title: 'Admission Letter', desc: 'Official provisional letter issued in 48-72 hours.', icon: 'verified' },
+            { step: '03', title: 'Ministry Invitation', desc: 'MVD Federal electronic study visa invitation.', icon: 'mark_email_read' },
+            { step: '04', title: 'Visa Stamping', desc: 'Consulate study visa stamped on passport.', icon: 'flight_takeoff' },
+            { step: '05', title: 'Campus Arrival', desc: 'Delhi flight escort, pickup & hostel check-in.', icon: 'hotel_class' }
+          ].map((st, i) => (
+            <div key={i} className="p-5 bg-white border border-slate-200 rounded-3xl shadow-xs relative flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-[#0f172a] text-amber-400 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-[20px]">{st.icon}</span>
                   </div>
+                  <span className="text-xs font-black text-slate-300 font-mono">{st.step}</span>
                 </div>
-                <div className="p-3 sm:p-5 flex flex-col flex-1">
-                  <h3 className="font-bold text-slate-900 text-xs sm:text-[15px] mb-0.5 sm:mb-1 line-clamp-2">{uni.name}</h3>
-                  <p className="text-slate-500 text-[10px] sm:text-xs flex items-center gap-0.5 mb-3 shrink-0">
-                    <span className="material-symbols-outlined text-[12px] sm:text-[14px]">location_on</span> {uni.loc}
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-3 shrink-0">
-                    <div className="border border-slate-100 bg-slate-50 rounded-md sm:rounded-lg p-1.5 sm:p-2">
-                      <div className="text-[9px] sm:text-[10px] text-slate-400 font-bold tracking-wider mb-0.5">DURATION</div>
-                      <div className="text-[10px] sm:text-xs font-semibold text-slate-800">6 Years</div>
-                    </div>
-                    <div className="border border-slate-100 bg-slate-50 rounded-md sm:rounded-lg p-1.5 sm:p-2">
-                      <div className="text-[9px] sm:text-[10px] text-slate-400 font-bold tracking-wider mb-0.5">MEDIUM</div>
-                      <div className="text-[10px] sm:text-xs font-semibold text-slate-800">English</div>
-                    </div>
-                  </div>
-                  <button onClick={() => navigate('/university/' + uni.id)} className="mt-auto w-full py-2 sm:py-2.5 border border-slate-200 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                    View Details
+                <h3 className="font-extrabold text-sm text-slate-900">{st.title}</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{st.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 8. MEET OUR EXPERTS */}
+      <section className="py-14 bg-slate-900 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Meet Senior Admissions Directors</h2>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1">Direct guidance from Russia medical education consultants with zero middleman</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 flex items-start gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-extrabold text-2xl shrink-0">
+                AG
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-extrabold text-white">Amit Gurjar</h3>
+                <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Director & Senior Consultant</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  "We ensure every Indian medical aspirant receives genuine, transparent guidance and complete support from admission to graduation."
+                </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <a href="https://wa.me/917375017401" target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">chat</span> WhatsApp
+                  </a>
+                  <a href="tel:+917375017401" className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">call</span> Call Direct
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 flex items-start gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-extrabold text-2xl shrink-0">
+                MG
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-extrabold text-white">Monu Gurjar</h3>
+                <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Head of Admissions & Operations</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  "Managing student documentation, MVD invitations, embassy visa stamping, and university arrival with total reliability."
+                </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <button onClick={() => setIsFeedbackOpen(true)} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">support_agent</span> Book Counseling
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Meet Our Experts */}
-      <section id="experts" className="py-14 sm:py-20 md:py-28 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 sm:mb-4">Meet Our Experts</h2>
-            <p className="text-slate-500 text-sm sm:text-lg">Founded by alumni who understand the journey, we provide authentic guidance you can trust.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
-            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xs hover:shadow-md transition-all flex flex-row items-start text-left gap-3.5 sm:gap-5">
-              <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80" alt="Amit Gurjar" className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border-2 border-slate-100 shadow-xs" />
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-xl font-bold text-slate-900 leading-tight">Amit Gurjar</h3>
-                <p className="text-[#d97706] text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-3">Co-Founder & Director</p>
-                <p className="text-slate-600 text-xs sm:text-sm italic leading-snug sm:leading-relaxed">
-                  "We built MedRussia to be the honest, transparent bridge between Indian students and their medical dreams. Your success is our mission."
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xs hover:shadow-md transition-all flex flex-row items-start text-left gap-3.5 sm:gap-5">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80" alt="Monu Gurjar" className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 border-2 border-slate-100 shadow-xs" />
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-xl font-bold text-slate-900 leading-tight">Monu Gurjar</h3>
-                <p className="text-[#d97706] text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-3">Co-Founder & Head of Operations</p>
-                <p className="text-slate-600 text-xs sm:text-sm italic leading-snug sm:leading-relaxed">
-                  "Navigating foreign admissions can be daunting. Our team ensures every step, from application to arrival, is seamless and secure."
-                </p>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Streamlined Process */}
-      <section id="process" className="py-14 sm:py-20 md:py-28 bg-slate-50">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 sm:mb-4">Our Streamlined Process</h2>
-            <p className="text-slate-500 text-sm sm:text-lg">A transparent, step-by-step journey from your first inquiry to your first day of class.</p>
-          </div>
-          
-          <div className="relative border-l-2 border-slate-200 ml-4 sm:ml-12 space-y-6 sm:space-y-12 pb-2">
-            {[
-              { icon: 'support_agent', title: 'Initial Counseling', desc: 'Free consultation to assess eligibility and select the right university.' },
-              { icon: 'description', title: 'Application & Admission Letter', desc: 'Submission of documents and securing the official admission letter.' },
-              { icon: 'flight_takeoff', title: 'Visa Processing', desc: 'Complete assistance with student visa application and embassy formalities.' },
-              { icon: 'school', title: 'Departure & Onboarding', desc: 'Travel arrangements, airport pickup, and hostel accommodation in Russia.' },
-            ].map((step, idx) => (
-              <div key={idx} className="relative pl-7 sm:pl-16">
-                <div className="absolute -left-4 top-0 w-8 h-8 sm:w-12 sm:h-12 bg-[#1e3a8a] rounded-full flex items-center justify-center text-white border-2 sm:border-4 border-slate-50 shadow-xs">
-                  <span className="material-symbols-outlined text-[16px] sm:text-[20px]">{step.icon}</span>
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-lg font-bold text-slate-900 mb-0.5 sm:mb-1">{step.title}</h3>
-                  <p className="text-slate-500 text-xs sm:text-sm leading-snug">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* Consultation Modal */}
       {isFeedbackOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 fade-in-up">
-          <div className="bg-white w-[90%] md:w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 shadow-xl relative">
-            <button onClick={() => setIsFeedbackOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
-              <span className="material-symbols-outlined text-slate-500" style={{fontSize:'18px'}}>close</span>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-[90%] md:w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 md:p-8 shadow-2xl relative">
+            <button onClick={() => setIsFeedbackOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition">
+              <span className="material-symbols-outlined text-slate-600 text-[18px]">close</span>
             </button>
             <div className="mb-6">
-              <h3 className="text-2xl font-bold text-slate-900">Apply for Consultation</h3>
-              <p className="text-slate-500 mt-2">Submit your query and our experts will get back to you shortly.</p>
+              <h3 className="text-xl font-extrabold text-slate-900">Book Free MBBS Counseling Session</h3>
+              <p className="text-xs text-slate-500 mt-1">Get 1-on-1 expert university recommendations tailored to your NEET score and budget.</p>
             </div>
             <FeedbackForm onSuccess={() => setTimeout(() => setIsFeedbackOpen(false), 2000)} />
           </div>
         </div>
       )}
+
     </div>
   );
 };

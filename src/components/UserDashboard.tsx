@@ -10,6 +10,8 @@ import { MbbsBudgetCalculator } from './MbbsBudgetCalculator';
 import { UniversityExplorer } from './UniversityExplorer';
 import { AiEligibilityChecker } from './AiEligibilityChecker';
 import { HumanCounselorDesk } from './HumanCounselorDesk';
+import { AdmissionFormScreen } from './AdmissionFormScreen';
+import { AdmissionTrackerScreen } from './AdmissionTrackerScreen';
 import { PlatformFeedbackModal } from './PlatformFeedbackModal';
 import { RUSSIAN_UNIVERSITIES, getUniversityData, getUniversityImage } from '../constants/universities';
 import { getStudentChats, createDirectChat, sendDirectMessage } from '../services/directChat';
@@ -17,26 +19,29 @@ import { DirectChat, DirectMessageAttachment } from '../types';
 
 interface UserDashboardProps {
   user: User; onLogout: () => void; onInquirySubmitted?: () => void;
-  initialView?: 'inquiries' | 'explorer' | 'budget' | 'profile' | 'settings' | 'help' | 'documents' | 'eligibility' | 'chats';
+  initialView?: 'inquiries' | 'explorer' | 'budget' | 'profile' | 'settings' | 'help' | 'documents' | 'eligibility' | 'chats' | 'tracker' | 'application';
   onFabToggle?: (isOpen: boolean) => void; theme?: 'light' | 'dark'; toggleTheme?: () => void; onToggleCurrency?: () => void;
 }
 
 const ALL_TABS = [
   { id: 'inquiries', label: 'Inquiries', icon: 'list_alt' },
+  { id: 'tracker', label: 'Admission Tracker', icon: 'timeline' },
+  { id: 'application', label: 'Admission Form', icon: 'edit_document' },
+  { id: 'documents', label: 'Document Vault', icon: 'folder_shared' },
   { id: 'chats', label: 'Chat', icon: 'chat' },
   { id: 'explorer', label: 'Uni Explorer', icon: 'account_balance' },
   { id: 'budget', label: 'Budget Calc', icon: 'calculate' },
   { id: 'eligibility', label: 'Eligibility', icon: 'verified' },
-  { id: 'documents', label: 'Checklist', icon: 'checklist' },
   { id: 'profile', label: 'Account & Settings', icon: 'manage_accounts' },
   { id: 'help', label: 'Help', icon: 'help_outline' },
 ] as const;
 
 const MOBILE_TABS = [
   { id: 'inquiries', label: 'Home', icon: 'home' },
+  { id: 'tracker', label: 'Tracker', icon: 'timeline' },
+  { id: 'application', label: 'Apply', icon: 'edit_document' },
+  { id: 'documents', label: 'Vault', icon: 'folder_shared' },
   { id: 'chats', label: 'Chat', icon: 'chat' },
-  { id: 'explorer', label: 'Search', icon: 'explore' },
-  { id: 'eligibility', label: 'Check', icon: 'checklist' },
 ];
 
 const SECURITY_QUESTIONS = ["What is the name of your first pet?", "What city were you born in?", "What is your mother's maiden name?", "What is the name of your favorite teacher?"];
@@ -1689,129 +1694,166 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
              </div>
           )}
 
-           {/* CHECKLIST TAB */}
-           {/* CHECKLIST TAB */}
-          {activeView === 'documents' && (
-             <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
-               <div>
-                 <h2 className="text-xl md:text-2xl font-bold text-slate-900">Required Documents Vault</h2>
-                 <p className="text-slate-500 text-xs md:text-sm mt-1">Upload clear scanned copies of your academic marksheets, passport, and NEET scorecard for visa and admission clearance.</p>
-               </div>
-               
-               {/* Progress Tracker Bar */}
-               <div className={`${cardCls} p-4 md:p-5 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3`}>
-                 <div className="flex-1">
-                   <div className="flex justify-between items-center mb-1.5">
-                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                       <span className="material-symbols-outlined text-[16px] text-indigo-600">donut_large</span> Document Verification Progress
-                     </span>
-                     <span className="text-sm font-extrabold text-slate-900">{Math.round((['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length / 3) * 100)}%</span>
-                   </div>
-                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                     <div className="h-full bg-slate-900 transition-all duration-500" style={{ width: `${Math.round((['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length / 3) * 100)}%` }}></div>
-                   </div>
-                 </div>
-
-                 <div className="flex items-center gap-3 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-5 text-center shrink-0">
-                   <div className="bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl">
-                     <span className="text-xs md:text-sm font-extrabold block">{['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length} / 3</span>
-                     <span className="text-[9px] font-bold tracking-wider uppercase opacity-80">Uploaded</span>
-                   </div>
-                   <div className="bg-amber-50 text-amber-800 px-3 py-1 rounded-xl">
-                     <span className="text-xs md:text-sm font-extrabold block">{3 - ['marksheet', 'passport', 'neetScoreCard'].filter(id => user.documents?.[id]?.status).length}</span>
-                     <span className="text-[9px] font-bold tracking-wider uppercase opacity-80">Pending</span>
-                   </div>
-                 </div>
-               </div>
-
-               {/* Document Cards List */}
-               <div className="space-y-3.5 md:space-y-4">
-                 {[
-                    { id: 'marksheet', title: '10th/12th Marksheet', desc: 'Combined PDF or high-resolution photo scan of both marksheets.' },
-                    { id: 'passport', title: 'Passport Copy', desc: 'First and last page scan. Must be valid for minimum 18 months.' },
-                    { id: 'neetScoreCard', title: 'NEET Scorecard', desc: 'Official NTA scorecard indicating qualification status.' }
-                 ].map(doc => {
-                    const docData = user.documents?.[doc.id];
-                    const isUploaded = !!docData;
-                    const isVerified = docData?.status === 'verified';
-                    
-                    return (
-                       <div key={doc.id} className={`${cardCls} p-3.5 md:p-5 rounded-2xl overflow-hidden border-l-4 ${isVerified ? 'border-l-emerald-500' : isUploaded ? 'border-l-blue-500' : 'border-l-amber-500'}`}>
-                         <div className="flex flex-col gap-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h3 className="text-sm md:text-base font-bold text-slate-900">{doc.title}</h3>
-                                  {isVerified ? (
-                                    <span className="bg-emerald-100 text-emerald-800 text-[10px] md:text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                      <span className="material-symbols-outlined text-[13px]">check_circle</span> Verified
-                                    </span>
-                                  ) : isUploaded ? (
-                                    <span className="bg-blue-100 text-blue-800 text-[10px] md:text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                      <span className="material-symbols-outlined text-[13px]">cloud_done</span> Uploaded
-                                    </span>
-                                  ) : (
-                                    <span className="bg-amber-100 text-amber-900 text-[10px] md:text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                      <span className="material-symbols-outlined text-[13px]">pending</span> Action Needed
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-slate-500 text-xs mt-0.5 leading-snug">{doc.desc}</p>
-                              </div>
-                            </div>
-                            
-                            {isUploaded ? (
-                              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">description</span>
-                                  <div className="min-w-0">
-                                    <p className="font-bold text-xs text-slate-800 truncate">
-                                      {docData.fileName || (docData.publicId && !docData.publicId.startsWith('local_') ? docData.publicId.split('/').pop() : `${doc.title}.pdf`)}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400">Uploaded {new Date(docData.uploadedAt || Date.now()).toLocaleDateString()}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <button onClick={() => handleViewDocument(docData)} className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">visibility</span> View
-                                  </button>
-                                  <label className="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
-                                    <span className="material-symbols-outlined text-[14px]">sync</span> Replace
-                                    <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />
-                                  </label>
-                                </div>
-                              </div>
-                            ) : (
-                              <label className="border border-dashed border-amber-300 bg-amber-50/40 hover:bg-amber-50 rounded-xl p-3 md:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors">
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                                    {uploadingDoc === doc.id ? (
-                                      <span className="animate-spin material-symbols-outlined text-[18px]">refresh</span>
-                                    ) : (
-                                      <span className="material-symbols-outlined text-[20px]">upload_file</span>
-                                    )}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h4 className="font-bold text-slate-900 text-xs md:text-sm leading-tight truncate">
-                                      {uploadingDoc === doc.id ? 'Uploading File...' : 'Tap to Upload File'}
-                                    </h4>
-                                    <p className="text-[10px] md:text-xs text-slate-500">PDF, JPG, PNG (Max 5MB)</p>
-                                  </div>
-                                </div>
-
-                                <span className="px-3 py-1.5 bg-slate-950 text-white font-bold text-xs rounded-xl hover:bg-slate-800 shrink-0">
-                                  Select File
-                                </span>
-                                <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} disabled={uploadingDoc !== null} />
-                              </label>
-                            )}
-                         </div>
-                       </div>
-                    );
-                 })}
-               </div>
+          {/* ADMISSION TRACKER TAB */}
+          {activeView === 'tracker' && (
+             <div className="max-w-4xl mx-auto">
+               <AdmissionTrackerScreen currentUser={user} />
              </div>
-          )}
+           )}
+
+           {/* ADMISSION APPLICATION FORM TAB */}
+           {activeView === 'application' && (
+             <div className="max-w-4xl mx-auto">
+               <AdmissionFormScreen currentUser={user} onSuccess={() => setActiveView('tracker')} />
+             </div>
+           )}
+
+           {/* REQUIRED DOCUMENTS VAULT (KYC SCANS + OFFICIAL ISSUED LETTERS) */}
+           {activeView === 'documents' && (
+              <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-slate-900">Student Document Vault & KYC</h2>
+                  <p className="text-slate-500 text-xs md:text-sm mt-1">Upload verified academic marksheets, passport, and medical fitness certificates for Russian university clearance.</p>
+                </div>
+                
+                {/* 1. KYC STUDENT UPLOADS */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-500 text-[18px]">folder</span>
+                    Mandatory Student KYC Documents
+                  </h3>
+
+                  <div className="space-y-3.5">
+                    {[
+                       { id: 'marksheet_10', title: '10th Secondary Certificate / Marksheet', desc: 'Proof of date of birth and secondary school completion.' },
+                       { id: 'marksheet_12', title: '12th Senior Secondary Marksheet (PCB)', desc: 'Physics, Chemistry, Biology marks for NMC 50%/40% eligibility check.' },
+                       { id: 'neetScoreCard', title: 'NEET Qualification Scorecard (NTA)', desc: 'Official NTA scorecard indicating candidate qualification status.' },
+                       { id: 'passport', title: 'Valid Indian Passport Scan', desc: 'First and address page scan. Must be valid for minimum 18 months.' },
+                       { id: 'medical_fitness', title: 'Medical Fitness & HIV/Hepatitis Test', desc: 'Doctor fitness certificate along with blood test reports.' }
+                    ].map(doc => {
+                       const docData = user.documents?.[doc.id as keyof typeof user.documents];
+                       const isUploaded = !!docData;
+                       const isVerified = docData?.status === 'verified';
+                       
+                       return (
+                          <div key={doc.id} className={`${cardCls} p-4 md:p-5 rounded-2xl border-l-4 ${isVerified ? 'border-l-emerald-500' : isUploaded ? 'border-l-blue-500' : 'border-l-amber-500'}`}>
+                            <div className="flex flex-col gap-3">
+                               <div className="flex items-start justify-between gap-2">
+                                 <div>
+                                   <div className="flex items-center gap-2 flex-wrap">
+                                     <h4 className="text-sm md:text-base font-bold text-slate-900">{doc.title}</h4>
+                                     {isVerified ? (
+                                       <span className="bg-emerald-100 text-emerald-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                         <span className="material-symbols-outlined text-[13px]">check_circle</span> Verified
+                                       </span>
+                                     ) : isUploaded ? (
+                                       <span className="bg-blue-100 text-blue-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                         <span className="material-symbols-outlined text-[13px]">cloud_done</span> Uploaded
+                                       </span>
+                                     ) : (
+                                       <span className="bg-amber-100 text-amber-900 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                         <span className="material-symbols-outlined text-[13px]">pending</span> Action Needed
+                                       </span>
+                                     )}
+                                   </div>
+                                   <p className="text-slate-500 text-xs mt-0.5 leading-snug">{doc.desc}</p>
+                                 </div>
+                               </div>
+                               
+                               {isUploaded ? (
+                                 <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
+                                   <div className="flex items-center gap-2 min-w-0">
+                                     <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">description</span>
+                                     <div className="min-w-0">
+                                       <p className="font-bold text-xs text-slate-800 truncate">
+                                         {docData.fileName || `${doc.title}.pdf`}
+                                       </p>
+                                       <p className="text-[10px] text-slate-400">Uploaded {new Date(docData.uploadedAt || Date.now()).toLocaleDateString()}</p>
+                                     </div>
+                                   </div>
+                                   <div className="flex items-center gap-2 shrink-0">
+                                     <button onClick={() => handleViewDocument(docData)} className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1">
+                                       <span className="material-symbols-outlined text-[14px]">visibility</span> View
+                                     </button>
+                                     <label className="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
+                                       <span className="material-symbols-outlined text-[14px]">sync</span> Replace
+                                       <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />
+                                     </label>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <label className="border border-dashed border-amber-300 bg-amber-50/40 hover:bg-amber-50 rounded-xl p-3 md:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors">
+                                   <div className="flex items-center gap-3 min-w-0">
+                                     <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                                       {uploadingDoc === doc.id ? (
+                                         <span className="animate-spin material-symbols-outlined text-[18px]">refresh</span>
+                                       ) : (
+                                         <span className="material-symbols-outlined text-[20px]">upload_file</span>
+                                       )}
+                                     </div>
+                                     <div className="min-w-0">
+                                       <h4 className="font-bold text-slate-900 text-xs md:text-sm leading-tight truncate">
+                                         {uploadingDoc === doc.id ? 'Uploading File...' : 'Tap to Upload File'}
+                                       </h4>
+                                       <p className="text-[10px] md:text-xs text-slate-500">PDF, JPG, PNG (Max 10MB)</p>
+                                     </div>
+                                   </div>
+
+                                   <span className="px-3 py-1.5 bg-slate-950 text-white font-bold text-xs rounded-xl hover:bg-slate-800 shrink-0">
+                                     Select File
+                                   </span>
+                                   <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} disabled={uploadingDoc !== null} />
+                                 </label>
+                               )}
+                            </div>
+                          </div>
+                       );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. OFFICIAL ISSUED LETTERS */}
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-600 text-[18px]">verified_user</span>
+                    Official Issued Letters & Visa Dossier
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { id: 'admission_letter', title: 'Provisional Admission Letter', issuer: 'Russian Ministry of Health University', icon: 'school' },
+                      { id: 'invitation_letter', title: 'MVD Federal Electronic Visa Invitation', issuer: 'Russian Ministry of Internal Affairs (MVD)', icon: 'mail' },
+                      { id: 'visa', title: 'Russian Consulate Study Visa (Stamped)', issuer: 'Consulate General of Russian Federation', icon: 'flight_takeoff' },
+                      { id: 'flight_ticket', title: 'Flight Ticket & Airport Reception', issuer: 'MedRussia Travel & Reception Desk', icon: 'airplane_ticket' }
+                    ].map(letter => (
+                      <div key={letter.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold shrink-0">
+                            <span className="material-symbols-outlined text-[20px]">{letter.icon}</span>
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs sm:text-sm text-slate-900 leading-tight">{letter.title}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{letter.issuer}</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                            Official Document
+                          </span>
+                          <button 
+                            onClick={() => showToast('Document will be available once issued by the university / embassy.')}
+                            className="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">download</span> Download
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+           )}
 
           {/* PROFILE TAB */}
           {/* UNIFIED ACCOUNT & SETTINGS TAB */}
