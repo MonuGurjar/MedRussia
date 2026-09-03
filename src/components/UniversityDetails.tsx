@@ -2,8 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { platformUniversityService } from '../services/platform/universityService';
 import { DETAILED_UNIVERSITIES, getUniversityImage, UniversityData } from '../constants/universities';
+import { User } from '../types';
 
-export const UniversityDetails: React.FC = () => {
+interface UniversityDetailsProps {
+  currentUser?: User | null;
+}
+
+export const UniversityDetails: React.FC<UniversityDetailsProps> = ({ currentUser }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [uni, setUni] = useState<UniversityData | null>(null);
@@ -123,20 +128,29 @@ export const UniversityDetails: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Fee Structure (Per Year)</h3>
-                <ul className="space-y-4">
-                  <li className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Tuition Fee</span>
-                    <span className="font-semibold text-slate-900">₽ {uni.tuition_fee_rub.toLocaleString()}</span>
-                  </li>
-                  <li className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Hostel Fee</span>
-                    <span className="font-semibold text-slate-900">₽ {uni.hostel_fee_rub.toLocaleString()}</span>
-                  </li>
-                  <li className="flex justify-between items-center text-base pt-2 border-t border-slate-100">
-                    <span className="text-slate-900 font-bold">Total (Approx)</span>
-                    <span className="font-bold text-emerald-600">₽ {uni.total_fee_rub.toLocaleString()}</span>
-                  </li>
-                </ul>
+                <div className="relative overflow-hidden rounded-xl">
+                  <ul className={`space-y-4 ${!currentUser ? 'filter blur-[5px] select-none pointer-events-none' : ''}`}>
+                    <li className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Tuition Fee</span>
+                      <span className="font-semibold text-slate-900">₽ {uni.tuition_fee_rub.toLocaleString()}</span>
+                    </li>
+                    <li className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Hostel Fee</span>
+                      <span className="font-semibold text-slate-900">₽ {uni.hostel_fee_rub.toLocaleString()}</span>
+                    </li>
+                    <li className="flex justify-between items-center text-base pt-2 border-t border-slate-100">
+                      <span className="text-slate-900 font-bold">Total (Approx)</span>
+                      <span className="font-bold text-emerald-600">₽ {uni.total_fee_rub.toLocaleString()}</span>
+                    </li>
+                  </ul>
+                  {!currentUser && (
+                    <div onClick={() => navigate('/auth')} className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-xl p-4">
+                      <span className="px-3 py-1.5 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all">
+                        <span className="material-symbols-outlined text-[15px] text-amber-400">lock</span> Login to View Detailed Fee Structure
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             

@@ -1,12 +1,16 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DETAILED_UNIVERSITIES, getUniversityImage, UniversityData } from '../constants/universities';
+import { User } from '../types';
 
 interface UniversityExplorerProps {
   onSelectUniversity?: (uni: UniversityData) => void;
   onApplyClick?: (uniName: string) => void;
+  currentUser?: User | null;
 }
 
-export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelectUniversity, onApplyClick }) => {
+export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelectUniversity, onApplyClick, currentUser }) => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [comparedIds, setComparedIds] = useState<(number | string)[]>([]);
@@ -103,16 +107,28 @@ export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelect
                   <h3 className="text-base font-bold text-slate-900 line-clamp-1 leading-snug">{uni.name}</h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{uni.notes}</p>
 
-                  <div className="flex items-center gap-4 my-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="flex-1">
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Annual Tuition</p>
-                      <p className="text-sm font-black text-amber-600">₽{uni.tuition_fee_rub.toLocaleString()} / yr</p>
+                  <div className="relative overflow-hidden rounded-xl my-4">
+                    <div className={`flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 ${!currentUser ? 'filter blur-[5px] select-none pointer-events-none' : ''}`}>
+                      <div className="flex-1">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Annual Tuition</p>
+                        <p className="text-sm font-black text-amber-600">₽{uni.tuition_fee_rub.toLocaleString()} / yr</p>
+                      </div>
+                      <div className="h-8 w-px bg-slate-200" />
+                      <div className="flex-1">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Hostel Fee</p>
+                        <p className="text-sm font-bold text-slate-800">₽{uni.hostel_fee_rub.toLocaleString()} / yr</p>
+                      </div>
                     </div>
-                    <div className="h-8 w-px bg-slate-200" />
-                    <div className="flex-1">
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Hostel Fee</p>
-                      <p className="text-sm font-bold text-slate-800">₽{uni.hostel_fee_rub.toLocaleString()} / yr</p>
-                    </div>
+                    {!currentUser && (
+                      <div
+                        onClick={() => navigate('/auth')}
+                        className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-xl"
+                      >
+                        <span className="px-2.5 py-1 bg-[#0f172a] hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
+                          <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View Fee
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 mb-3">
@@ -190,9 +206,18 @@ export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelect
                 <div key={u.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
                   <h4 className="font-extrabold text-slate-900 text-sm">{u.name}</h4>
                   <p className="text-xs text-slate-500 font-medium">{u.location}</p>
-                  <div className="pt-2 border-t border-slate-200 space-y-1.5 text-xs">
-                    <p><span className="text-slate-400 font-semibold">Tuition:</span> <strong className="text-amber-600">₽{u.tuition_fee_rub.toLocaleString()}</strong></p>
-                    <p><span className="text-slate-400 font-semibold">Hostel:</span> <strong>₽{u.hostel_fee_rub.toLocaleString()}</strong></p>
+                  <div className="pt-2 border-t border-slate-200 space-y-1.5 text-xs relative overflow-hidden">
+                    <div className={!currentUser ? 'filter blur-[4px] select-none pointer-events-none' : ''}>
+                      <p><span className="text-slate-400 font-semibold">Tuition:</span> <strong className="text-amber-600">₽{u.tuition_fee_rub.toLocaleString()}</strong></p>
+                      <p><span className="text-slate-400 font-semibold">Hostel:</span> <strong>₽{u.hostel_fee_rub.toLocaleString()}</strong></p>
+                    </div>
+                    {!currentUser && (
+                      <div onClick={() => navigate('/auth')} className="absolute inset-0 flex items-center justify-center bg-slate-900/5 cursor-pointer rounded-lg">
+                        <span className="px-2 py-0.5 bg-[#0f172a] hover:bg-slate-800 text-white text-[10px] font-bold rounded shadow-sm flex items-center gap-1 transition-all">
+                          <span className="material-symbols-outlined text-[12px] text-amber-400">lock</span> Login to View Fee
+                        </span>
+                      </div>
+                    )}
                     <p><span className="text-slate-400 font-semibold">Indian Mess:</span> <strong>{u.indian_mess ? 'Yes ✓' : 'No'}</strong></p>
                     <p><span className="text-slate-400 font-semibold">Ranking:</span> <strong>{u.ranking}</strong></p>
                   </div>

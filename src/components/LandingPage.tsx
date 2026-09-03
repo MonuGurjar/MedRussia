@@ -251,19 +251,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       {u.location}
                     </p>
 
-                    <div className="mt-4 p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Tuition Fee</span>
-                        <span className="font-bold text-slate-900">₹{inrFee} Lakhs / yr</span>
+                    <div className="mt-4 p-3 bg-white rounded-2xl border border-slate-200/60 space-y-1.5 relative overflow-hidden">
+                      <div className={`space-y-1.5 ${!currentUser ? 'filter blur-[5px] select-none pointer-events-none' : ''}`}>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Tuition Fee</span>
+                          <span className="font-bold text-slate-900">₹{inrFee} Lakhs / yr</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Hostel Fee</span>
+                          <span className="font-bold text-slate-900">₹{Math.round(u.hostel_fee_rub * 0.95 / 1000)}k / yr</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                          <span className="text-slate-500">Indian Mess</span>
+                          <span className="font-bold text-emerald-600">{u.indian_mess ? 'Available ✅' : 'Self-Cook'}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Hostel Fee</span>
-                        <span className="font-bold text-slate-900">₹{Math.round(u.hostel_fee_rub * 0.95 / 1000)}k / yr</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
-                        <span className="text-slate-500">Indian Mess</span>
-                        <span className="font-bold text-emerald-600">{u.indian_mess ? 'Available ✅' : 'Self-Cook'}</span>
-                      </div>
+                      {!currentUser && (
+                        <div 
+                          onClick={() => navigate('/auth')}
+                          className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-2xl"
+                        >
+                          <span className="px-2.5 py-1 bg-[#0f172a] hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
+                            <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View Fee
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

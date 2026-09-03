@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { platformUniversityService } from '../services/platform/universityService';
 import { DETAILED_UNIVERSITIES, getUniversityImage, UniversityData } from '../constants/universities';
+import { User } from '../types';
 
-export const UniversitiesList: React.FC = () => {
+interface UniversitiesListProps {
+  currentUser?: User | null;
+}
+
+export const UniversitiesList: React.FC<UniversitiesListProps> = ({ currentUser }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [universities, setUniversities] = useState<UniversityData[]>(DETAILED_UNIVERSITIES);
@@ -75,9 +80,18 @@ export const UniversitiesList: React.FC = () => {
                   <span className="material-symbols-outlined text-[14px]">location_on</span> {uni.location}
                 </p>
                 <div className="grid grid-cols-2 gap-2 mb-5 shrink-0">
-                  <div className="border border-slate-100 bg-slate-50 rounded-lg p-2">
+                  <div className="border border-slate-100 bg-slate-50 rounded-lg p-2 relative overflow-hidden">
                     <div className="text-[10px] text-slate-400 font-bold tracking-wider mb-0.5">FEE/YR</div>
-                    <div className="text-xs font-semibold text-slate-800">₽ {uni.tuition_fee_rub.toLocaleString()}</div>
+                    <div className={`text-xs font-semibold text-slate-800 ${!currentUser ? 'filter blur-[4px] select-none pointer-events-none' : ''}`}>
+                      ₽ {uni.tuition_fee_rub.toLocaleString()}
+                    </div>
+                    {!currentUser && (
+                      <div onClick={() => navigate('/auth')} className="absolute inset-0 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 cursor-pointer">
+                        <span className="text-[9px] font-bold text-slate-900 bg-white px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[10px] text-amber-500">lock</span> Login
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="border border-slate-100 bg-slate-50 rounded-lg p-2">
                     <div className="text-[10px] text-slate-400 font-bold tracking-wider mb-0.5">MEDIUM</div>

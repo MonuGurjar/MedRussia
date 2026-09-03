@@ -250,9 +250,9 @@ const App: React.FC = () => {
             />
           } />
 
-          <Route path="/universities" element={<UniversitiesList />} />
-          <Route path="/university/:id" element={<UniversityDetails />} />
-          <Route path="/explorer" element={<UniversityExplorer onApplyClick={() => navigate('/apply')} />} />
+          <Route path="/universities" element={<UniversitiesList currentUser={currentUser} />} />
+          <Route path="/university/:id" element={<UniversityDetails currentUser={currentUser} />} />
+          <Route path="/explorer" element={<UniversityExplorer onApplyClick={() => navigate('/apply')} currentUser={currentUser} />} />
           <Route path="/calculator" element={<MbbsBudgetCalculator onApplyWithBudget={() => navigate('/apply')} />} />
           <Route path="/eligibility" element={<AiEligibilityChecker />} />
           <Route path="/counselor" element={<HumanCounselorDesk />} />
