@@ -55,9 +55,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <img 
             src={heroImg} 
             alt="Indian MBBS Students in Russia" 
-            className="w-full h-full object-cover opacity-35 transition-transform duration-1000 scale-105" 
+            className="w-full h-full object-cover opacity-60 transition-transform duration-1000 scale-105" 
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/95 via-[#0f172a]/90 to-[#0f172a]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/75 via-[#0f172a]/70 to-[#0f172a]"></div>
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
@@ -272,7 +272,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-2xl"
                         >
                           <span className="px-2.5 py-1 bg-[#0f172a] hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
-                            <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View Fee
+                            <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View
                           </span>
                         </div>
                       )}

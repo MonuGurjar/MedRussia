@@ -146,7 +146,7 @@ export const UniversityDetails: React.FC<UniversityDetailsProps> = ({ currentUse
                   {!currentUser && (
                     <div onClick={() => navigate('/auth')} className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-xl p-4">
                       <span className="px-3 py-1.5 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all">
-                        <span className="material-symbols-outlined text-[15px] text-amber-400">lock</span> Login to View Detailed Fee Structure
+                        <span className="material-symbols-outlined text-[15px] text-amber-400">lock</span> Login to View
                       </span>
                     </div>
                   )}

@@ -125,7 +125,7 @@ export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelect
                         className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 backdrop-blur-[2px] cursor-pointer transition-all rounded-xl"
                       >
                         <span className="px-2.5 py-1 bg-[#0f172a] hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
-                          <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View Fee
+                          <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span> Login to View
                         </span>
                       </div>
                     )}
@@ -214,7 +214,7 @@ export const UniversityExplorer: React.FC<UniversityExplorerProps> = ({ onSelect
                     {!currentUser && (
                       <div onClick={() => navigate('/auth')} className="absolute inset-0 flex items-center justify-center bg-slate-900/5 cursor-pointer rounded-lg">
                         <span className="px-2 py-0.5 bg-[#0f172a] hover:bg-slate-800 text-white text-[10px] font-bold rounded shadow-sm flex items-center gap-1 transition-all">
-                          <span className="material-symbols-outlined text-[12px] text-amber-400">lock</span> Login to View Fee
+                          <span className="material-symbols-outlined text-[12px] text-amber-400">lock</span> Login to View
                         </span>
                       </div>
                     )}

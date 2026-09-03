@@ -88,7 +88,7 @@ export const UniversitiesList: React.FC<UniversitiesListProps> = ({ currentUser 
                     {!currentUser && (
                       <div onClick={() => navigate('/auth')} className="absolute inset-0 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 cursor-pointer">
                         <span className="text-[9px] font-bold text-slate-900 bg-white px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
-                          <span className="material-symbols-outlined text-[10px] text-amber-500">lock</span> Login
+                          <span className="material-symbols-outlined text-[10px] text-amber-500">lock</span> Login to View
                         </span>
                       </div>
                     )}
