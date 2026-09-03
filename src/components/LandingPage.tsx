@@ -305,7 +305,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">6-Year MBBS Cost Estimator</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">Calculates Tuition, Hostel, Indian Mess, Medical Insurance & Visa in INR / RUB / USD</p>
         </div>
-        <MbbsBudgetCalculator onApplyWithBudget={() => navigate('/apply')} />
+        <div className="relative">
+          <div className={!currentUser ? "opacity-35 pointer-events-none select-none blur-[1.5px] transition-all" : ""}>
+            <MbbsBudgetCalculator onApplyWithBudget={() => navigate('/apply')} />
+          </div>
+          {!currentUser && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
+              <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 text-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                  <span className="material-symbols-outlined text-[28px]">lock</span>
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                    Sign In to Access 6-Year Cost Estimator
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                    Create a free student account to customize lifestyle preferences, download official PDF cost breakdowns, and reserve university seats.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigate('/auth')}
+                    className="w-full py-3 px-5 bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">login</span>
+                    <span>Sign In / Sign Up</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* 6. AI ELIGIBILITY EVALUATOR SECTION */}
@@ -316,7 +346,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Check Your MBBS Eligibility</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Validate your NEET score, PCB marks & category against NMC FMGL 2021 Gazette rules</p>
           </div>
-          <AiEligibilityChecker />
+          <div className="relative">
+            <div className={!currentUser ? "opacity-35 pointer-events-none select-none blur-[1.5px] transition-all" : ""}>
+              <AiEligibilityChecker />
+            </div>
+            {!currentUser && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
+                <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 text-center space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center mx-auto shadow-inner">
+                    <span className="material-symbols-outlined text-[28px]">lock</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                      Sign In to Check Your MBBS Eligibility
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                      Instant evaluation of your 12th PCB marks & NEET scorecard against NMC FMGL Gazette 2021 regulations with personalized advice.
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate('/auth')}
+                      className="w-full py-3 px-5 bg-purple-900 hover:bg-purple-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">login</span>
+                      <span>Sign In / Sign Up</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
