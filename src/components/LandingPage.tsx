@@ -117,20 +117,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
-            <button 
-              onClick={() => navigate('/apply')}
-              className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition hover:scale-105"
-            >
-              <span>Fill Admission Form</span>
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </button>
-            <button 
-              onClick={() => navigate('/tracker')}
-              className="w-full sm:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 transition"
-            >
-              <span className="material-symbols-outlined text-[18px] text-emerald-600">timeline</span>
-              <span>Track Admission</span>
-            </button>
+            {currentUser ? (
+              <>
+                <button 
+                  onClick={() => navigate('/apply')}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition hover:scale-105"
+                >
+                  <span>Fill Admission Form</span>
+                  <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/tracker')}
+                  className="w-full sm:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 transition"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-emerald-600">timeline</span>
+                  <span>Track Admission</span>
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-[#0f172a] hover:bg-slate-800 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 transition hover:scale-105"
+                >
+                  <span className="material-symbols-outlined text-[18px]">login</span>
+                  <span>Sign In / Sign Up to Apply</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="w-full sm:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 transition opacity-70"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-slate-400">lock</span>
+                  <span>Track Dossier</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -144,25 +165,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {[
-            { title: 'Universities', sub: '40+ Recognized', icon: 'school', color: 'text-blue-600', bg: 'bg-blue-50', link: '/explorer' },
-            { title: '6-Yr Calculator', sub: 'INR/RUB/USD', icon: 'calculate', color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/calculator' },
-            { title: 'AI MD Advisor', sub: '24/7 Gemini AI', icon: 'smart_toy', color: 'text-purple-600', bg: 'bg-purple-50', link: '/ai-counselor' },
-            { title: 'Apply Online', sub: 'Session 2026', icon: 'edit_document', color: 'text-amber-600', bg: 'bg-amber-50', link: '/apply' },
-            { title: 'Live Tracker', sub: '5 Milestones', icon: 'timeline', color: 'text-teal-600', bg: 'bg-teal-50', link: '/tracker' },
-            { title: 'Counselor Desk', sub: 'Amit Gurjar', icon: 'support_agent', color: 'text-rose-600', bg: 'bg-rose-50', link: '/counselor' }
-          ].map((act, i) => (
-            <div 
-              key={i}
-              onClick={() => navigate(act.link)}
-              className="p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs hover:shadow-md cursor-pointer transition flex flex-col items-center text-center group"
-            >
-              <div className={`w-12 h-12 rounded-2xl ${act.bg} ${act.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                <span className="material-symbols-outlined text-[24px]">{act.icon}</span>
+            { title: 'Universities', sub: '40+ Recognized', icon: 'school', color: 'text-blue-600', bg: 'bg-blue-50', link: '/explorer', requiresAuth: false },
+            { title: '6-Yr Calculator', sub: 'INR/RUB/USD', icon: 'calculate', color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/calculator', requiresAuth: false },
+            { title: 'AI MD Advisor', sub: '24/7 Gemini AI', icon: 'smart_toy', color: 'text-purple-600', bg: 'bg-purple-50', link: '/ai-counselor', requiresAuth: true },
+            { title: 'Apply Online', sub: 'Session 2026', icon: 'edit_document', color: 'text-amber-600', bg: 'bg-amber-50', link: '/apply', requiresAuth: true },
+            { title: 'Live Tracker', sub: '5 Milestones', icon: 'timeline', color: 'text-teal-600', bg: 'bg-teal-50', link: '/tracker', requiresAuth: true },
+            { title: 'Counselor Desk', sub: 'Amit Gurjar', icon: 'support_agent', color: 'text-rose-600', bg: 'bg-rose-50', link: '/counselor', requiresAuth: true }
+          ].map((act, i) => {
+            const isDimmed = !currentUser && act.requiresAuth;
+            return (
+              <div 
+                key={i}
+                onClick={() => navigate(isDimmed ? '/auth' : act.link)}
+                className={`p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs hover:shadow-md cursor-pointer transition flex flex-col items-center text-center group relative overflow-hidden ${isDimmed ? 'opacity-65 hover:opacity-90' : ''}`}
+              >
+                {isDimmed && (
+                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <span className="material-symbols-outlined text-[12px]">lock</span>
+                  </div>
+                )}
+                <div className={`w-12 h-12 rounded-2xl ${act.bg} ${act.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                  <span className="material-symbols-outlined text-[24px]">{act.icon}</span>
+                </div>
+                <h3 className="font-extrabold text-xs text-slate-900">{act.title}</h3>
+                <p className="text-[10px] text-slate-500 mt-0.5">{isDimmed ? 'Sign in to access' : act.sub}</p>
               </div>
-              <h3 className="font-extrabold text-xs text-slate-900">{act.title}</h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">{act.sub}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

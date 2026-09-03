@@ -4,6 +4,8 @@ import { User, FeedbackEntry, AppSettings, EligibilityData, DocumentMetadata } f
 import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromStore, updateUser, getVaultDocuments } from '../services/db';
 import { getSettings } from '../services/settings';
 import { uploadFileToCloudinary, getSignedKycUrl } from '../services/storage';
+import { platformDocumentService } from '../services/platform/documentService';
+import { DocumentUploadResponse } from '../types/platform';
 import { checkEligibility } from '../services/gemini';
 import { BudgetCalculator } from './BudgetCalculator';
 import { MbbsBudgetCalculator } from './MbbsBudgetCalculator';
@@ -141,6 +143,33 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   }, [user]);
 
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [serverDocs, setServerDocs] = useState<Record<string, DocumentUploadResponse>>({});
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+
+  const fetchVaultDocs = async () => {
+    setIsLoadingDocs(true);
+    try {
+      const docs = await platformDocumentService.getMyDocuments();
+      const map: Record<string, DocumentUploadResponse> = {};
+      if (Array.isArray(docs)) {
+        docs.forEach(d => {
+          map[d.doc_type] = d;
+        });
+      }
+      setServerDocs(map);
+    } catch (e) {
+      console.warn("Could not fetch documents from Platform API:", e);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === 'documents' || activeView === 'profile') {
+      fetchVaultDocs();
+    }
+  }, [activeView]);
+
   const [eligibilityForm, setEligibilityForm] = useState<EligibilityData>(user?.eligibilityData || { pcbPercentage: '', category: 'General', isPwd: false, neetScore: '', dob: '', medium: 'English', knowsRussian: false, passportStatus: 'Have', medicalHistory: '' });
   const [eligibilityResult, setEligibilityResult] = useState<string | null>(user?.eligibilityResult || null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
@@ -281,41 +310,48 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
     }
     setUploadingDoc(type);
     try {
-      const uploadData = await uploadFileToCloudinary(file, user.id, type);
-      const metaData: DocumentMetadata = {
-        url: uploadData.secure_url,
-        publicId: uploadData.public_id,
-        fileName: file.name,
-        status: 'uploaded',
-        uploadedAt: Date.now()
-      };
-      const updatedUser = await updateUserDocuments(user.id, type, metaData);
-      if (!user.documents) user.documents = {};
-      user.documents[type] = metaData;
-      localStorage.setItem('mr_current_user', JSON.stringify({ ...user, documents: user.documents }));
-      showToast(`${file.name} securely uploaded to KYC vault!`, 'success');
+      const docResponse = await platformDocumentService.uploadDocument(type, file);
+      if (docResponse && docResponse.id) {
+        setServerDocs(prev => ({ ...prev, [type]: docResponse }));
+        const metaData: DocumentMetadata = {
+          url: docResponse.id,
+          publicId: docResponse.id,
+          fileName: file.name,
+          status: (docResponse.status as any) || 'uploaded',
+          uploadedAt: Date.now()
+        };
+        try {
+          await updateUserDocuments(user.id, type, metaData);
+        } catch (_dbErr) {}
+        if (!user.documents) user.documents = {};
+        user.documents[type] = metaData;
+        localStorage.setItem('mr_current_user', JSON.stringify({ ...user, documents: user.documents }));
+        showToast(`${file.name} securely uploaded to KYC vault!`, 'success');
+      } else {
+        throw new Error("Document upload did not return a valid document ID.");
+      }
     } catch (err: any) {
-      showToast(`Upload failed: ${err.message}`, 'error');
+      showToast(`Upload failed: ${err.message || 'Unknown error'}`, 'error');
     } finally {
       setUploadingDoc(null);
     }
   };
 
-  const handleViewDocument = async (docData: DocumentMetadata) => {
-    const storagePath = docData.publicId || docData.url;
-    if (!storagePath) {
-      showToast("Document path not found", 'error');
+  const handleViewDocument = async (docId?: string, docTitle?: string) => {
+    if (!docId || docId.startsWith('http://') || docId.startsWith('https://') || docId.startsWith('data:')) {
+      showToast(`Unable to open ${docTitle || 'document'}: no valid document found in vault.`, 'error');
       return;
     }
     try {
-      const signedUrl = await getSignedKycUrl(storagePath, 900); // 15 mins
-      if (signedUrl) {
-        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      const res = await platformDocumentService.getSignedUrl(docId);
+      if (res && res.signed_url) {
+        window.open(res.signed_url, '_blank', 'noopener,noreferrer');
       } else {
-        showToast("Unable to generate secure signed access link.", 'error');
+        showToast(`Unable to open ${docTitle || 'document'}: secure access link could not be generated.`, 'error');
       }
-    } catch (e) {
-      showToast("Failed to open document securely.", 'error');
+    } catch (e: any) {
+      console.error('Failed to generate signed document preview URL:', e);
+      showToast(e.message || `Unable to open ${docTitle || 'document'}.`, 'error');
     }
   };
 
@@ -1810,62 +1846,66 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
 
                   <div className="space-y-3.5">
                     {[
-                       { id: 'marksheet_10', title: '10th Secondary Certificate / Marksheet', desc: 'Proof of date of birth and secondary school completion.' },
-                       { id: 'marksheet_12', title: '12th Senior Secondary Marksheet (PCB)', desc: 'Physics, Chemistry, Biology marks for NMC 50%/40% eligibility check.' },
-                       { id: 'neet_scorecard', title: 'NEET Qualification Scorecard (NTA)', desc: 'Official NTA scorecard indicating candidate qualification status.' },
-                       { id: 'passport_front', title: 'Valid Indian Passport Scan', desc: 'First and address page scan. Must be valid for minimum 18 months.' },
-                       { id: 'medical_fitness_certificate', title: 'Medical Fitness & HIV/Hepatitis Test', desc: 'Doctor fitness certificate along with blood test reports.' }
+                        { id: 'marksheet_10', title: '10th Secondary Certificate / Marksheet', desc: 'Proof of date of birth and secondary school completion.' },
+                        { id: 'marksheet_12', title: '12th Senior Secondary Marksheet (PCB)', desc: 'Physics, Chemistry, Biology marks for NMC 50%/40% eligibility check.' },
+                        { id: 'neet_scorecard', title: 'NEET Qualification Scorecard (NTA)', desc: 'Official NTA scorecard indicating candidate qualification status.' },
+                        { id: 'passport_front', title: 'Valid Indian Passport Scan', desc: 'First and address page scan. Must be valid for minimum 18 months.' },
+                        { id: 'medical_fitness_certificate', title: 'Medical Fitness & HIV/Hepatitis Test', desc: 'Doctor fitness certificate along with blood test reports.' }
                     ].map(doc => {
-                       const docData = user.documents?.[doc.id as keyof typeof user.documents];
-                       const isUploaded = !!docData;
-                       const isVerified = docData?.status === 'verified';
-                       
-                       return (
-                          <div key={doc.id} className={`${cardCls} p-4 md:p-5 rounded-2xl border-l-4 ${isVerified ? 'border-l-emerald-500' : isUploaded ? 'border-l-blue-500' : 'border-l-amber-500'}`}>
-                            <div className="flex flex-col gap-3">
-                               <div className="flex items-start justify-between gap-2">
-                                 <div>
-                                   <div className="flex items-center gap-2 flex-wrap">
-                                     <h4 className="text-sm md:text-base font-bold text-slate-900">{doc.title}</h4>
-                                     {isVerified ? (
-                                       <span className="bg-emerald-100 text-emerald-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                         <span className="material-symbols-outlined text-[13px]">check_circle</span> Verified
-                                       </span>
-                                     ) : isUploaded ? (
-                                       <span className="bg-blue-100 text-blue-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                         <span className="material-symbols-outlined text-[13px]">cloud_done</span> Uploaded
-                                       </span>
-                                     ) : (
-                                       <span className="bg-amber-100 text-amber-900 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                                         <span className="material-symbols-outlined text-[13px]">pending</span> Action Needed
-                                       </span>
-                                     )}
-                                   </div>
-                                   <p className="text-slate-500 text-xs mt-0.5 leading-snug">{doc.desc}</p>
-                                 </div>
-                               </div>
-                               
-                               {isUploaded ? (
-                                 <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
-                                   <div className="flex items-center gap-2 min-w-0">
-                                     <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">description</span>
-                                     <div className="min-w-0">
-                                       <p className="font-bold text-xs text-slate-800 truncate">
-                                         {docData.fileName || `${doc.title}.pdf`}
-                                       </p>
-                                       <p className="text-[10px] text-slate-400">Uploaded {new Date(docData.uploadedAt || Date.now()).toLocaleDateString()}</p>
-                                     </div>
-                                   </div>
-                                   <div className="flex items-center gap-2 shrink-0">
-                                     <button onClick={() => handleViewDocument(docData)} className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1">
-                                       <span className="material-symbols-outlined text-[14px]">visibility</span> View
-                                     </button>
-                                     <label className="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
-                                       <span className="material-symbols-outlined text-[14px]">sync</span> Replace
-                                       <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />
-                                     </label>
-                                   </div>
-                                 </div>
+                        const serverDoc = serverDocs[doc.id];
+                        const localDoc = user.documents?.[doc.id as keyof typeof user.documents];
+                        const isUploaded = !!serverDoc || !!localDoc;
+                        const isVerified = serverDoc?.status === 'verified' || localDoc?.status === 'verified';
+                        const docFileName = serverDoc?.file_name || localDoc?.fileName || `${doc.title}.pdf`;
+                        const docUploadDate = serverDoc?.created_at ? new Date(serverDoc.created_at).toLocaleDateString() : (localDoc?.uploadedAt ? new Date(localDoc.uploadedAt).toLocaleDateString() : new Date().toLocaleDateString());
+                        const docId = serverDoc?.id || localDoc?.publicId || (localDoc?.url && !localDoc.url.startsWith('http') ? localDoc.url : '');
+                        
+                        return (
+                           <div key={doc.id} className={`${cardCls} p-4 md:p-5 rounded-2xl border-l-4 ${isVerified ? 'border-l-emerald-500' : isUploaded ? 'border-l-blue-500' : 'border-l-amber-500'}`}>
+                             <div className="flex flex-col gap-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="text-sm md:text-base font-bold text-slate-900">{doc.title}</h4>
+                                      {isVerified ? (
+                                        <span className="bg-emerald-100 text-emerald-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                          <span className="material-symbols-outlined text-[13px]">check_circle</span> Verified
+                                        </span>
+                                      ) : isUploaded ? (
+                                        <span className="bg-blue-100 text-blue-800 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                          <span className="material-symbols-outlined text-[13px]">cloud_done</span> Uploaded
+                                        </span>
+                                      ) : (
+                                        <span className="bg-amber-100 text-amber-900 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                                          <span className="material-symbols-outlined text-[13px]">pending</span> Action Needed
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-slate-500 text-xs mt-0.5 leading-snug">{doc.desc}</p>
+                                  </div>
+                                </div>
+                                
+                                {isUploaded ? (
+                                  <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">description</span>
+                                      <div className="min-w-0">
+                                        <p className="font-bold text-xs text-slate-800 truncate">
+                                          {docFileName}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400">Uploaded {docUploadDate}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button onClick={() => handleViewDocument(docId, doc.title)} className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
+                                        <span className="material-symbols-outlined text-[14px]">visibility</span> View
+                                      </button>
+                                      <label className="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer">
+                                        <span className="material-symbols-outlined text-[14px]">sync</span> Replace
+                                        <input type="file" className="hidden" onChange={e => handleFileUpload(e, doc.id)} />
+                                      </label>
+                                    </div>
+                                  </div>
                                ) : (
                                  <label className="border border-dashed border-amber-300 bg-amber-50/40 hover:bg-amber-50 rounded-xl p-3 md:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors">
                                    <div className="flex items-center gap-3 min-w-0">
