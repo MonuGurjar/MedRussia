@@ -5,13 +5,13 @@ const supabaseUrl =
   import.meta.env.VITE_SUPABASE_URL ||
   import.meta.env.NEXT_PUBLIC_SUPABASE_URL ||
   import.meta.env.SUPABASE_URL ||
-  "http://127.0.0.1:54321";
+  "https://obfzmoyrfkpnyqglylpr.supabase.co";
 
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   import.meta.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IjEyNy4wLjAuMSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.MsHUvZNOQiMTyHkixZy-F24hXKEkmK0xsbAn2LJniGs";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZnptb3lyZmtwbnlxZ2x5bHByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODcyNDcsImV4cCI6MjEwMzc2MzI0N30._PMThI8FGjmZFqDxD5GhC3oI2FiGUQ3NgQ8sr8R9Rpo";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

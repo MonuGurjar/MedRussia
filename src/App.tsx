@@ -86,6 +86,10 @@ const ProtectedRoute = ({ children, role, user, isLoading }: { children?: React.
   return <>{children}</>;
 };
 
+import { platformAuthService } from './services/platform/authService';
+import { tokenManager } from './lib/tokenManager';
+import { mapPlatformProfileToUser } from './services/db';
+
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackEntry[]>([]);
@@ -122,147 +126,69 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSession = async (session: any): Promise<User | null> => {
-    try {
-      const role = session.user.app_metadata?.role || session.user.user_metadata?.role || 'student';
-      
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (profile) {
-        const localUsers = getLocal<User>('mr_users');
-        const localUser = localUsers.find((u: any) => u.id === profile.id);
-        const docs = (profile.documents && Object.keys(profile.documents).length > 0) 
-          ? profile.documents 
-          : (localUser?.documents || {});
-
-        const mappedUser: User = {
-          id: profile.id,
-          email: profile.email,
-          name: profile.name,
-          username: profile.username || session.user.user_metadata?.username || localUser?.username,
-          phone: profile.phone || localUser?.phone,
-          neetScore: profile.neet_score || localUser?.neetScore,
-          budget: profile.budget || localUser?.budget,
-          shortlistedUniversities: profile.shortlisted_universities || localUser?.shortlistedUniversities || [],
-          documents: docs,
-          notifications: profile.notifications || localUser?.notifications || [],
-          eligibilityData: profile.eligibility_data || localUser?.eligibilityData,
-          eligibilityResult: profile.eligibility_result || localUser?.eligibilityResult,
-          role
-        };
-        setCurrentUser(mappedUser);
-        localStorage.setItem('mr_current_user', JSON.stringify(mappedUser));
-        return mappedUser;
-      } else {
-        const localUsers = getLocal<User>('mr_users');
-        const localUser = localUsers.find((u: any) => u.id === session.user.id);
-
-        const newUser: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-          username: session.user.user_metadata?.username || localUser?.username,
-          phone: session.user.user_metadata?.phone || '',
-          shortlistedUniversities: localUser?.shortlistedUniversities || [],
-          documents: localUser?.documents || {},
-          notifications: localUser?.notifications || [],
-          eligibilityData: localUser?.eligibilityData,
-          eligibilityResult: localUser?.eligibilityResult
-        };
-        await supabase.from('users').upsert({
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          username: newUser.username,
-          phone: newUser.phone,
-          documents: newUser.documents
-        });
-        setCurrentUser(newUser);
-        localStorage.setItem('mr_current_user', JSON.stringify(newUser));
-        return newUser;
-      }
-    } catch (e) {
-      console.error('Error fetching user profile', e);
-      return null;
-    } finally {
-      setIsAuthLoading(false);
-    }
-  };
-
   useEffect(() => {
     refreshData();
 
     let isMounted = true;
 
-    const processSession = async (session: any) => {
-      let activeUser: User | null = null;
-      if (session) {
-        activeUser = await handleSession(session);
-      }
-
-      if (!activeUser) {
-        const saved = localStorage.getItem('mr_current_user');
-        if (saved) {
-          try {
-            activeUser = JSON.parse(saved);
-          } catch (e) {}
+    const restorePlatformSession = async () => {
+      // Authoritative Platform Session Check
+      if (tokenManager.isAuthenticated()) {
+        try {
+          const profile = await platformAuthService.getCurrentUser();
+          if (profile && isMounted) {
+            const mapped = mapPlatformProfileToUser(profile);
+            setCurrentUser(mapped);
+            localStorage.setItem('mr_current_user', JSON.stringify(mapped));
+            setIsAuthLoading(false);
+            return;
+          }
+        } catch (_: any) {
+          tokenManager.clearTokens();
+          localStorage.removeItem('mr_current_user');
+          setCurrentUser(null);
         }
+      } else {
+        localStorage.removeItem('mr_current_user');
+        setCurrentUser(null);
       }
 
       if (isMounted) {
-        if (activeUser) {
-          setCurrentUser(activeUser);
-          localStorage.setItem('mr_current_user', JSON.stringify(activeUser));
-        }
         setIsAuthLoading(false);
       }
     };
 
-    // 1. Check initial session on mount (fixes refresh logout issues)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      processSession(session);
-    });
-
-    // 2. Listen for future auth changes (login/logout/token refresh/initial session)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
-        await processSession(session);
-      } else if (event === 'SIGNED_OUT') {
-        if (isMounted) {
-          localStorage.removeItem('mr_current_user');
-          setCurrentUser(null);
-          setIsAuthLoading(false);
-        }
-      }
-    });
+    restorePlatformSession();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     localStorage.setItem('mr_current_user', JSON.stringify(user));
-    navigate('/user', { replace: true });
+    const dest = user.username ? `/@${user.username}` : '/user';
+    navigate(dest, { replace: true });
   };
 
   const handleLogout = async () => {
-    try { await supabase.auth.signOut(); } catch (e) {}
+    try { await platformAuthService.logout(); } catch (e) {}
+    tokenManager.clearTokens();
     localStorage.removeItem('mr_current_user');
+    localStorage.removeItem('mr_neet_score');
+    localStorage.removeItem('mr_category');
     setCurrentUser(null);
     navigate('/');
   };
 
   const handleHeaderAction = () => {
-    if (currentUser) navigate('/user');
-    else navigate('/auth');
+    if (currentUser) {
+      const dest = currentUser.username ? `/@${currentUser.username}` : '/user';
+      navigate(dest);
+    } else {
+      navigate('/auth');
+    }
   };
 
   const handleLogoClick = () => {
@@ -285,8 +211,11 @@ const App: React.FC = () => {
     { q: "Can I work while studying?", a: "Students can work part-time, but it is recommended to focus on studies due to the rigorous medical curriculum." }
   ];
 
-  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/user') || location.pathname === '/auth';
-  const isDashboardView = location.pathname.startsWith('/admin') || location.pathname.startsWith('/user');
+  const isDashboardView = location.pathname.startsWith('/admin') || 
+                          location.pathname.startsWith('/user') || 
+                          location.pathname.startsWith('/@') || 
+                          location.pathname.startsWith('/u/');
+  const hideHeader = isDashboardView || location.pathname === '/auth';
 
   return (
     <div className="min-h-screen bg-background text-on-background relative overflow-x-hidden">
@@ -298,6 +227,7 @@ const App: React.FC = () => {
           onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined}
           isAuthenticated={!!currentUser}
           userName={currentUser?.name}
+          userUsername={currentUser?.username}
           userAvatar={currentUser?.avatar}
           theme={theme}
           onToggleTheme={toggleTheme}
@@ -338,7 +268,7 @@ const App: React.FC = () => {
               </div>
             ) : !currentUser ? (
               <Login onAuthSuccess={handleLoginSuccess} onCancel={() => navigate('/')} onShowLegal={(page) => setActiveLegalPage(page)} />
-            ) : <Navigate to="/user" replace />
+            ) : <Navigate to={currentUser.username ? `/@${currentUser.username}` : "/user"} replace />
           } />
 
           <Route path="/compare" element={<UniversityCompare />} />
@@ -347,9 +277,51 @@ const App: React.FC = () => {
           <Route path="/terms" element={<LegalPage page="terms" />} />
           <Route path="/disclaimer" element={<LegalPage page="disclaimer" />} />
 
-          <Route path="/admin" element={<Navigate to="/user" replace />} />
+          <Route path="/admin" element={<Navigate to={currentUser?.username ? `/@${currentUser.username}` : "/auth"} replace />} />
 
+          {/* Student Profile / Dashboard with Username & Tab Routes */}
           <Route path="/user" element={
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/user/:tab" element={
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/u/:username" element={
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/u/:username/:tab" element={
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
+            </ProtectedRoute>
+          } />
+
+          {/* Matches /@username and /@username/:tab as well as /username and /username/:tab */}
+          <Route path="/:username" element={
+            <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
+              {currentUser ? (
+                <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />
+              ) : null}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/:username/:tab" element={
             <ProtectedRoute role="student" user={currentUser} isLoading={isAuthLoading}>
               {currentUser ? (
                 <UserDashboard user={currentUser} onLogout={handleLogout} onInquirySubmitted={refreshData} onFabToggle={setIsFabOpen} theme={theme} toggleTheme={toggleTheme} onToggleCurrency={settings?.currencyConverter?.enabled ? () => setShowCurrencyConverter(!showCurrencyConverter) : undefined} />

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { platformEligibilityService } from '../services/platform/eligibilityService';
+import { EligibilityReportResponse } from '../types/platform';
 
 interface EligibilityModalProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
   const [pcbPercentage, setPcbPercentage] = useState<string>('60');
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [report, setReport] = useState<EligibilityReportResponse | null>(null);
 
   useEffect(() => {
     const savedScore = localStorage.getItem('mr_neet_score');
@@ -30,7 +34,7 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleCheck = (e: React.FormEvent) => {
+  const handleCheck = async (e: React.FormEvent) => {
     e.preventDefault();
     const scoreNum = parseInt(neetScore, 10);
     const pcbNum = parseFloat(pcbPercentage);
@@ -54,21 +58,35 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
 
     if (!isAuthenticated) {
       onLoginRedirect(neetScore, category, pcbPercentage);
-    } else {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const catLower = category.toLowerCase().includes('sc') || category.toLowerCase().includes('st') || category.toLowerCase().includes('obc')
+        ? 'sc_st_obc'
+        : (category.toLowerCase().includes('pwd') ? 'pwd' : 'general');
+
+      const response = await platformEligibilityService.evaluateEligibility({
+        physics_marks: pcbNum,
+        chemistry_marks: pcbNum,
+        biology_marks: pcbNum,
+        english_passed: true,
+        student_age: 18,
+        category: catLower,
+        neet_status: 'qualified',
+        neet_score: scoreNum
+      });
+      setReport(response);
       setSubmitted(true);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to evaluate eligibility with Platform');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Eligibility Criteria:
-  // General: NEET ~164 marks, 12th PCB >= 50%
-  // OBC/SC/ST: NEET ~129 marks, 12th PCB >= 40%
-  const scoreNum = parseInt(neetScore, 10) || 0;
-  const pcbNum = parseFloat(pcbPercentage) || 0;
-  const isReserved = ['OBC', 'SC', 'ST'].includes(category);
-  const minNeetScore = isReserved ? 129 : 164;
-  const minPcb = isReserved ? 40 : 50;
-
-  const isEligible = scoreNum >= minNeetScore && pcbNum >= minPcb;
+  const isEligible = report ? report.is_eligible : false;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 overflow-y-auto fade-in-up">
@@ -81,161 +99,132 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
               <span className="material-symbols-outlined text-[20px]">verified</span>
             </div>
             <div>
-              <h3 className="font-extrabold text-base sm:text-lg tracking-tight text-white">NEET Eligibility Checker</h3>
-              <p className="text-slate-400 text-xs">NMC Guidelines for MBBS in Russia</p>
+              <h3 className="font-bold text-base text-white">NMC Eligibility Check</h3>
+              <p className="text-[11px] text-slate-300">Statutory FMGL 2021 Regulation Evaluation</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 sm:p-8">
+        {/* Content Body */}
+        <div className="p-6">
           {!submitted ? (
-            <form onSubmit={handleCheck} className="space-y-5">
-              
-              {/* Category Selector */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  1. Select Reservation Category
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['General', 'OBC', 'SC', 'ST'].map((cat) => (
-                    <button
-                      type="button"
-                      key={cat}
-                      onClick={() => setCategory(cat)}
-                      className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all ${
-                        category === cat
-                          ? 'bg-[#1a365d] text-white border-[#1a365d] shadow-sm'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* NEET Score Input */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  2. NEET Score / Marks (Out of 720)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    max="720"
-                    value={neetScore}
-                    onChange={(e) => setNeetScore(e.target.value)}
-                    placeholder="e.g. 240, 380, 520"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm font-semibold text-slate-900 bg-slate-50/50"
-                  />
-                  <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">/ 720</span>
-                </div>
-              </div>
-
-              {/* 12th PCB % */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  3. 12th PCB Aggregate (Physics + Chem + Biology %)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={pcbPercentage}
-                    onChange={(e) => setPcbPercentage(e.target.value)}
-                    placeholder="e.g. 55, 65, 75"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm font-semibold text-slate-900 bg-slate-50/50"
-                  />
-                  <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">%</span>
-                </div>
-              </div>
-
+            <form onSubmit={handleCheck} className="space-y-4">
               {errorMsg && (
-                <div className="p-3.5 bg-red-50 text-red-700 rounded-xl text-xs font-semibold border border-red-100 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">warning</span>
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
                   {errorMsg}
                 </div>
               )}
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm transition-all shadow-md flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">verified</span>
-                  Check Eligibility & Match Universities
-                </button>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  NEET Score (Out of 720)
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 350"
+                  value={neetScore}
+                  onChange={(e) => setNeetScore(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-slate-900 text-sm font-semibold transition-all placeholder:text-slate-400"
+                  min="0"
+                  max="720"
+                  required
+                />
               </div>
 
-              {!isAuthenticated && (
-                <p className="text-[11px] text-slate-500 text-center font-medium">
-                  🔒 Note: You will be prompted to sign in / register to view your full eligibility report.
-                </p>
-              )}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-slate-900 text-sm font-semibold transition-all bg-white"
+                >
+                  <option value="General">General / UR (50% PCB)</option>
+                  <option value="OBC">OBC (40% PCB)</option>
+                  <option value="SC">SC (40% PCB)</option>
+                  <option value="ST">ST (40% PCB)</option>
+                  <option value="PwD">PwD (45% PCB)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  12th PCB Aggregate Marks (%)
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 65"
+                  value={pcbPercentage}
+                  onChange={(e) => setPcbPercentage(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-slate-900 text-sm font-semibold transition-all placeholder:text-slate-400"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                    Evaluating on Platform...
+                  </>
+                ) : (
+                  <>
+                    <span>Evaluate Statutory Eligibility</span>
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </>
+                )}
+              </button>
             </form>
           ) : (
-            /* Logged-in Result Report */
-            <div className="space-y-5">
-              <div className={`p-4 sm:p-5 rounded-2xl border ${
-                isEligible 
-                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' 
-                  : 'bg-amber-50/80 border-amber-200 text-amber-950'
-              }`}>
-                <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-[28px] shrink-0 text-emerald-600">
-                    {isEligible ? 'check_circle' : 'info'}
+            <div className="text-center py-2 space-y-4">
+              <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${isEligible ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                <span className="material-symbols-outlined text-[36px]">
+                  {isEligible ? 'check_circle' : 'cancel'}
+                </span>
+              </div>
+
+              <div>
+                <h4 className="text-lg font-black text-slate-900">
+                  {isEligible ? 'Eligible for Russian MBBS' : 'Eligibility Criteria Not Met'}
+                </h4>
+                <p className="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
+                  {report?.summary || (isEligible ? 'Your academic credentials meet the statutory NMC guidelines for study abroad.' : 'Your profile does not satisfy the minimum statutory benchmarks.')}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">12th PCB Percentage:</span>
+                  <span className="font-bold text-slate-900">{report?.pcb_percentage ?? pcbPercentage}% (Required: {report?.pcb_cutoff_required ?? 50}%)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">NEET Qualification:</span>
+                  <span className={`font-bold ${report?.neet_passed ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {report?.neet_passed ? 'Qualified' : 'Pending / Required'}
                   </span>
-                  <div>
-                    <h4 className="font-extrabold text-base mb-1">
-                      {isEligible ? '🎉 Eligible for MBBS in Russia' : '⚠️ Action Recommended'}
-                    </h4>
-                    <p className="text-xs leading-relaxed opacity-90">
-                      {isEligible
-                        ? `With a NEET Score of ${neetScore} (${category} category) and ${pcbPercentage}% in PCB, you meet all NMC guidelines for MBBS admission in Russia!`
-                        : `Your NEET Score is ${neetScore}. The required qualifying cutoff for ${category} category is ${minNeetScore} marks and ${minPcb}% PCB.`}
-                    </p>
-                  </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex justify-between text-xs py-1 border-b border-slate-200/80">
-                  <span className="text-slate-500 font-semibold">Category:</span>
-                  <span className="font-bold text-slate-900">{category}</span>
-                </div>
-                <div className="flex justify-between text-xs py-1 border-b border-slate-200/80">
-                  <span className="text-slate-500 font-semibold">NMC Cutoff Required:</span>
-                  <span className="font-bold text-slate-900">{minNeetScore} Marks</span>
-                </div>
-                <div className="flex justify-between text-xs py-1">
-                  <span className="text-slate-500 font-semibold">12th PCB Minimum:</span>
-                  <span className="font-bold text-slate-900">{minPcb}% (Your score: {pcbPercentage}%)</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="flex-1 py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors"
-                >
-                  Recalculate
-                </button>
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-3 px-4 rounded-xl bg-[#1a365d] text-white font-bold text-xs hover:bg-slate-800 transition-colors shadow-sm"
-                >
-                  Explore Universities
-                </button>
-              </div>
+              <button
+                onClick={() => { setSubmitted(false); onClose(); }}
+                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition-all"
+              >
+                Close
+              </button>
             </div>
           )}
         </div>

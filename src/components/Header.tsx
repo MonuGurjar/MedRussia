@@ -8,6 +8,7 @@ interface HeaderProps {
   onToggleCurrency?: () => void;
   isAuthenticated: boolean;
   userName?: string;
+  userUsername?: string;
   userAvatar?: string;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
@@ -15,14 +16,19 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onLogoClick, onLogout, onNavigate, onToggleCurrency,
-  isAuthenticated, userName, userAvatar, theme, onToggleTheme
+  isAuthenticated, userName, userUsername, userAvatar, theme, onToggleTheme
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
   const handleNav = (path: string) => {
     setShowDropdown(false);
-    navigate('/user');
+    const dest = userUsername ? `/@${userUsername}` : '/user';
+    if (path && path !== 'dashboard' && path !== 'inquiries') {
+      navigate(`${dest}/${path}`);
+    } else {
+      navigate(dest);
+    }
   };
 
   return (

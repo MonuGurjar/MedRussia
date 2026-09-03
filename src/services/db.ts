@@ -1,5 +1,6 @@
 
 import { FeedbackEntry, User, FeedbackReply, EligibilityData, ChatSession, PlatformFeedback, UserNotification, DocumentMetadata, VaultDocument } from '../types';
+import { DocumentType } from '../types/platform';
 import { supabase } from '../lib/supabase';
 import {
   saveFeedbackToStore,
@@ -87,7 +88,22 @@ export const uploadDocumentFile = async (userId: string, docType: string, file: 
   }
 };
 
-// --- REGISTRATION ---
+import { platformAuthService } from './platform/authService';
+import { tokenManager } from '../lib/tokenManager';
+
+export const mapPlatformProfileToUser = (profile: any): User => ({
+  id: profile.id,
+  name: profile.full_name || profile.name || '',
+  username: profile.username || '',
+  email: profile.email || '',
+  phone: profile.phone || '',
+  role: profile.role || 'student',
+  avatar: profile.avatar_url || null,
+  shortlistedUniversities: [],
+  documents: {},
+  notifications: []
+});
+
 // --- REGISTRATION ---
 export const registerUser = async (userData: Partial<User> & { password?: string }): Promise<User | null> => {
   if (!userData.email || !userData.password) throw new Error('Email and password are required');
@@ -96,38 +112,31 @@ export const registerUser = async (userData: Partial<User> & { password?: string
     ? userData.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
     : userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-  const { data, error } = await supabase.auth.signUp({
-    email: userData.email,
-    password: userData.password,
-    options: {
-      data: { full_name: userData.name, username: formattedUsername, phone: userData.phone, role: 'student' }
-    }
-  });
+  const cleanUsername = formattedUsername.length < 3 ? `user_${Date.now() % 100000}` : formattedUsername;
 
-  if (error) throw new Error(error.message);
-  if (!data.user) throw new Error('Failed to create account');
+  try {
+    await platformAuthService.register({
+      email: userData.email.trim().toLowerCase(),
+      username: cleanUsername,
+      password: userData.password,
+      full_name: userData.name || cleanUsername,
+      phone: userData.phone || null
+    });
 
-  const newUser: User = {
-    id: data.user.id,
-    name: userData.name || '',
-    username: formattedUsername,
-    email: userData.email,
-    phone: userData.phone,
-    role: 'student',
-    shortlistedUniversities: [],
-    documents: {},
-    notifications: [],
-  };
+    // Auto-login to obtain session tokens
+    await platformAuthService.login({
+      identifier: userData.email.trim().toLowerCase(),
+      password: userData.password
+    });
 
-  await supabase.from('users').upsert({
-    id: newUser.id,
-    email: newUser.email,
-    name: newUser.name,
-    username: newUser.username,
-    phone: newUser.phone
-  });
-
-  return newUser;
+    // Fetch authoritative profile directly from GET /api/v1/users/me
+    const profile = await platformAuthService.getCurrentUser();
+    const newUser = mapPlatformProfileToUser(profile);
+    localStorage.setItem('mr_current_user', JSON.stringify(newUser));
+    return newUser;
+  } catch (e: any) {
+    throw e;
+  }
 };
 
 export const updateUser = async (user: User): Promise<void> => {
@@ -186,63 +195,33 @@ export const sendNotificationToUser = async (userId: string, notification: Omit<
   }
 };
 
-export const loginUser = async (email: string, password?: string): Promise<User | null> => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: password || '',
-  });
-
-  if (error || !data.user) {
-    throw new Error(error?.message || 'Login failed');
+export const loginUser = async (emailOrUsername: string, password?: string): Promise<User | null> => {
+  if (!emailOrUsername || !password) {
+    throw new Error('Email/username and password are required');
   }
 
-  const role = data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
+  try {
+    await platformAuthService.login({
+      identifier: emailOrUsername.trim(),
+      password
+    });
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', data.user.id)
-    .maybeSingle();
-
-  if (profile) {
-    return {
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      username: profile.username || data.user.user_metadata?.username,
-      phone: profile.phone,
-      neetScore: profile.neet_score,
-      budget: profile.budget,
-      shortlistedUniversities: profile.shortlisted_universities || [],
-      documents: profile.documents || {},
-      notifications: profile.notifications || [],
-      eligibilityData: profile.eligibility_data,
-      eligibilityResult: profile.eligibility_result,
-      role
-    };
+    const profile = await platformAuthService.getCurrentUser();
+    const mappedUser = mapPlatformProfileToUser(profile);
+    localStorage.setItem('mr_current_user', JSON.stringify(mappedUser));
+    return mappedUser;
+  } catch (e: any) {
+    throw e;
   }
+};
 
-  const defaultUser: User = {
-    id: data.user.id,
-    email: data.user.email || '',
-    name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
-    username: data.user.user_metadata?.username || data.user.email?.split('@')[0],
-    phone: data.user.user_metadata?.phone || '',
-    role,
-    shortlistedUniversities: [],
-    documents: {},
-    notifications: []
-  };
-
-  await supabase.from('users').upsert({
-    id: defaultUser.id,
-    email: defaultUser.email,
-    name: defaultUser.name,
-    username: defaultUser.username,
-    phone: defaultUser.phone
-  });
-
-  return defaultUser;
+export const logoutUser = async (): Promise<void> => {
+  try {
+    await platformAuthService.logout();
+  } finally {
+    tokenManager.clearTokens();
+    localStorage.removeItem('mr_current_user');
+  }
 };
 
 // --- PASSWORD RECOVERY ---
@@ -333,7 +312,7 @@ export const deleteVaultDocument = async (
 
 export const updateUserDocuments = async (
   userId: string, 
-  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string, 
+  docType: DocumentType | string, 
   metadata: DocumentMetadata
 ): Promise<User> => {
   // 1. Persist directly to canonical 'public.vault_documents' table
@@ -360,7 +339,7 @@ export const updateUserDocuments = async (
     user = {
       id: userId,
       email: profile?.email || session?.user?.email || '',
-      name: profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || 'Student',
+      name: profile?.full_name || profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '',
       username: profile?.username || session?.user?.user_metadata?.username,
       phone: profile?.phone || session?.user?.user_metadata?.phone || '',
       role: (profile?.role as any) || session?.user?.app_metadata?.role || 'student',
@@ -383,7 +362,7 @@ export const updateUserDocuments = async (
 
 export const deleteUserDocument = async (
   userId: string, 
-  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string
+  docType: DocumentType | string
 ): Promise<User> => {
   // Delete from canonical vault_documents
   await deleteVaultDocument(`${userId}_${docType}`, userId);
@@ -420,7 +399,7 @@ export const deleteUserDocument = async (
 // Admin Verification on canonical table
 export const verifyUserDocument = async (
   userId: string, 
-  docType: 'marksheet' | 'passport' | 'neetScoreCard' | string, 
+  docType: DocumentType | string, 
   status: 'verified' | 'rejected', 
   remarks?: string
 ): Promise<User> => {
@@ -449,7 +428,7 @@ export const verifyUserDocument = async (
   
   const localUsers = getLocal<User>(USERS_KEY);
   const localUser = localUsers.find(u => u.id === userId);
-  return localUser || { id: userId, email: '', name: 'Student', role: 'student' };
+  return localUser || { id: userId, email: '', name: '', role: 'student' };
 };
 
 export const updateUserEligibility = async (userId: string, data: EligibilityData, result: string): Promise<User> => {
@@ -466,7 +445,7 @@ export const updateUserEligibility = async (userId: string, data: EligibilityDat
     user = {
       id: userId,
       email: profile?.email || session?.user?.email || '',
-      name: profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || 'Student',
+      name: profile?.full_name || profile?.name || session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '',
       username: profile?.username || session?.user?.user_metadata?.username,
       phone: profile?.phone || '',
       role: 'student',
@@ -560,25 +539,19 @@ export const saveFeedback = async (entry: Omit<FeedbackEntry, 'id' | 'timestamp'
   localEntries.push(newEntry);
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(localEntries));
 
-  // Sync to Supabase Inquiries table directly for text data storing
+  // Sync to MedRussia Platform Inquiries API
   try {
-    await supabase.from('inquiries').upsert({
-      id: newEntry.id,
-      user_id: newEntry.userId || null,
+    const { platformInquiryService } = await import('./platform/inquiryService');
+    await platformInquiryService.submitInquiry({
       name: newEntry.name,
       email: newEntry.email,
       phone: newEntry.phone,
-      university: newEntry.university,
-      target_university: newEntry.targetUniversity,
       message: newEntry.message,
-      budget: newEntry.budget,
-      current_status: newEntry.currentStatus,
-      status: newEntry.status,
-      replies: newEntry.replies,
-      timestamp: newEntry.timestamp
+      target_university_id: null,
+      budget_range: newEntry.budget || null
     });
   } catch (e) {
-    console.warn('Direct Supabase inquiry insert warning:', e);
+    console.warn('Platform inquiry submission notice:', e);
   }
 
   // Sync to Cloud Store

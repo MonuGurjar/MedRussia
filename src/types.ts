@@ -59,11 +59,7 @@ export interface User {
   phone?: string;
   shortlistedUniversities?: string[];
   avatar?: string;
-  documents?: {
-    marksheet?: DocumentMetadata;
-    passport?: DocumentMetadata;
-    neetScoreCard?: DocumentMetadata;
-  };
+  documents?: Record<string, DocumentMetadata | undefined>;
   eligibilityData?: EligibilityData;
   eligibilityResult?: string; // The AI analysis text
   notifications?: UserNotification[];

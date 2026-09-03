@@ -4,7 +4,7 @@ import { getSettings } from '../services/settings';
 import { AppSettings, ChatSession } from '../types';
 import { getChatResponse } from '../services/gemini';
 import { logChatSession } from '../services/db';
-import { supabase } from '../lib/supabase';
+import { tokenManager } from '../lib/tokenManager';
 
 interface Message { id: number; text: string; sender: 'user' | 'bot'; isError?: boolean; }
 interface ChatWidgetProps { isLifted?: boolean; }
@@ -42,9 +42,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ isLifted = false }) => {
   const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session?.user);
-    });
+    setIsAuthenticated(tokenManager.isAuthenticated());
     try { const count = sessionStorage.getItem(GUEST_MSG_COUNT_KEY); if (count) setGuestMessageCount(parseInt(count, 10)); } catch (e) {}
     if (!sessionIdRef.current) {
       const existingId = sessionStorage.getItem('mr_chat_session_id');

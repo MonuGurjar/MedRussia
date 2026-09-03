@@ -1,61 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { DETAILED_UNIVERSITIES } from '../constants/universities';
 import { User } from '../types';
+import { platformApplicationService } from '../services/platform/applicationService';
+import { platformUniversityService } from '../services/platform/universityService';
+import { tokenManager } from '../lib/tokenManager';
+import { ApplicationResponse, UniversityDetailResponse } from '../types/platform';
 
 interface AdmissionTrackerProps {
   currentUser?: User | null;
 }
 
-interface ApplicationData {
-  id: string;
-  student_name: string;
-  email: string;
-  phone: string;
-  selected_university_id: string;
-  intake_batch: string;
-  application_status: string;
-  current_step: number;
-  total_steps: number;
-  created_at: string;
-  updated_at: string;
-}
-
 const MILESTONES = [
   {
     step: 1,
-    key: 'APPLIED',
+    stageKey: 'applied',
     title: 'Application Submitted & Registered',
-    desc: 'Official candidate dossier created and forwarded to university international admissions office.',
+    desc: 'Official candidate dossier created and verified by international admissions desk.',
     icon: 'assignment_turned_in'
   },
   {
     step: 2,
-    key: 'LETTER_ISSUED',
-    title: 'University Provisional Admission Letter Issued',
-    desc: 'Official Ministry-accredited Russian medical university admission letter generated.',
-    icon: 'mark_email_read'
+    stageKey: 'under_review',
+    title: 'Academic & NEET Eligibility Review',
+    desc: 'Candidate PCB marks and NEET scorecard verified against statutory NMC FMGL 2021 criteria.',
+    icon: 'fact_check'
   },
   {
     step: 3,
-    key: 'MINISTRY_INVITATION',
+    stageKey: 'invitation_applied',
     title: 'Ministry of Internal Affairs (MVD) Visa Invitation',
     desc: 'Electronic study invitation letter sanctioned by Russian Federal Migration Service.',
     icon: 'verified_user'
   },
   {
     step: 4,
-    key: 'VISA_STAMPED',
+    stageKey: 'visa_stamped',
     title: 'Russian Consulate Study Visa Stamped',
-    desc: 'Original passport stamped with single/multi-entry student visa for Russian Federation.',
+    desc: 'Original passport stamped with student visa for Russian Federation.',
     icon: 'flight_takeoff'
   },
   {
     step: 5,
-    key: 'DEPARTURE_READY',
+    stageKey: 'arrived_and_enrolled',
     title: 'Departure Briefing & Campus Hostel Allotment',
-    desc: 'Group flight escort from Delhi, airport pickup, hostel check-in & campus registration.',
+    desc: 'Airport reception, hostel allotment & campus registration.',
     icon: 'hotel_class'
   }
 ];
@@ -66,41 +54,115 @@ export const AdmissionTrackerScreen: React.FC<AdmissionTrackerProps> = ({ curren
   const appIdParam = searchParams.get('appId');
 
   const [loading, setLoading] = useState(true);
-  const [application, setApplication] = useState<ApplicationData | null>(null);
+  const [application, setApplication] = useState<ApplicationResponse | null>(null);
+  const [university, setUniversity] = useState<UniversityDetailResponse | null>(null);
+  const isAuthenticated = tokenManager.isAuthenticated();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
     const fetchApplication = async () => {
       setLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const authUserId = session?.user?.id || currentUser?.id;
-
-        let query = supabase.from('applications').select('*');
+        let appResponse: ApplicationResponse | null = null;
         if (appIdParam) {
-          query = query.eq('id', appIdParam);
-        } else if (authUserId) {
-          query = query.eq('user_id', authUserId);
+          appResponse = await platformApplicationService.getApplicationById(appIdParam);
+        } else {
+          appResponse = await platformApplicationService.getMyDossier();
         }
 
-        const { data, error } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
-        if (data) {
-          setApplication(data as ApplicationData);
+        if (appResponse && appResponse.id && isMounted) {
+          setApplication(appResponse);
+          if (appResponse.university_id) {
+            try {
+              const uni = await platformUniversityService.getUniversityById(appResponse.university_id);
+              if (isMounted) setUniversity(uni);
+            } catch (_) {}
+          }
+        } else if (isMounted) {
+          setApplication(null);
         }
-      } catch (e) {
-        console.warn('Failed to load tracker data:', e);
+      } catch (e: any) {
+        // No dossier or 404
+        if (isMounted) setApplication(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchApplication();
-  }, [appIdParam, currentUser]);
+    return () => { isMounted = false; };
+  }, [appIdParam, isAuthenticated, currentUser]);
 
-  const activeStep = application?.current_step || 2;
-  const activeUni = DETAILED_UNIVERSITIES.find(
-    u => String(u.id).toLowerCase() === application?.selected_university_id?.toLowerCase() ||
-         u.name.toLowerCase().includes(application?.selected_university_id?.toLowerCase() || '')
-  ) || DETAILED_UNIVERSITIES[0];
+  // 1. Unauthenticated State
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-5">
+          <div className="w-16 h-16 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto">
+            <span className="material-symbols-outlined text-3xl">lock</span>
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-900">Student Sign In Required</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Please log in to your student account to track your official Russian MBBS Admission Dossier.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/auth')}
+            className="w-full py-3 px-4 bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+          >
+            Log In / Register
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-16 px-4 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs font-bold text-slate-600">Retrieving official application dossier...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Truthful Empty State (Logged in but no application)
+  if (!application || !application.id) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-5">
+          <div className="w-16 h-16 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center mx-auto">
+            <span className="material-symbols-outlined text-3xl">assignment_late</span>
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-900">No Active Application</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            You have not submitted an MBBS admission application yet. Apply directly to NMC & WHO-recognized Russian medical universities.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/apply')}
+            className="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+          >
+            Start Admission Application
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Real Application Live Tracker
+  const activeStepNumber = application.current_step_number || 1;
+  const stageDisplay = (application.current_stage || (application as any).stage || 'APPLICATION_SUBMITTED').replace(/_/g, ' ');
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -112,128 +174,97 @@ export const AdmissionTrackerScreen: React.FC<AdmissionTrackerProps> = ({ curren
           <div className="flex items-center justify-between">
             <button 
               onClick={() => navigate(-1)} 
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 flex items-center gap-1 transition"
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 flex items-center gap-1 transition cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">arrow_back</span>
               Back
             </button>
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Live Admission Tracker
+              Live Admission Dossier
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-4">
-            {application?.student_name || currentUser?.name || 'Student'} Admission Dossier
+            {application.student_name || currentUser?.name || 'Student'} Admission Dossier
           </h1>
           <p className="text-slate-300 text-xs sm:text-sm mt-1">
-            Application ID: <span className="font-mono text-amber-400 font-bold">{application?.id || 'APP-2026-PENDING'}</span>
+            Dossier Number: <span className="font-mono text-amber-400 font-bold">{application.dossier_number || 'Pending'}</span>
           </p>
 
           {/* Target Uni Banner */}
           <div className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-400">Allotted Russian University</p>
-              <h3 className="font-extrabold text-sm sm:text-base text-white mt-0.5">{activeUni.name}</h3>
-              <p className="text-xs text-slate-300">📍 {activeUni.location} • Intake: {application?.intake_batch || 'September 2026'}</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">Target Russian University</p>
+              <h3 className="font-extrabold text-sm sm:text-base text-white mt-0.5">
+                {university?.name || 'Russian State Medical University'}
+              </h3>
+              <p className="text-xs text-slate-300">📍 {university?.city || 'Russia'} • Intake: {application.intake_batch || 'September 2026'}</p>
             </div>
             <div className="text-right shrink-0">
-              <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold text-xs rounded-xl">
-                Step {activeStep} of 5
+              <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold text-xs rounded-xl uppercase">
+                {stageDisplay}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Timeline Milestones Card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200">
-          <h2 className="text-base sm:text-lg font-extrabold text-slate-900 mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-amber-500">timeline</span>
-            5-Stage Official Admission Timeline
-          </h2>
+        {/* Milestone Tracker Cards */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-600">verified</span>
+              Admission Milestones
+            </h2>
+            <span className="text-xs font-bold text-slate-500">
+              Stage {activeStepNumber} of {MILESTONES.length}
+            </span>
+          </div>
 
-          <div className="space-y-6 relative before:absolute before:left-5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
+          <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
             {MILESTONES.map((m) => {
-              const isCompleted = activeStep > m.step;
-              const isCurrent = activeStep === m.step;
-              const isPending = activeStep < m.step;
+              const isCompleted = activeStepNumber > m.step;
+              const isCurrent = activeStepNumber === m.step;
 
               return (
-                <div key={m.step} className="relative flex items-start gap-4 pl-1">
-                  {/* Step Icon Badge */}
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 z-10 transition-all duration-300 ${
-                    isCompleted ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' :
-                    isCurrent ? 'bg-[#0f172a] text-amber-400 ring-4 ring-amber-400/20 shadow-lg' :
-                    'bg-slate-100 text-slate-400 border border-slate-200'
+                <div key={m.step} className="relative">
+                  {/* Step Dot Icon */}
+                  <div className={`absolute -left-6 sm:-left-8 top-0.5 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-xs ${
+                    isCompleted 
+                      ? 'bg-emerald-500 text-white' 
+                      : isCurrent 
+                      ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-100 animate-bounce' 
+                      : 'bg-slate-100 text-slate-400 border border-slate-200'
                   }`}>
                     {isCompleted ? (
-                      <span className="material-symbols-outlined text-[20px]">check</span>
+                      <span className="material-symbols-outlined text-[16px]">check</span>
                     ) : (
-                      <span className="material-symbols-outlined text-[18px]">{m.icon}</span>
+                      m.step
                     )}
                   </div>
 
                   {/* Step Details */}
-                  <div className={`flex-1 p-4 rounded-2xl border transition ${
-                    isCurrent ? 'bg-amber-50/40 border-amber-300 shadow-sm' :
-                    isCompleted ? 'bg-slate-50 border-slate-200' :
-                    'bg-white border-slate-100 opacity-60'
+                  <div className={`p-4 rounded-2xl border transition-all ${
+                    isCurrent 
+                      ? 'bg-amber-50/50 border-amber-200 shadow-xs' 
+                      : isCompleted 
+                      ? 'bg-slate-50/50 border-slate-200' 
+                      : 'bg-white border-slate-100 opacity-60'
                   }`}>
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className={`font-bold text-xs sm:text-sm ${
-                        isCurrent ? 'text-slate-900 font-extrabold' :
-                        isCompleted ? 'text-slate-800' : 'text-slate-500'
-                      }`}>
-                        {m.step}. {m.title}
-                      </h4>
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900">{m.title}</h4>
                       {isCurrent && (
-                        <span className="px-2.5 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-black rounded-full uppercase tracking-wider animate-pulse">
-                          In Progress
-                        </span>
-                      )}
-                      {isCompleted && (
-                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
-                          Completed
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-extrabold text-[10px] uppercase tracking-wider">
+                          Current Stage
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">{m.desc}</p>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{m.desc}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-
-        {/* Action CTAs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a
-            href="https://wa.me/917375017401?text=Hello%20MedRussia%20Admission%20Desk,%20I%20want%20an%20update%20on%20my%20MBBS%20Application."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900 transition"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[20px]">chat</span>
-            </div>
-            <div>
-              <h4 className="font-bold text-xs sm:text-sm">WhatsApp Counselor Desk</h4>
-              <p className="text-[11px] text-emerald-700">Get instant status update from Amit Gurjar</p>
-            </div>
-          </a>
-
-          <a
-            href="tel:+917375017401"
-            className="p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl flex items-center gap-3 text-blue-900 transition"
-          >
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[20px]">call</span>
-            </div>
-            <div>
-              <h4 className="font-bold text-xs sm:text-sm">Direct Admission Hotline</h4>
-              <p className="text-[11px] text-blue-700">+91 73750 17401 • Toll-Free Helpdesk</p>
-            </div>
-          </a>
         </div>
 
       </div>

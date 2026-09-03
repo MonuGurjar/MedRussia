@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { RUSSIAN_UNIVERSITIES, getUniversityData, DETAILED_UNIVERSITIES } from '../constants/universities';
 import { User } from '../types';
+import { platformApplicationService } from '../services/platform/applicationService';
+import { platformUniversityService } from '../services/platform/universityService';
+import { UniversitySummaryResponse } from '../types/platform';
+import { tokenManager } from '../lib/tokenManager';
 
 interface AdmissionFormProps {
   currentUser?: User | null;
@@ -11,6 +13,10 @@ interface AdmissionFormProps {
 
 const DAYS_LIST = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTHS_LIST = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_MAP: Record<string, string> = {
+  Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+  Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+};
 const YEARS_LIST = Array.from({ length: 13 }, (_, i) => String(2010 - i));
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const BOARD_OPTIONS = ['CBSE', 'ICSE / ISC', 'State Board', 'NIOS (Open School)', 'Other'];
@@ -26,15 +32,16 @@ const HOSTEL_OPTIONS = ['2-Sharing (Standard)', '3-Sharing (Standard)', 'Single 
 export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser, onSuccess }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialUni = searchParams.get('uni') || 'bashkir';
+  const initialUni = searchParams.get('uni') || '';
 
+  const [universities, setUniversities] = useState<UniversitySummaryResponse[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [uniSearch, setUniSearch] = useState('');
   const [showUniModal, setShowUniModal] = useState(false);
 
-  // Form State matching Android AdmissionApplicationData exactly
+  // Form State
   const [formData, setFormData] = useState({
     // Step 1: Personal & Contact
     studentName: currentUser?.name || '',
@@ -51,10 +58,10 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
 
     // Step 2: Academic & NEET
     board12th: 'CBSE',
-    pcbPercentage: currentUser?.eligibilityData?.twelfthMarks ? String(currentUser.eligibilityData.twelfthMarks) : '65',
+    pcbPercentage: 65,
     category: 'General / UR',
     neetStatus: 'Qualified (NEET 2025)',
-    neetScore: currentUser?.eligibilityData?.neetScore ? String(currentUser.eligibilityData.neetScore) : '380',
+    neetScore: 285,
 
     // Step 3: University & Intake Preferences
     selectedUniversityId: initialUni,
@@ -64,37 +71,43 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
     termsAccepted: false
   });
 
+  // Load universities from Platform API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnis = async () => {
+      try {
+        const data = await platformUniversityService.getUniversities({ page_size: 50 });
+        if (isMounted && data.items && data.items.length > 0) {
+          setUniversities(data.items);
+          if (!formData.selectedUniversityId) {
+            setFormData(prev => ({ ...prev, selectedUniversityId: data.items[0].id }));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load universities:', e);
+      }
+    };
+    fetchUnis();
+    return () => { isMounted = false; };
+  }, []);
+
   // Load existing application if any
   useEffect(() => {
+    if (!tokenManager.isAuthenticated()) return;
+
     const loadApplication = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const authUserId = session?.user?.id || currentUser?.id;
-      if (!authUserId) return;
-
       try {
-        const { data, error } = await supabase
-          .from('applications')
-          .select('*')
-          .eq('user_id', authUserId)
-          .maybeSingle();
-
-        if (data) {
+        const apps = await platformApplicationService.getMyApplications();
+        if (apps && apps.length > 0) {
+          const data = apps[0];
           setFormData(prev => ({
             ...prev,
             studentName: data.student_name || prev.studentName,
             email: data.email || prev.email,
             phone: data.phone || prev.phone,
             whatsapp: data.phone || prev.whatsapp,
-            guardianName: data.parent_name || prev.guardianName,
-            guardianPhone: data.parent_phone || prev.guardianPhone,
-            cityState: data.address || prev.cityState,
-            pcbPercentage: data.pcb_percentage || prev.pcbPercentage,
-            category: data.category || prev.category,
-            neetScore: data.neet_score || prev.neetScore,
-            neetStatus: data.neet_status || prev.neetStatus,
-            selectedUniversityId: data.selected_university_id || prev.selectedUniversityId,
-            intakeBatch: data.intake_batch || prev.intakeBatch,
-            indianMessOptIn: data.needs_indian_mess !== false
+            selectedUniversityId: data.university_id || prev.selectedUniversityId,
+            intakeBatch: data.intake_batch || prev.intakeBatch
           }));
         }
       } catch (e) {}
@@ -102,14 +115,13 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
     loadApplication();
   }, [currentUser]);
 
-  const selectedUniData = DETAILED_UNIVERSITIES.find(
-    u => String(u.id).toLowerCase() === formData.selectedUniversityId.toLowerCase() || 
-         u.name.toLowerCase().includes(formData.selectedUniversityId.toLowerCase())
-  ) || DETAILED_UNIVERSITIES[0];
+  const selectedUniData = universities.find(
+    u => u.id === formData.selectedUniversityId || u.code.toLowerCase() === formData.selectedUniversityId.toLowerCase()
+  ) || universities[0] || { name: 'Select University', city: 'Russia', id: '' };
 
-  const filteredUnis = DETAILED_UNIVERSITIES.filter(u => 
+  const filteredUnis = universities.filter(u => 
     u.name.toLowerCase().includes(uniSearch.toLowerCase()) || 
-    u.location.toLowerCase().includes(uniSearch.toLowerCase())
+    u.city.toLowerCase().includes(uniSearch.toLowerCase())
   );
 
   const validateStep = (step: number) => {
@@ -156,40 +168,51 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
     setErrorMsg('');
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const authUserId = session?.user?.id || currentUser?.id;
-      const appId = `APP_2026_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const targetUniId = formData.selectedUniversityId || (universities.length > 0 ? universities[0].id : '');
+      if (!targetUniId) {
+        setErrorMsg('Please select a valid Russian medical university to submit your application.');
+        setIsSubmitting(false);
+        return;
+      }
 
-      const payload = {
-        id: appId,
-        user_id: authUserId || null,
-        student_id: authUserId || appId,
+      const pcbNum = parseFloat(String(formData.pcbPercentage)) || 60.0;
+      const neetNum = parseInt(String(formData.neetScore), 10) || 0;
+
+      const monthNum = MONTH_MAP[formData.dobMonth] || (parseInt(formData.dobMonth, 10) ? String(formData.dobMonth).padStart(2, '0') : '01');
+      const dayNum = String(formData.dobDay).padStart(2, '0');
+      const isoDob = `${formData.dobYear}-${monthNum}-${dayNum}`;
+
+      const catLower = formData.category.toLowerCase().includes('sc') || 
+                       formData.category.toLowerCase().includes('st') || 
+                       formData.category.toLowerCase().includes('obc') 
+        ? 'sc_st_obc' 
+        : 'general';
+
+      const response = await platformApplicationService.submitApplication({
+        university_id: targetUniId,
         student_name: formData.studentName.trim(),
-        email: formData.email.trim(),
+        dob: isoDob,
+        gender: formData.gender.toLowerCase(),
         phone: formData.phone.trim(),
-        parent_name: formData.guardianName.trim(),
-        parent_phone: formData.guardianPhone.trim(),
-        address: formData.cityState.trim(),
-        pcb_percentage: formData.pcbPercentage,
-        category: formData.category,
-        neet_score: formData.neetScore,
-        neet_status: formData.neetStatus,
-        neet_year: '2026',
-        selected_university_id: formData.selectedUniversityId,
+        whatsapp: formData.whatsapp.trim() || null,
+        email: formData.email.trim(),
+        guardian_name: formData.guardianName.trim() || 'Guardian',
+        guardian_phone: formData.guardianPhone.trim() || formData.phone.trim(),
+        city_state: formData.cityState.trim() || 'City, State',
+        board_12th: formData.board12th,
+        physics_marks: pcbNum,
+        chemistry_marks: pcbNum,
+        biology_marks: pcbNum,
+        neet_status: formData.neetStatus.toLowerCase().includes('qualified') ? 'qualified' : 'appearing',
+        neet_score: neetNum > 0 ? neetNum : null,
+        category: catLower,
         intake_batch: formData.intakeBatch,
-        needs_hostel: true,
-        needs_indian_mess: formData.indianMessOptIn,
-        application_status: 'APPLIED',
-        current_step: 2,
-        total_steps: 5,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase.from('applications').upsert(payload);
-      if (error) throw error;
+        hostel_room_type: formData.hostelSharing,
+        indian_mess_opted: formData.indianMessOptIn
+      });
 
       if (onSuccess) onSuccess();
-      navigate('/tracker?appId=' + appId);
+      navigate('/tracker?appId=' + response.id);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to submit admission application. Please try again.');
     } finally {
@@ -487,7 +510,7 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
                 >
                   <div className="min-w-0">
                     <h3 className="font-extrabold text-sm text-slate-900 truncate">{selectedUniData.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">📍 {selectedUniData.location} • ₹{(selectedUniData.tuition_fee_rub * 0.95 / 100000).toFixed(1)} Lakhs/Yr</p>
+                    <p className="text-xs text-slate-500 mt-0.5">📍 {(selectedUniData as any).city || 'Russia'} • NMC & WHO Approved</p>
                   </div>
                   <button type="button" className="px-3 py-1.5 bg-[#0f172a] text-white text-xs font-bold rounded-xl shrink-0">
                     Change
@@ -666,7 +689,7 @@ export const AdmissionFormScreen: React.FC<AdmissionFormProps> = ({ currentUser,
                   >
                     <div>
                       <h4 className="font-bold text-xs text-slate-900">{u.name}</h4>
-                      <p className="text-[11px] text-slate-500">📍 {u.location} • ₹{(u.tuition_fee_rub * 0.95 / 100000).toFixed(1)} Lakhs/Yr</p>
+                      <p className="text-[11px] text-slate-500">📍 {u.city} • NMC Approved</p>
                     </div>
                     {formData.selectedUniversityId === String(u.id) && (
                       <span className="material-symbols-outlined text-amber-600 text-[20px]">check_circle</span>

@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DETAILED_UNIVERSITIES, getUniversityImage } from '../constants/universities';
+import { platformUniversityService } from '../services/platform/universityService';
+import { DETAILED_UNIVERSITIES, getUniversityImage, UniversityData } from '../constants/universities';
 
 export const UniversitiesList: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [universities, setUniversities] = useState<UniversityData[]>(DETAILED_UNIVERSITIES);
 
-  const filtered = DETAILED_UNIVERSITIES.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.location.toLowerCase().includes(searchTerm.toLowerCase()));
+  useEffect(() => {
+    let isMounted = true;
+    const fetchFromPlatform = async () => {
+      try {
+        const response = await platformUniversityService.getUniversities({ page: 1, page_size: 100 });
+        if (response?.items && response.items.length > 0 && isMounted) {
+          const mapped: UniversityData[] = response.items.map((item, idx) => ({
+            id: item.id,
+            name: item.name,
+            location: `${item.city}, Russia`,
+            established: '1900s',
+            tuition_fee_rub: 450000,
+            hostel_fee_rub: 35000,
+            total_fee_rub: 485000,
+            duration: '6 Years',
+            indian_mess: item.has_indian_mess,
+            ranking: item.ranking_russia ? `#${item.ranking_russia} in Russia` : (item.ranking_world ? `#${item.ranking_world} Global` : '#1 in Russia'),
+            notes: item.is_nmc_compliant ? 'NMC & WHO Compliant' : 'Approved'
+          }));
+          setUniversities(mapped);
+        }
+      } catch (_: any) {
+        // Fallback gracefully to default catalog
+      }
+    };
+    fetchFromPlatform();
+    return () => { isMounted = false; };
+  }, []);
+
+  const filtered = universities.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="pt-20 sm:pt-28 pb-16 sm:pb-20 bg-slate-50 min-h-screen">
@@ -32,7 +66,7 @@ export const UniversitiesList: React.FC = () => {
                 {/* Fallback image */}
                 <img src={getUniversityImage(uni.id)} alt={uni.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">star</span> {(4.5 + (Number(uni.id) % 5) / 10).toFixed(1)}
+                  <span className="material-symbols-outlined text-[14px]">star</span> {(4.5 + (Number(uni.id) % 5 || 0) / 10).toFixed(1)}
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">

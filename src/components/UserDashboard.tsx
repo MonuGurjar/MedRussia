@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { User, FeedbackEntry, AppSettings, EligibilityData, DocumentMetadata } from '../types';
 import { getUserFeedback, saveFeedback, toggleShortlist, updateUserDocuments, updateUserEligibility, fetchUsersFromStore, updateUser, getVaultDocuments } from '../services/db';
 import { getSettings } from '../services/settings';
@@ -14,6 +14,7 @@ import { AdmissionFormScreen } from './AdmissionFormScreen';
 import { AdmissionTrackerScreen } from './AdmissionTrackerScreen';
 import { PlatformFeedbackModal } from './PlatformFeedbackModal';
 import { RUSSIAN_UNIVERSITIES, getUniversityData, getUniversityImage } from '../constants/universities';
+import { platformAuthService } from '../services/platform/authService';
 import { getStudentChats, createDirectChat, sendDirectMessage } from '../services/directChat';
 import { DirectChat, DirectMessageAttachment } from '../types';
 
@@ -75,10 +76,30 @@ const getEligibilityStatus = (result: string) => {
 
 export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, onInquirySubmitted, initialView = 'inquiries', onFabToggle, theme, toggleTheme, onToggleCurrency }) => {
   const navigate = useNavigate();
+  const { tab: urlTab } = useParams<{ username?: string; tab?: string }>();
+
+  // Map URL tab or aliases to internal view
+  const normalizeTab = (tabStr?: string): typeof initialView => {
+    if (!tabStr) return initialView || 'inquiries';
+    if (tabStr === 'dashboard' || tabStr === 'home') return 'inquiries';
+    if (tabStr === 'settings') return 'settings';
+    if (tabStr === 'chat' || tabStr === 'messages') return 'chats';
+    if (tabStr === 'vault' || tabStr === 'kyc') return 'documents';
+    if (tabStr === 'apply') return 'application';
+    if (ALL_TABS.some(t => t.id === tabStr)) return tabStr as typeof initialView;
+    return initialView || 'inquiries';
+  };
+
+  const activeView = normalizeTab(urlTab);
+
+  const setActiveView = (newView: string) => {
+    const userPrefix = user?.username ? `/@${user.username}` : '/user';
+    navigate(`${userPrefix}/${newView}`);
+  };
+
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
-  const [activeView, setActiveView] = useState(initialView);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; text: string; type: 'info' | 'success' | 'alert' | 'recommendation'; time: string }[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -91,10 +112,35 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
   const [savingSettings, setSavingSettings] = useState(false);
-  const [profileData, setProfileData] = useState({ name: user?.name || 'Student', username: user?.username || '', phone: user?.phone || '', university: user?.university || '', targetYear: '2026', preferredMedium: 'English Medium (6 Years)', targetBudget: '300k-500k', passportNumber: '', passportExpiry: '', whatsappAlerts: true, emailAlerts: true });
+  const [profileData, setProfileData] = useState({ 
+    name: user?.name || '', 
+    username: user?.username || '', 
+    phone: user?.phone || '', 
+    university: user?.university || '', 
+    targetYear: '2026', 
+    preferredMedium: 'English Medium (6 Years)', 
+    targetBudget: '300k-500k', 
+    passportNumber: '', 
+    passportExpiry: '', 
+    whatsappAlerts: true, 
+    emailAlerts: true 
+  });
   const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [uploadingDoc, setUploadingDoc] = useState<'marksheet' | 'passport' | 'neetScoreCard' | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        name: user.name || '',
+        username: user.username || '',
+        phone: user.phone || '',
+        university: user.university || ''
+      }));
+      setAvatar(user.avatar || null);
+    }
+  }, [user]);
+
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [eligibilityForm, setEligibilityForm] = useState<EligibilityData>(user?.eligibilityData || { pcbPercentage: '', category: 'General', isPwd: false, neetScore: '', dob: '', medium: 'English', knowsRussian: false, passportStatus: 'Have', medicalHistory: '' });
   const [eligibilityResult, setEligibilityResult] = useState<string | null>(user?.eligibilityResult || null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
@@ -122,7 +168,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   const [showSecurityPrompt, setShowSecurityPrompt] = useState(false);
   const [recoveryData, setRecoveryData] = useState({ question: SECURITY_QUESTIONS[0], answer: '' });
 
-  useEffect(() => { setActiveView(initialView); }, [initialView]);
   useEffect(() => { if (!user.recoveryQuestion && !user.recoveryAnswer) setShowSecurityPrompt(true); }, [user]);
   useEffect(() => {
     if (activeView === 'chats') {
@@ -184,9 +229,49 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
   };
 
   const handleCheckEligibility = async () => { setCheckingEligibility(true); try { const result = await checkEligibility(eligibilityForm); setEligibilityResult(result); await updateUserEligibility(user.id, eligibilityForm, result); showToast('Eligibility report generated!'); } catch (e) { showToast("Eligibility check failed", 'error'); } finally { setCheckingEligibility(false); } };
-  const handleProfileUpdate = async (e: React.FormEvent) => { e.preventDefault(); setIsUpdatingProfile(true); await new Promise(r => setTimeout(r, 600)); try { const updatedUser = { ...user, ...profileData, avatar }; await updateUser(updatedUser); setIsUpdatingProfile(false); showToast('Profile updated successfully!'); } catch (e) { setIsUpdatingProfile(false); showToast('Failed to update profile', 'error'); } };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    try {
+      const updatedProfile = await platformAuthService.updateCurrentUser({
+        full_name: profileData.name.trim(),
+        phone: profileData.phone.trim() || undefined
+      });
+      const updatedUser: User = {
+        ...user,
+        name: updatedProfile.full_name,
+        phone: updatedProfile.phone || '',
+        avatar: updatedProfile.avatar_url || avatar
+      };
+      localStorage.setItem('mr_current_user', JSON.stringify(updatedUser));
+      showToast('Profile updated successfully!');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update profile', 'error');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   const handleSettingsSave = async () => { setSavingSettings(true); await new Promise(r => setTimeout(r, 800)); if (passData.new && passData.new !== passData.confirm) { showToast("Passwords do not match!", 'error'); setSavingSettings(false); return; } setPassData({ current: '', new: '', confirm: '' }); setSavingSettings(false); showToast("Settings updated successfully!"); };
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { if (file.size > 2 * 1024 * 1024) { showToast("Image size must be under 2MB", 'error'); return; } const reader = new FileReader(); reader.onloadend = () => { setAvatar(reader.result as string); showToast("Avatar updated successfully!"); }; reader.readAsDataURL(file); } };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image size must be under 5MB", 'error');
+      return;
+    }
+    try {
+      const res = await platformAuthService.uploadAvatar(file);
+      setAvatar(res.avatar_url);
+      const updatedUser = { ...user, avatar: res.avatar_url };
+      localStorage.setItem('mr_current_user', JSON.stringify(updatedUser));
+      showToast("Avatar updated successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to upload avatar", "error");
+    }
+  };
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -352,7 +437,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
             </button>
             <div>
               <h2 className="text-base sm:text-xl font-bold text-[#0f172a] leading-tight">
-                {activeView === 'inquiries' && `Welcome, ${(user?.name || 'Student').split(' ')[0]}`}
+                {activeView === 'inquiries' && `Welcome, ${(user?.name || user?.username || 'User').split(' ')[0]}`}
                 {activeView === 'explorer' && 'University Explorer'}
                 {activeView === 'budget' && 'Budget Calc'}
                 {activeView === 'chats' && 'Communications'}
@@ -430,7 +515,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
              
              {/* Profile Avatar */}
              <button onClick={() => setActiveView('profile' as any)} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-[#0f172a] text-white flex items-center justify-center font-bold cursor-pointer hover:ring-2 hover:ring-slate-300 transition-all text-sm">
-                {avatar ? <img src={avatar} className="w-full h-full object-cover" alt="Avatar" /> : (user?.name || 'Student').charAt(0)}
+                {avatar ? <img src={avatar} className="w-full h-full object-cover" alt="Avatar" /> : (user?.name || user?.username || 'U').charAt(0).toUpperCase()}
              </button>
           </div>
         </header>
@@ -1727,9 +1812,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                     {[
                        { id: 'marksheet_10', title: '10th Secondary Certificate / Marksheet', desc: 'Proof of date of birth and secondary school completion.' },
                        { id: 'marksheet_12', title: '12th Senior Secondary Marksheet (PCB)', desc: 'Physics, Chemistry, Biology marks for NMC 50%/40% eligibility check.' },
-                       { id: 'neetScoreCard', title: 'NEET Qualification Scorecard (NTA)', desc: 'Official NTA scorecard indicating candidate qualification status.' },
-                       { id: 'passport', title: 'Valid Indian Passport Scan', desc: 'First and address page scan. Must be valid for minimum 18 months.' },
-                       { id: 'medical_fitness', title: 'Medical Fitness & HIV/Hepatitis Test', desc: 'Doctor fitness certificate along with blood test reports.' }
+                       { id: 'neet_scorecard', title: 'NEET Qualification Scorecard (NTA)', desc: 'Official NTA scorecard indicating candidate qualification status.' },
+                       { id: 'passport_front', title: 'Valid Indian Passport Scan', desc: 'First and address page scan. Must be valid for minimum 18 months.' },
+                       { id: 'medical_fitness_certificate', title: 'Medical Fitness & HIV/Hepatitis Test', desc: 'Doctor fitness certificate along with blood test reports.' }
                     ].map(doc => {
                        const docData = user.documents?.[doc.id as keyof typeof user.documents];
                        const isUploaded = !!docData;
@@ -1907,7 +1992,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                         <span className="material-symbols-outlined text-indigo-400 text-[15px]">list_alt</span> {entries.length} Inquiries
                       </span>
                       <span className="bg-white/10 text-white backdrop-blur-xs px-3 py-1 rounded-xl border border-white/10 flex items-center gap-1.5 font-semibold">
-                        <span className="material-symbols-outlined text-emerald-400 text-[15px]">folder</span> {Object.keys(user.documents || {}).length}/3 Vault Files
+                        <span className="material-symbols-outlined text-emerald-400 text-[15px]">folder</span> {Object.keys(user.documents || {}).length}/5 Vault Files
                       </span>
                     </div>
                   </div>
@@ -1955,7 +2040,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
                       value={profileData.phone} 
                       onChange={e => setProfileData({...profileData, phone: e.target.value})} 
                       className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white text-slate-900 text-sm font-semibold transition-all" 
-                      placeholder="+91 98765 43210" 
+                      placeholder="Enter contact number" 
                     />
                   </div>
 

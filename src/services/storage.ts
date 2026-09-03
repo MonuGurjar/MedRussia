@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { platformDocumentService } from './platform/documentService';
 
 // Helper to convert file to Base64 (local preview only)
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -9,106 +9,76 @@ const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) 
 });
 
 export interface UploadResponse {
-  secure_url: string; // Storage object path (e.g. students/{userId}/{docType}_{fileName})
+  secure_url: string; // Storage object path or document ID
   public_id: string;
   format: string;
   resource_type: string;
 }
 
 /**
- * Uploads a document directly to the private 'kyc-vault' Supabase Storage bucket.
- * Uses private user-isolated path: students/{userId}/{docType}_{fileName}.
+ * Uploads a document directly via MedRussia Platform Document API to private KYC vault.
+ * Performs server-side validation, SHA-256 integrity checks, and stores in private bucket.
  * NEVER generates or returns permanent public URLs.
  */
 export const uploadFileToCloudinary = async (
   file: File, 
   userId?: string, 
-  docType: string = 'document'
+  docType: string = 'passport_front'
 ): Promise<UploadResponse> => {
   const fileExt = file.name.split('.').pop() || 'pdf';
-  const cleanDocType = docType.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   
-  // Resolve authenticated user ID
-  let activeUserId = userId;
-  if (!activeUserId) {
-    const { data: { session } } = await supabase.auth.getSession();
-    activeUserId = session?.user?.id || 'guest_student';
+  const docResponse = await platformDocumentService.uploadDocument(docType, file);
+  if (docResponse && docResponse.id) {
+    return {
+      secure_url: docResponse.id,
+      public_id: docResponse.id,
+      format: fileExt,
+      resource_type: file.type.startsWith('image/') ? 'image' : 'raw'
+    };
   }
 
-  const storagePath = `students/${activeUserId}/${cleanDocType}_${cleanFileName}`;
-
-  try {
-    // 1. Direct Supabase Storage Upload to private 'kyc-vault'
-    const { data: uploadData, error: storageError } = await supabase.storage
-      .from('kyc-vault')
-      .upload(storagePath, file, { upsert: true });
-
-    if (!storageError && uploadData) {
-      return {
-        secure_url: storagePath, // Private storage object path
-        public_id: storagePath,
-        format: fileExt,
-        resource_type: file.type.startsWith('image/') ? 'image' : 'raw'
-      };
-    }
-  } catch (sErr) {
-    console.warn('Supabase storage upload notice:', sErr);
-  }
-
-  // 2. Local Base64 fallback (transient client preview only)
-  const base64Fallback = await toBase64(file);
-  return {
-    secure_url: storagePath,
-    public_id: `local_${Date.now()}`,
-    format: fileExt,
-    resource_type: file.type.startsWith('image/') ? 'image' : 'raw'
-  };
+  throw new Error('Document upload did not return a valid document ID.');
 };
 
 /**
- * Generates a short-lived signed URL (default 15 mins) for viewing or downloading a KYC file.
+ * Generates an ephemeral short-lived signed URL (default 15 mins) for viewing or downloading a KYC file.
  * Authenticates user before access; never stores or returns permanent public URLs.
  */
 export const getSignedKycUrl = async (
-  storagePath: string, 
+  storagePathOrDocId: string, 
   expiresInSeconds: number = 900
 ): Promise<string | null> => {
-  if (!storagePath) return null;
+  if (!storagePathOrDocId) return null;
 
   // If already a local data URL, return for client preview
-  if (storagePath.startsWith('data:')) return storagePath;
+  if (storagePathOrDocId.startsWith('data:') || storagePathOrDocId.startsWith('blob:')) {
+    return storagePathOrDocId;
+  }
 
   try {
-    const { data, error } = await supabase.storage
-      .from('kyc-vault')
-      .createSignedUrl(storagePath, expiresInSeconds);
-
-    if (error || !data?.signedUrl) {
-      console.warn('Signed URL generation notice:', error?.message);
-      return null;
+    const res = await platformDocumentService.getSignedUrl(storagePathOrDocId);
+    if (res && res.signed_url) {
+      return res.signed_url;
     }
-    return data.signedUrl;
+    return null;
   } catch (e) {
-    console.warn('Failed to generate signed URL:', e);
+    console.warn('Failed to generate signed URL via Platform API:', e);
     return null;
   }
 };
 
 /**
- * Deletes a document file from the private 'kyc-vault' bucket.
+ * Deletes a document file from the private vault via MedRussia Platform API.
  */
 export const deleteFileFromCloudinary = async (
-  storagePath: string, 
+  documentId: string, 
   resourceType: string = 'image'
 ): Promise<void> => {
   try {
-    if (storagePath.startsWith('students/')) {
-      await supabase.storage.from('kyc-vault').remove([storagePath]);
-      return;
+    if (documentId && !documentId.startsWith('data:') && !documentId.startsWith('local_')) {
+      await platformDocumentService.deleteDocument(documentId);
     }
   } catch (error: any) {
-    console.warn("Storage Delete Notice:", error);
+    console.warn('Platform Document Delete Notice:', error);
   }
 };
-

@@ -1,15 +1,69 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DETAILED_UNIVERSITIES, getUniversityImage } from '../constants/universities';
+import { platformUniversityService } from '../services/platform/universityService';
+import { DETAILED_UNIVERSITIES, getUniversityImage, UniversityData } from '../constants/universities';
 
 export const UniversityDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const uni = DETAILED_UNIVERSITIES.find(u => u.id.toString() === id);
+  const [uni, setUni] = useState<UniversityData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    let isMounted = true;
+
+    const fetchDetail = async () => {
+      setIsLoading(true);
+      // 1. Try Platform API first
+      if (id) {
+        try {
+          const detail = await platformUniversityService.getUniversityById(id);
+          if (detail && isMounted) {
+            const activeFee = detail.fee_schedules?.find(f => f.is_active) || detail.fee_schedules?.[0];
+            const mapped: UniversityData = {
+              id: detail.id,
+              name: detail.name,
+              location: `${detail.city}, Russia`,
+              established: detail.established_year || 1900,
+              tuition_fee_rub: activeFee ? activeFee.annual_tuition_rub : 450000,
+              hostel_fee_rub: activeFee ? activeFee.annual_hostel_rub : 35000,
+              total_fee_rub: activeFee ? (activeFee.annual_tuition_rub + activeFee.annual_hostel_rub) : 485000,
+              duration: `${Math.round(detail.course_duration_months / 12)} Years`,
+              indian_mess: detail.has_indian_mess,
+              ranking: detail.ranking_russia ? `#${detail.ranking_russia} in Russia` : (detail.ranking_world ? `#${detail.ranking_world} Global` : '#1 in Russia'),
+              notes: detail.description || (detail.is_nmc_compliant ? 'NMC & WHO Recognized Medical Institution.' : ''),
+              website: detail.website_url || undefined
+            };
+            setUni(mapped);
+            setIsLoading(false);
+            return;
+          }
+        } catch (_: any) {
+          // Fallback to static detailed list
+        }
+      }
+
+      // 2. Fallback to local static catalog
+      const fallback = DETAILED_UNIVERSITIES.find(u => u.id.toString() === id);
+      if (isMounted) {
+        setUni(fallback || null);
+        setIsLoading(false);
+      }
+    };
+
+    fetchDetail();
+    return () => { isMounted = false; };
   }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="pt-32 pb-20 text-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-slate-500 font-semibold text-sm">Loading university details...</p>
+      </div>
+    );
+  }
 
   if (!uni) {
     return (
