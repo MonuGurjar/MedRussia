@@ -128,6 +128,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout, on
     emailAlerts: true 
   });
   const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
